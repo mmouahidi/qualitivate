@@ -1,0 +1,141 @@
+{
+  "nav": {
+    "methodology": "Methodology",
+    "benefits": "Benefits",
+    "pricing": "Pricing",
+    "signIn": "Sign in",
+    "bookDemo": "Book Demo"
+  },
+  "hero": {
+    "badge": "The New Standard in Employee Experience",
+    "title": "Make Listening Your",
+    "titleHighlight": "Competitive Advantage",
+    "subtitle": "Move beyond simple surveys. Qualitivate connects the dots between employee feedback, quality culture, and business performance.",
+    "cta": "Start Listening Today",
+    "ctaSecondary": "Our Methodology",
+    "enps": "eNPS Score",
+    "enpsChange": "+12% vs last quarter"
+  },
+  "agitation": {
+    "title": "The Cost of Silence",
+    "subtitle": "In a rapidly evolving workplace, missing the signal means missing the future. Disconnected teams lead to turnover, stagnation, and poor quality.",
+    "card1Title": "Evolving Expectations",
+    "card1Desc": "Workforce needs are shifting faster than ever. Annual surveys are no longer enough to keep up with the pace of change.",
+    "card2Title": "The Feedback Void",
+    "card2Desc": "Data without action is just noise. When employees speak up but see no change, engagement plummets.",
+    "card3Title": "Siloed Quality",
+    "card3Desc": "Quality isn't just an output; it's a culture. Disconnected departments create gaps where quality fails to thrive."
+  },
+  "methodology": {
+    "label": "Our Methodology",
+    "title": "A Smarter Way to Listen",
+    "step1Title": "Capture Signals",
+    "step1Desc": "Flexible NPS and Custom Surveys that adapt to your organizational hierarchy and cadence.",
+    "step2Title": "Decode Sentiment",
+    "step2Desc": "AI-Powered Analytics that separate noise from nuance, revealing the \"why\" behind the scores.",
+    "step3Title": "Drive Action",
+    "step3Desc": "Turn passive feedback into active quality improvement initiatives with tracked outcomes."
+  },
+  "benefits": {
+    "title": "Go deeper than",
+    "titleHighlight": "surface-level metrics",
+    "feat1Title": "Precision Engagement",
+    "feat1Desc": "Measure loyalty and sentiment at every level—from the frontline to the C-suite. Segment data by department, role, or tenure.",
+    "feat2Title": "Human-Centric Insights",
+    "feat2Desc": "Go beyond charts. Understand the human stories behind the data with deep drills-down and sentiment analysis.",
+    "feat3Title": "Culture Collaboration",
+    "feat3Desc": "Empower department heads to own their quality culture. Share role-based dashboards that drive accountability."
+  },
+  "trust": {
+    "label": "Trusted by forward-thinking teams"
+  },
+  "cta": {
+    "title": "Ready to reimagine your",
+    "titleLine2": "quality culture?",
+    "subtitle": "Join the organizations that are turning employee feedback into their strongest competitive asset.",
+    "button": "Book a Demo",
+    "note": "See Qualitivate in action. Schedule a personalized walkthrough."
+  },
+  "footer": {
+    "copyright": "© 2026 Qualitivate.io. All rights reserved.",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "contact": "Contact"
+  },
+  "login": {
+    "title": "Welcome back",
+    "subtitle": "Please enter your details to sign in.",
+    "email": "Email address",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "noAccount": "Don't have an account?",
+    "bookDemo": "Book a demo"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "adminSubtitle": "Here's what's happening with your surveys today.",
+    "userSubtitle": "Check your pending surveys below.",
+    "stats": {
+      "totalSurveys": "Total Surveys",
+      "activeResponses": "Active Responses",
+      "npsScore": "NPS Score",
+      "responseRate": "Response Rate"
+    },
+    "fromLastMonth": "from last month",
+    "manageSurveys": "Manage Surveys",
+    "manageSurveysDesc": "Create and edit surveys",
+    "viewAnalytics": "View Analytics",
+    "viewAnalyticsDesc": "Insights and reports",
+    "manageSites": "Manage Sites",
+    "manageSitesDesc": "Organize locations",
+    "recentActivity": "Recent Activity",
+    "noActivity": "No recent activity",
+    "emptyDashboard": "Your dashboard is looking a bit empty.",
+    "startBySurvey": "Start by creating your first survey.",
+    "createSurvey": "Create Survey",
+    "pendingSurveys": "Your Pending Surveys",
+    "loadingSurveys": "Loading surveys...",
+    "noPendingSurveys": "No pending surveys",
+    "allCaughtUp": "You're all caught up! 🎉",
+    "surveysWillAppear": "When you're invited to take a survey, it will appear here.",
+    "recentlyCompleted": "Recently Completed",
+    "loading": "Loading...",
+    "noCompletedSurveys": "No completed surveys yet.",
+    "completedWillAppear": "Your completed surveys will appear here."
+  },
+  "profile": {
+    "title": "My Profile",
+    "subtitle": "Manage your account settings and preferences.",
+    "updateSuccess": "Profile updated successfully!",
+    "personalInfo": "Personal Information",
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "fullName": "Full Name",
+    "email": "Email Address",
+    "organization": "Organization",
+    "companyMember": "Company Member",
+    "site": "Site",
+    "siteAssigned": "Site Assigned",
+    "saveChanges": "Save Changes",
+    "preferences": "Preferences",
+    "language": "Language",
+    "notifications": "Notifications",
+    "emailNotifications": "Email Notifications",
+    "emailNotificationsDesc": "Receive important updates via email",
+    "surveyReminders": "Survey Reminders",
+    "surveyRemindersDesc": "Get notified about pending surveys",
+    "memberSince": "Member since joining",
+    "roles": {
+      "superAdmin": "Super Admin",
+      "companyAdmin": "Company Admin",
+      "siteAdmin": "Site Admin",
+      "departmentAdmin": "Department Admin",
+      "user": "User"
+    }
+  }
+}

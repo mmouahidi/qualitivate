@@ -1,0 +1,141 @@
+{
+  "nav": {
+    "methodology": "Méthodologie",
+    "benefits": "Avantages",
+    "pricing": "Tarifs",
+    "signIn": "Connexion",
+    "bookDemo": "Réserver une démo"
+  },
+  "hero": {
+    "badge": "La nouvelle référence en expérience employé",
+    "title": "Faites de l'écoute votre",
+    "titleHighlight": "avantage concurrentiel",
+    "subtitle": "Dépassez les simples sondages. Qualitivate relie les retours employés, la culture qualité et la performance de l'entreprise.",
+    "cta": "Commencez à écouter",
+    "ctaSecondary": "Notre méthodologie",
+    "enps": "Score eNPS",
+    "enpsChange": "+12% vs trimestre précédent"
+  },
+  "agitation": {
+    "title": "Le coût du silence",
+    "subtitle": "Dans un environnement de travail en constante évolution, manquer le signal c'est manquer l'avenir. Des équipes déconnectées mènent au turnover, à la stagnation et à une qualité médiocre.",
+    "card1Title": "Attentes en évolution",
+    "card1Desc": "Les besoins de la main-d'œuvre évoluent plus vite que jamais. Les sondages annuels ne suffisent plus pour suivre le rythme du changement.",
+    "card2Title": "Le vide du feedback",
+    "card2Desc": "Les données sans action ne sont que du bruit. Quand les employés s'expriment sans voir de changement, l'engagement s'effondre.",
+    "card3Title": "Qualité cloisonnée",
+    "card3Desc": "La qualité n'est pas seulement un résultat; c'est une culture. Des départements déconnectés créent des brèches où la qualité ne prospère pas."
+  },
+  "methodology": {
+    "label": "Notre méthodologie",
+    "title": "Une meilleure façon d'écouter",
+    "step1Title": "Capturer les signaux",
+    "step1Desc": "Des enquêtes NPS et personnalisées flexibles qui s'adaptent à votre hiérarchie organisationnelle et à votre rythme.",
+    "step2Title": "Décoder le sentiment",
+    "step2Desc": "Des analyses propulsées par l'IA qui séparent le bruit de la nuance, révélant le « pourquoi » derrière les scores.",
+    "step3Title": "Passer à l'action",
+    "step3Desc": "Transformez les retours passifs en initiatives actives d'amélioration de la qualité avec des résultats suivis."
+  },
+  "benefits": {
+    "title": "Allez au-delà des",
+    "titleHighlight": "métriques superficielles",
+    "feat1Title": "Engagement précis",
+    "feat1Desc": "Mesurez la fidélité et le sentiment à tous les niveaux — du terrain à la direction. Segmentez les données par département, rôle ou ancienneté.",
+    "feat2Title": "Insights centrés sur l'humain",
+    "feat2Desc": "Dépassez les graphiques. Comprenez les histoires humaines derrière les données avec des analyses approfondies et l'analyse du sentiment.",
+    "feat3Title": "Collaboration culturelle",
+    "feat3Desc": "Permettez aux chefs de département de s'approprier leur culture qualité. Partagez des tableaux de bord basés sur les rôles qui responsabilisent."
+  },
+  "trust": {
+    "label": "Approuvé par des équipes visionnaires"
+  },
+  "cta": {
+    "title": "Prêt à réinventer votre",
+    "titleLine2": "culture qualité ?",
+    "subtitle": "Rejoignez les organisations qui transforment les retours employés en leur atout concurrentiel le plus fort.",
+    "button": "Réserver une démo",
+    "note": "Découvrez Qualitivate en action. Planifiez une présentation personnalisée."
+  },
+  "footer": {
+    "copyright": "© 2026 Qualitivate.io. Tous droits réservés.",
+    "privacy": "Confidentialité",
+    "terms": "Conditions",
+    "contact": "Contact"
+  },
+  "login": {
+    "title": "Bon retour",
+    "subtitle": "Veuillez entrer vos identifiants pour vous connecter.",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié ?",
+    "signIn": "Se connecter",
+    "signingIn": "Connexion en cours...",
+    "noAccount": "Vous n'avez pas de compte ?",
+    "bookDemo": "Réserver une démo"
+  },
+  "dashboard": {
+    "welcome": "Bon retour",
+    "adminSubtitle": "Voici ce qui se passe avec vos sondages aujourd'hui.",
+    "userSubtitle": "Consultez vos sondages en attente ci-dessous.",
+    "stats": {
+      "totalSurveys": "Total des sondages",
+      "activeResponses": "Réponses actives",
+      "npsScore": "Score NPS",
+      "responseRate": "Taux de réponse"
+    },
+    "fromLastMonth": "par rapport au mois dernier",
+    "manageSurveys": "Gérer les sondages",
+    "manageSurveysDesc": "Créer et modifier des sondages",
+    "viewAnalytics": "Voir les analyses",
+    "viewAnalyticsDesc": "Insights et rapports",
+    "manageSites": "Gérer les sites",
+    "manageSitesDesc": "Organiser les emplacements",
+    "recentActivity": "Activité récente",
+    "noActivity": "Aucune activité récente",
+    "emptyDashboard": "Votre tableau de bord semble un peu vide.",
+    "startBySurvey": "Commencez par créer votre premier sondage.",
+    "createSurvey": "Créer un sondage",
+    "pendingSurveys": "Vos sondages en attente",
+    "loadingSurveys": "Chargement des sondages...",
+    "noPendingSurveys": "Aucun sondage en attente",
+    "allCaughtUp": "Vous êtes à jour ! 🎉",
+    "surveysWillAppear": "Lorsque vous serez invité à répondre à un sondage, il apparaîtra ici.",
+    "recentlyCompleted": "Récemment complétés",
+    "loading": "Chargement...",
+    "noCompletedSurveys": "Aucun sondage complété pour l'instant.",
+    "completedWillAppear": "Vos sondages complétés apparaîtront ici."
+  },
+  "profile": {
+    "title": "Mon Profil",
+    "subtitle": "Gérez vos paramètres de compte et préférences.",
+    "updateSuccess": "Profil mis à jour avec succès !",
+    "personalInfo": "Informations personnelles",
+    "edit": "Modifier",
+    "cancel": "Annuler",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "fullName": "Nom complet",
+    "email": "Adresse e-mail",
+    "organization": "Organisation",
+    "companyMember": "Membre de l'entreprise",
+    "site": "Site",
+    "siteAssigned": "Site assigné",
+    "saveChanges": "Enregistrer",
+    "preferences": "Préférences",
+    "language": "Langue",
+    "notifications": "Notifications",
+    "emailNotifications": "Notifications par e-mail",
+    "emailNotificationsDesc": "Recevoir les mises à jour importantes par e-mail",
+    "surveyReminders": "Rappels de sondages",
+    "surveyRemindersDesc": "Être notifié des sondages en attente",
+    "memberSince": "Membre depuis l'inscription",
+    "roles": {
+      "superAdmin": "Super Admin",
+      "companyAdmin": "Admin Entreprise",
+      "siteAdmin": "Admin Site",
+      "departmentAdmin": "Admin Département",
+      "user": "Utilisateur"
+    }
+  }
+}

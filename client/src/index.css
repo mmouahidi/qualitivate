@@ -1,0 +1,416 @@
+/* Google Fonts - Plus Jakarta Sans (Friendly SaaS) */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
+/* Tailwind CSS Base */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base Styles */
+@layer base {
+  html {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-background text-text-primary antialiased;
+  }
+  
+  /* Typography Scale */
+  h1 { @apply text-4xl font-bold tracking-tight; }
+  h2 { @apply text-3xl font-semibold tracking-tight; }
+  h3 { @apply text-2xl font-semibold; }
+  h4 { @apply text-xl font-medium; }
+  h5 { @apply text-lg font-medium; }
+  h6 { @apply text-base font-medium; }
+}
+
+/* Component Styles - Soft UI Evolution */
+@layer components {
+  /* Cards */
+  .card-soft {
+    @apply bg-surface rounded-soft shadow-soft p-6 transition-all duration-smooth;
+  }
+  
+  .card-soft:hover {
+    @apply shadow-soft-hover;
+  }
+  
+  .card-soft-sm {
+    @apply bg-surface rounded-soft shadow-soft-sm p-4 transition-all duration-smooth;
+  }
+
+  /* Buttons - Primary */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-5 py-2.5 
+           bg-primary-600 text-white font-medium 
+           rounded-soft shadow-soft-sm
+           transition-all duration-smooth
+           hover:bg-primary-700 hover:shadow-soft hover:-translate-y-0.5
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+  }
+  
+  /* Buttons - Accent/CTA */
+  .btn-accent {
+    @apply inline-flex items-center justify-center px-5 py-2.5 
+           bg-accent-500 text-white font-medium 
+           rounded-soft shadow-soft-sm
+           transition-all duration-smooth
+           hover:bg-accent-600 hover:shadow-soft hover:-translate-y-0.5
+           focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+  }
+  
+  /* Buttons - Secondary */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-5 py-2.5 
+           bg-surface text-text-primary font-medium 
+           border border-border rounded-soft shadow-soft-sm
+           transition-all duration-smooth
+           hover:bg-background hover:shadow-soft hover:-translate-y-0.5
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+  }
+  
+  /* Buttons - Ghost */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-5 py-2.5 
+           bg-transparent text-text-secondary font-medium 
+           rounded-soft
+           transition-all duration-smooth
+           hover:bg-background hover:text-text-primary
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+  
+  /* Buttons - Danger */
+  .btn-danger {
+    @apply inline-flex items-center justify-center px-5 py-2.5 
+           bg-red-600 text-white font-medium 
+           rounded-soft shadow-soft-sm
+           transition-all duration-smooth
+           hover:bg-red-700 hover:shadow-soft hover:-translate-y-0.5
+           focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+  }
+  
+  /* Icon Button */
+  .btn-icon {
+    @apply inline-flex items-center justify-center p-2.5
+           rounded-soft transition-all duration-smooth
+           hover:bg-background
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  /* Inputs */
+  .input-soft {
+    @apply w-full px-4 py-2.5 
+           bg-surface border border-border rounded-soft 
+           text-text-primary placeholder:text-text-muted
+           transition-all duration-smooth
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+           hover:border-primary-300;
+  }
+  
+  /* Select */
+  .select-soft {
+    @apply w-full px-4 py-2.5 
+           bg-surface border border-border rounded-soft 
+           text-text-primary
+           transition-all duration-smooth
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+           hover:border-primary-300
+           cursor-pointer;
+  }
+  
+  /* Textarea */
+  .textarea-soft {
+    @apply w-full px-4 py-3 
+           bg-surface border border-border rounded-soft 
+           text-text-primary placeholder:text-text-muted
+           transition-all duration-smooth resize-y min-h-[100px]
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+           hover:border-primary-300;
+  }
+  
+  /* Labels */
+  .label-soft {
+    @apply block text-sm font-medium text-text-primary mb-2;
+  }
+
+  /* Tables */
+  .table-soft {
+    @apply w-full border-separate border-spacing-0;
+  }
+  
+  .table-soft thead {
+    @apply bg-background;
+  }
+  
+  .table-soft th {
+    @apply px-6 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider;
+  }
+  
+  .table-soft tbody {
+    @apply bg-surface;
+  }
+  
+  .table-soft tbody tr {
+    @apply transition-all duration-smooth border-b border-border;
+  }
+  
+  .table-soft tbody tr:hover {
+    @apply bg-background;
+  }
+  
+  .table-soft td {
+    @apply px-6 py-4 whitespace-nowrap text-sm text-text-primary;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .badge-primary {
+    @apply badge bg-primary-100 text-primary-700;
+  }
+  
+  .badge-success {
+    @apply badge bg-green-100 text-green-700;
+  }
+  
+  .badge-warning {
+    @apply badge bg-yellow-100 text-yellow-700;
+  }
+  
+  .badge-danger {
+    @apply badge bg-red-100 text-red-700;
+  }
+  
+  .badge-neutral {
+    @apply badge bg-gray-100 text-gray-700;
+  }
+
+  .badge-purple {
+    @apply badge bg-purple-100 text-purple-700;
+  }
+
+  /* Modal / Dialog */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50 
+           flex items-center justify-center p-4;
+  }
+  
+  .modal-content {
+    @apply bg-surface rounded-soft-lg shadow-soft-lg w-full max-w-md 
+           p-6 animate-in fade-in zoom-in-95 duration-200;
+  }
+  
+  .modal-title {
+    @apply text-xl font-semibold text-text-primary mb-4;
+  }
+
+  /* Sidebar Navigation */
+  .sidebar {
+    @apply w-64 bg-surface border-r border-border h-screen flex flex-col;
+  }
+  
+  .sidebar-brand {
+    @apply p-6 border-b border-border;
+  }
+  
+  .sidebar-nav {
+    @apply flex-1 p-4 space-y-1;
+  }
+  
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-2.5 
+           text-text-secondary rounded-soft
+           transition-all duration-smooth
+           hover:bg-primary-50 hover:text-primary-600;
+  }
+  
+  .sidebar-link.active {
+    @apply bg-primary-50 text-primary-600 font-medium;
+  }
+  
+  .sidebar-link-icon {
+    @apply w-5 h-5 flex-shrink-0;
+  }
+
+  /* Smart Sidebar - Collapsible with slide animation */
+  .sidebar-smart {
+    @apply h-screen bg-surface border-r border-border flex-shrink-0
+           transition-all duration-300 ease-out relative;
+  }
+  
+  .sidebar-smart-expanded {
+    @apply w-64;
+  }
+  
+  .sidebar-smart-collapsed {
+    @apply w-[72px];
+  }
+  
+  .sidebar-smart-brand {
+    @apply p-4 border-b border-border relative;
+  }
+  
+  .sidebar-smart-brand-expanded {
+    @apply px-6 py-5;
+  }
+  
+  .sidebar-smart-brand-collapsed {
+    @apply px-4 py-5 flex justify-center;
+  }
+  
+  .sidebar-smart-nav {
+    @apply flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden;
+  }
+  
+  .sidebar-smart-link {
+    @apply flex items-center gap-3 px-3 py-2.5 
+           text-text-secondary rounded-soft
+           transition-all duration-200
+           hover:bg-primary-50 hover:text-primary-600
+           relative overflow-hidden;
+  }
+  
+  .sidebar-smart-link.active {
+    @apply bg-primary-50 text-primary-600 font-medium;
+  }
+  
+  .sidebar-smart-link.active::before {
+    content: '';
+    @apply absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 
+           bg-primary-500 rounded-r-full;
+  }
+  
+  .sidebar-smart-link-icon {
+    @apply w-5 h-5 flex-shrink-0;
+  }
+  
+  .sidebar-smart-link-text {
+    @apply whitespace-nowrap transition-all duration-300 ease-out;
+  }
+  
+  .sidebar-smart-link-text-visible {
+    @apply opacity-100 translate-x-0;
+  }
+  
+  .sidebar-smart-link-text-hidden {
+    @apply opacity-0 -translate-x-4 w-0 overflow-hidden;
+  }
+  
+  .sidebar-smart-footer {
+    @apply py-4 border-t border-border transition-all duration-300;
+  }
+
+  /* Tooltip for collapsed sidebar */
+  .sidebar-smart-collapsed .sidebar-smart-link:hover::after {
+    content: attr(title);
+    @apply absolute left-full ml-3 px-3 py-1.5 
+           bg-gray-900 text-white text-sm rounded-md
+           whitespace-nowrap z-50 shadow-lg
+           animate-in fade-in duration-150;
+  }
+
+  /* Alert/Notification */
+  .alert {
+    @apply rounded-soft p-4 flex items-start gap-3;
+  }
+  
+  .alert-info {
+    @apply alert bg-primary-50 text-primary-800 border border-primary-200;
+  }
+  
+  .alert-success {
+    @apply alert bg-green-50 text-green-800 border border-green-200;
+  }
+  
+  .alert-warning {
+    @apply alert bg-yellow-50 text-yellow-800 border border-yellow-200;
+  }
+  
+  .alert-error {
+    @apply alert bg-red-50 text-red-800 border border-red-200;
+  }
+
+  /* Loading Spinner */
+  .spinner {
+    @apply animate-spin rounded-full border-2 border-current border-t-transparent;
+  }
+  
+  .spinner-sm { @apply w-4 h-4; }
+  .spinner-md { @apply w-6 h-6; }
+  .spinner-lg { @apply w-8 h-8; }
+
+  /* Stats Card */
+  .stat-card {
+    @apply card-soft flex flex-col;
+  }
+  
+  .stat-card-label {
+    @apply text-sm font-medium text-text-secondary;
+  }
+  
+  .stat-card-value {
+    @apply text-3xl font-bold text-text-primary mt-1;
+  }
+  
+  .stat-card-change {
+    @apply text-sm mt-2 flex items-center gap-1;
+  }
+  
+  .stat-card-change.positive {
+    @apply text-green-600;
+  }
+  
+  .stat-card-change.negative {
+    @apply text-red-600;
+  }
+}
+
+/* Utility Animations */
+@layer utilities {
+  .animate-in {
+    animation: animateIn 0.25s ease-out;
+  }
+  
+  @keyframes animateIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  .zoom-in-95 {
+    animation: zoomIn95 0.2s ease-out;
+  }
+  
+  @keyframes zoomIn95 {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
