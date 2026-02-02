@@ -176,9 +176,10 @@ const Surveys: React.FC = () => {
             onChange={(e) => setSelectedCompanyFilter(e.target.value)}
             className="select-soft sm:w-48"
           >
-            <option value="">All Companies</option>
+            <option value="">All Surveys</option>
+            <option value="general">🌐 General Only</option>
             {companiesData?.data?.map((company: any) => (
-              <option key={company.id} value={company.id}>{company.name}</option>
+              <option key={company.id} value={company.id}>🏢 {company.name}</option>
             ))}
           </select>
         )}
@@ -215,12 +216,21 @@ const Surveys: React.FC = () => {
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-text-primary mb-1">{survey.title}</h3>
                   <p className="text-sm text-text-secondary line-clamp-2">{survey.description || 'No description'}</p>
-                  {isSuperAdmin && survey.companyName && (
+                  {isSuperAdmin && (
                     <p className="text-xs text-primary-600 mt-1 flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                      {survey.companyName}
+                      {survey.companyName ? (
+                        <>
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                          </svg>
+                          {survey.companyName}
+                        </>
+                      ) : (
+                        <>
+                          <span>🌐</span>
+                          General Survey
+                        </>
+                      )}
                     </p>
                   )}
                 </div>
@@ -295,19 +305,22 @@ const Surveys: React.FC = () => {
             <form onSubmit={handleCreate}>
               {isSuperAdmin && (
                 <div className="mb-4 p-4 bg-primary-50 rounded-lg border border-primary-200">
-                  <label className="label-soft text-primary-700">Company *</label>
+                  <label className="label-soft text-primary-700">Survey Scope</label>
                   <select
-                    required
                     value={formData.companyId}
                     onChange={(e) => setFormData({ ...formData, companyId: e.target.value, siteId: '' })}
                     className="select-soft"
                   >
-                    <option value="">Select a company...</option>
+                    <option value="">🌐 General (All Users)</option>
                     {companiesData?.data?.map((company: any) => (
-                      <option key={company.id} value={company.id}>{company.name}</option>
+                      <option key={company.id} value={company.id}>🏢 {company.name}</option>
                     ))}
                   </select>
-                  <p className="text-xs text-primary-600 mt-1">As super admin, select which company this survey belongs to</p>
+                  <p className="text-xs text-primary-600 mt-1">
+                    {formData.companyId 
+                      ? 'Survey belongs to selected company' 
+                      : 'General survey accessible to all users'}
+                  </p>
                   
                   {formData.companyId && sitesData?.data && sitesData.data.length > 0 && (
                     <div className="mt-3">

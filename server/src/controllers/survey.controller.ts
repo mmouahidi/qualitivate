@@ -39,7 +39,11 @@ export const listSurveys = async (req: AuthRequest, res: Response) => {
       .leftJoin('companies', 'surveys.company_id', 'companies.id');
 
     if (user.role === 'super_admin') {
-      if (companyId) query = query.where('surveys.company_id', companyId);
+      if (companyId === 'general') {
+        query = query.whereNull('surveys.company_id');
+      } else if (companyId) {
+        query = query.where('surveys.company_id', companyId);
+      }
     } else if (user.role === 'company_admin') {
       query = query.where('surveys.company_id', user.companyId!);
     } else if (user.role === 'site_admin' || user.role === 'department_admin') {
@@ -76,8 +80,12 @@ export const listSurveys = async (req: AuthRequest, res: Response) => {
           builder.where('company_id', user.companyId!);
         } else if (user.role === 'user') {
           builder.where('company_id', user.companyId!).where('status', 'active');
-        } else if (user.role === 'super_admin' && companyId) {
-          builder.where('company_id', companyId);
+        } else if (user.role === 'super_admin') {
+          if (companyId === 'general') {
+            builder.whereNull('company_id');
+          } else if (companyId) {
+            builder.where('company_id', companyId);
+          }
         }
         // Include search filter in count query
         if (search) {
@@ -185,11 +193,13 @@ export const createSurvey = async (req: AuthRequest, res: Response) => {
     }
 
     let companyId = user.companyId;
-    if (user.role === 'super_admin' && req.body.companyId) {
-      companyId = req.body.companyId;
+    if (user.role === 'super_admin') {
+      // Super admin can specify a company or create a general survey (null company)
+      companyId = req.body.companyId || null;
     }
 
-    if (!companyId) {
+    // Non-super_admin users must have a company
+    if (user.role !== 'super_admin' && !companyId) {
       return res.status(400).json({ error: 'Company ID is required' });
     }
 

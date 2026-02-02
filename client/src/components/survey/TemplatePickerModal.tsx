@@ -97,19 +97,23 @@ const TemplatePickerModal: React.FC<TemplatePickerModalProps> = ({ isOpen, onClo
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Which company should this survey belong to?
+              Survey Scope
             </label>
             <select
               value={selectedCompanyId}
               onChange={(e) => setSelectedCompanyId(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              required
             >
-              <option value="">Select a company...</option>
+              <option value="">🌐 General (All Users)</option>
               {companiesData?.data?.map((company: any) => (
-                <option key={company.id} value={company.id}>{company.name}</option>
+                <option key={company.id} value={company.id}>🏢 {company.name}</option>
               ))}
             </select>
+            <p className="text-xs text-gray-500 mt-1">
+              {selectedCompanyId 
+                ? 'Survey belongs to selected company' 
+                : 'General survey accessible to all users'}
+            </p>
           </div>
 
           <div className="flex justify-between">
@@ -124,8 +128,7 @@ const TemplatePickerModal: React.FC<TemplatePickerModalProps> = ({ isOpen, onClo
             </button>
             <button
               onClick={handleConfirmCreate}
-              disabled={!selectedCompanyId}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
             >
               Create Survey
             </button>
