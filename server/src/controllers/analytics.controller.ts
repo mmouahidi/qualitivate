@@ -1111,3 +1111,228 @@ export const getCompanyAnalytics = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Failed to fetch company analytics' });
   }
 };
+
+/**
+ * Export survey analytics as a PDF report
+ * Generates a professional, visually appealing analytics report
+ */
+export const exportPDFReport = async (req: AuthRequest, res: Response) => {
+  try {
+    const { surveyId } = req.params;
+    const user = req.user!;
+
+    // Verify survey exists and user has access
+    const survey = await db('surveys')
+      .where({ id: surveyId })
+      .first();
+
+    if (!survey) {
+      return res.status(404).json({ error: 'Survey not found' });
+    }
+
+    if (user.role !== 'super_admin' && survey.company_id !== user.companyId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Get company info for branding
+    let companyInfo = undefined;
+    if (survey.company_id) {
+      const company = await db('companies')
+        .where({ id: survey.company_id })
+        .first();
+      if (company) {
+        companyInfo = { name: company.name };
+      }
+    }
+
+    // ===== Gather Survey Analytics =====
+    const responseStats = await db('responses')
+      .where({ survey_id: surveyId })
+      .select(
+        db.raw('COUNT(*) as total_responses'),
+        db.raw("COUNT(*) FILTER (WHERE status = 'completed') as completed_responses"),
+        db.raw("COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress_responses"),
+        db.raw("COUNT(*) FILTER (WHERE status = 'abandoned') as abandoned_responses"),
+        db.raw('MIN(started_at) as first_response'),
+        db.raw('MAX(completed_at) as last_response')
+      )
+      .first();
+
+    const avgCompletionTime = await db('responses')
+      .where({ survey_id: surveyId, status: 'completed' })
+      .whereNotNull('completed_at')
+      .select(
+        db.raw("AVG(EXTRACT(EPOCH FROM (completed_at - started_at))) as avg_seconds")
+      )
+      .first();
+
+    const questions = await db('questions')
+      .where({ survey_id: surveyId })
+      .orderBy('order_index');
+
+    // Calculate NPS
+    const npsQuestions = questions.filter((q: any) => q.type === 'nps');
+    let npsData = null;
+
+    if (npsQuestions.length > 0) {
+      const npsAnswers = await db('answers')
+        .join('responses', 'answers.response_id', 'responses.id')
+        .whereIn('answers.question_id', npsQuestions.map((q: any) => q.id))
+        .where('responses.status', 'completed')
+        .select('answers.value');
+
+      const scores = npsAnswers.map((a: any) => {
+        const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
+        return parseInt(answer.value || answer, 10);
+      }).filter((s: number) => !isNaN(s));
+
+      if (scores.length > 0) {
+        const promoters = scores.filter((s: number) => s >= 9).length;
+        const passives = scores.filter((s: number) => s >= 7 && s <= 8).length;
+        const detractors = scores.filter((s: number) => s <= 6).length;
+        const total = scores.length;
+
+        npsData = {
+          score: Math.round(((promoters - detractors) / total) * 100),
+          promoters: { count: promoters, percentage: Math.round((promoters / total) * 100) },
+          passives: { count: passives, percentage: Math.round((passives / total) * 100) },
+          detractors: { count: detractors, percentage: Math.round((detractors / total) * 100) },
+          totalResponses: total
+        };
+      }
+    }
+
+    // Response trend
+    const responseTrend = await db('responses')
+      .where({ survey_id: surveyId })
+      .where('started_at', '>=', db.raw("NOW() - INTERVAL '30 days'"))
+      .select(
+        db.raw("DATE(started_at) as date"),
+        db.raw("COUNT(*) as count"),
+        db.raw("COUNT(*) FILTER (WHERE status = 'completed') as completed")
+      )
+      .groupBy(db.raw('DATE(started_at)'))
+      .orderBy('date');
+
+    const totalResponses = parseInt(responseStats?.total_responses || '0', 10);
+    const completedResponses = parseInt(responseStats?.completed_responses || '0', 10);
+
+    const surveyAnalytics = {
+      survey: {
+        id: survey.id,
+        title: survey.title,
+        type: survey.type,
+        status: survey.status,
+        startsAt: survey.starts_at,
+        endsAt: survey.ends_at
+      },
+      overview: {
+        totalResponses,
+        completedResponses,
+        inProgressResponses: parseInt(responseStats?.in_progress_responses || '0', 10),
+        abandonedResponses: parseInt(responseStats?.abandoned_responses || '0', 10),
+        completionRate: totalResponses > 0 
+          ? Math.round((completedResponses / totalResponses) * 100) 
+          : 0,
+        avgCompletionTimeSeconds: Math.round(avgCompletionTime?.avg_seconds || 0),
+        firstResponseAt: responseStats?.first_response,
+        lastResponseAt: responseStats?.last_response
+      },
+      nps: npsData,
+      trend: responseTrend.map((t: any) => ({
+        date: t.date,
+        count: parseInt(t.count, 10),
+        completed: parseInt(t.completed, 10)
+      })),
+      questionCount: questions.length
+    };
+
+    // ===== Gather Question Analytics =====
+    const questionAnalytics = await Promise.all(questions.map(async (question: any) => {
+      const answers = await db('answers')
+        .join('responses', 'answers.response_id', 'responses.id')
+        .where('answers.question_id', question.id)
+        .where('responses.status', 'completed')
+        .select('answers.value');
+
+      const totalAnswers = answers.length;
+      let distribution: any = {};
+      let stats: any = {};
+
+      switch (question.type) {
+        case 'nps':
+        case 'rating_scale':
+          const numericValues = answers.map((a: any) => {
+            const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
+            return parseInt(answer.value || answer, 10);
+          }).filter((v: number) => !isNaN(v));
+
+          if (numericValues.length > 0) {
+            const sum = numericValues.reduce((a: number, b: number) => a + b, 0);
+            stats = {
+              average: Math.round((sum / numericValues.length) * 100) / 100,
+              min: Math.min(...numericValues),
+              max: Math.max(...numericValues),
+              count: numericValues.length
+            };
+
+            numericValues.forEach((v: number) => {
+              distribution[v] = (distribution[v] || 0) + 1;
+            });
+          }
+          break;
+
+        case 'multiple_choice':
+          answers.forEach((a: any) => {
+            const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
+            const values = Array.isArray(answer.value) ? answer.value : [answer.value || answer];
+            values.forEach((v: string) => {
+              if (v) {
+                distribution[v] = (distribution[v] || 0) + 1;
+              }
+            });
+          });
+          break;
+
+        case 'text_short':
+        case 'text_long':
+          stats = {
+            count: totalAnswers,
+            avgLength: Math.round(
+              answers.reduce((sum: number, a: any) => {
+                const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
+                const text = answer.value || answer || '';
+                return sum + (typeof text === 'string' ? text.length : 0);
+              }, 0) / (totalAnswers || 1)
+            )
+          };
+          break;
+      }
+
+      return {
+        questionId: question.id,
+        questionText: question.content,
+        type: question.type,
+        required: question.is_required,
+        totalAnswers,
+        distribution,
+        stats,
+        options: typeof question.options === 'string' ? JSON.parse(question.options) : question.options
+      };
+    }));
+
+    // ===== Generate PDF =====
+    const { PDFReportService } = await import('../services/pdfReport.service');
+    const pdfService = new PDFReportService();
+    
+    await pdfService.generateReport(surveyAnalytics, questionAnalytics, companyInfo);
+
+    // Stream PDF to response
+    const filename = `${survey.title.replace(/[^a-z0-9]/gi, '_')}_Analytics_Report.pdf`;
+    pdfService.streamToResponse(res, filename);
+
+  } catch (error) {
+    console.error('Export PDF report error:', error);
+    res.status(500).json({ error: 'Failed to generate PDF report' });
+  }
+};

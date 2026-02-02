@@ -6,6 +6,7 @@ import {
   getResponses,
   getResponseDetails,
   exportResponses,
+  exportPDFReport,
   getCompanyAnalytics,
   getRoleDashboard
 } from '../controllers/analytics.controller';
@@ -53,11 +54,18 @@ router.get(
   getResponseDetails
 );
 
-// Export responses
+// Export responses (CSV/JSON)
 router.get(
   '/surveys/:surveyId/export',
   authorize('super_admin', 'company_admin', 'site_admin'),
   exportResponses
+);
+
+// Export PDF analytics report
+router.get(
+  '/surveys/:surveyId/export/pdf',
+  authorize('super_admin', 'company_admin', 'site_admin'),
+  exportPDFReport
 );
 
 export default router;

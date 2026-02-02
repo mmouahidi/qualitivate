@@ -249,6 +249,16 @@ class AnalyticsService {
   }
 
   /**
+   * Export analytics as PDF report
+   */
+  async exportPDFReport(surveyId: string): Promise<Blob> {
+    const response = await api.get(`/analytics/surveys/${surveyId}/export/pdf`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  }
+
+  /**
    * Download CSV file
    */
   downloadCSV(blob: Blob, filename: string): void {
@@ -256,6 +266,20 @@ class AnalyticsService {
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Download PDF file
+   */
+  downloadPDF(blob: Blob, filename: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
