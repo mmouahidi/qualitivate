@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import responseService from '../../services/response.service';
 
 const ThankYou: React.FC = () => {
+  const { t } = useTranslation();
   const { surveyId } = useParams<{ surveyId: string }>();
   const [loading, setLoading] = useState(true);
-  const [thankYouTitle, setThankYouTitle] = useState('Thank You!');
-  const [thankYouMessage, setThankYouMessage] = useState('Your response has been submitted successfully.');
+  const [thankYouTitle, setThankYouTitle] = useState<string | null>(null);
+  const [thankYouMessage, setThankYouMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadSurveySettings();
@@ -51,13 +53,13 @@ const ThankYou: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{thankYouTitle}</h1>
-          <p className="text-gray-600 text-lg">{thankYouMessage}</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{thankYouTitle || t('thankYou.title')}</h1>
+          <p className="text-gray-600 text-lg">{thankYouMessage || t('thankYou.message')}</p>
         </div>
 
         <div className="bg-gray-50 rounded-xl p-6 mb-6">
           <p className="text-gray-600">
-            We appreciate you taking the time to share your feedback. Your input helps us improve and make better decisions.
+            {t('thankYou.appreciation')}
           </p>
         </div>
 
@@ -66,19 +68,19 @@ const ThankYou: React.FC = () => {
             onClick={() => window.close()}
             className="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 transition-colors"
           >
-            Close Window
+            {t('thankYou.closeWindow')}
           </button>
           <Link
             to="/"
             className="block w-full text-gray-600 py-3 rounded-xl font-medium hover:text-gray-900 transition-colors"
           >
-            Return to Home
+            {t('thankYou.returnHome')}
           </Link>
         </div>
 
         <div className="mt-8 pt-6 border-t border-gray-100">
           <p className="text-xs text-gray-400">
-            Powered by Qualitivate.io
+            {t('thankYou.poweredBy')}
           </p>
         </div>
       </div>

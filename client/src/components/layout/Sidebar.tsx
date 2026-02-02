@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Menu, X, LogOut } from 'lucide-react';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,6 +22,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ navigation }) => {
+  const { t } = useTranslation();
   const location = useLocation();
   const { user, logout } = useAuth();
   const {
@@ -76,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ navigation }) => {
             transition-all duration-200 shadow-sm
             ${isExpanded ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
           `}
-          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={isCollapsed ? t('sidebar.expand') : t('sidebar.collapse')}
         >
           {isCollapsed ? (
             <ChevronRight className="w-3.5 h-3.5" />
@@ -160,10 +162,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ navigation }) => {
             flex items-center
             ${isExpanded ? 'justify-start px-2' : 'justify-center'}
           `}
-          title={!isExpanded ? 'Sign Out' : undefined}
+          title={!isExpanded ? t('sidebar.signOut') : undefined}
         >
           <LogOut className="w-4 h-4 flex-shrink-0" />
-          {isExpanded && <span className="ml-2">Sign Out</span>}
+          {isExpanded && <span className="ml-2">{t('sidebar.signOut')}</span>}
         </button>
       </div>
     </>

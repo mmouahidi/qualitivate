@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { surveyService } from '../../services/survey.service';
 import templateService, { Template } from '../../services/template.service';
 import { companyService, siteService } from '../../services/organization.service';
@@ -9,6 +10,7 @@ import { DashboardLayout } from '../../components/layout';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Surveys: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -137,8 +139,8 @@ const Surveys: React.FC = () => {
 
   return (
     <DashboardLayout
-      title="Surveys"
-      subtitle="Create and manage your surveys"
+      title={t('surveys.title')}
+      subtitle={t('surveys.subtitle')}
       headerActions={
         <div className="flex gap-2">
           <button
@@ -148,7 +150,7 @@ const Surveys: React.FC = () => {
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            Use Template
+            {t('surveys.useTemplate')}
           </button>
           <button
             onClick={() => setIsCreateModalOpen(true)}
@@ -157,7 +159,7 @@ const Surveys: React.FC = () => {
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Create Blank
+            {t('surveys.createBlank')}
           </button>
         </div>
       }
@@ -165,7 +167,7 @@ const Surveys: React.FC = () => {
       <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
         <input
           type="text"
-          placeholder="Search surveys..."
+          placeholder={t('surveys.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="input-soft flex-1"
@@ -176,8 +178,8 @@ const Surveys: React.FC = () => {
             onChange={(e) => setSelectedCompanyFilter(e.target.value)}
             className="select-soft sm:w-48"
           >
-            <option value="">All Surveys</option>
-            <option value="general">🌐 General Only</option>
+            <option value="">{t('surveys.allSurveys')}</option>
+            <option value="general">🌐 {t('surveys.generalSurvey')}</option>
             {companiesData?.data?.map((company: any) => (
               <option key={company.id} value={company.id}>🏢 {company.name}</option>
             ))}
@@ -188,10 +190,10 @@ const Surveys: React.FC = () => {
           onChange={(e) => setStatusFilter(e.target.value)}
           className="select-soft sm:w-40"
         >
-          <option value="">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="active">Active</option>
-          <option value="closed">Closed</option>
+          <option value="">{t('surveys.allStatus')}</option>
+          <option value="draft">{t('surveys.draft')}</option>
+          <option value="active">{t('surveys.active')}</option>
+          <option value="closed">{t('surveys.closed')}</option>
         </select>
         <label className="flex items-center gap-2 text-sm text-text-secondary whitespace-nowrap cursor-pointer">
           <input
@@ -200,7 +202,7 @@ const Surveys: React.FC = () => {
             onChange={(e) => setHideExpired(e.target.checked)}
             className="checkbox-soft"
           />
-          Hide expired
+          {t('surveys.hideExpired')}
         </label>
       </div>
 
@@ -215,7 +217,7 @@ const Surveys: React.FC = () => {
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-text-primary mb-1">{survey.title}</h3>
-                  <p className="text-sm text-text-secondary line-clamp-2">{survey.description || 'No description'}</p>
+                  <p className="text-sm text-text-secondary line-clamp-2">{survey.description || t('surveys.noDescription')}</p>
                   {isSuperAdmin && (
                     <p className="text-xs text-primary-600 mt-1 flex items-center gap-1">
                       {survey.companyName ? (
@@ -228,7 +230,7 @@ const Surveys: React.FC = () => {
                       ) : (
                         <>
                           <span>🌐</span>
-                          General Survey
+                          {t('surveys.generalSurvey')}
                         </>
                       )}
                     </p>
@@ -256,13 +258,13 @@ const Surveys: React.FC = () => {
                     onClick={() => navigate(`/surveys/${survey.id}/builder`)}
                     className="text-primary-600 hover:text-primary-700 text-sm font-medium"
                   >
-                    Edit
+                    {t('surveys.edit')}
                   </button>
                   <button
                     onClick={() => navigate(`/surveys/${survey.id}/distribute`)}
                     className="text-green-600 hover:text-green-700 text-sm font-medium"
                   >
-                    Distribute
+                    {t('surveys.distribute')}
                   </button>
                 </div>
                 <div className="flex gap-3">
@@ -270,17 +272,17 @@ const Surveys: React.FC = () => {
                     onClick={() => duplicateMutation.mutate(survey.id)}
                     className="text-text-secondary hover:text-text-primary text-sm"
                   >
-                    Duplicate
+                    {t('surveys.duplicate')}
                   </button>
                   <button
                     onClick={() => {
-                      if (confirm('Delete this survey?')) {
+                      if (confirm(t('surveys.deleteConfirm'))) {
                         deleteMutation.mutate(survey.id);
                       }
                     }}
                     className="text-red-600 hover:text-red-700 text-sm"
                   >
-                    Delete
+                    {t('surveys.delete')}
                   </button>
                 </div>
               </div>
@@ -291,8 +293,8 @@ const Surveys: React.FC = () => {
               <svg className="w-12 h-12 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              <p>No surveys found</p>
-              <p className="text-sm mt-1">Create your first survey to get started</p>
+              <p>{t('surveys.noSurveys')}</p>
+              <p className="text-sm mt-1">{t('surveys.noSurveysDesc')}</p>
             </div>
           )}
         </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import responseService, { PublicSurvey, Question } from '../../services/response.service';
 import { evaluateLogic, getPreviousQuestionIndex } from '../../utils/surveyLogicEngine';
 
@@ -16,6 +17,7 @@ interface SavedProgress {
 }
 
 const TakeSurvey: React.FC = () => {
+  const { t } = useTranslation();
   const { surveyId } = useParams<{ surveyId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -280,7 +282,7 @@ const TakeSurvey: React.FC = () => {
 
   const copyResumeLink = () => {
     navigator.clipboard.writeText(getResumeLink());
-    alert('Resume link copied to clipboard!');
+    alert(t('survey.resumeLinkCopied'));
   };
 
   const renderQuestion = (question: Question) => {
@@ -293,7 +295,7 @@ const TakeSurvey: React.FC = () => {
             type="text"
             value={value || ''}
             onChange={(e) => handleAnswer(e.target.value)}
-            placeholder="Type your answer..."
+            placeholder={t('survey.inputPlaceholder')}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-lg"
             autoFocus
           />
@@ -304,7 +306,7 @@ const TakeSurvey: React.FC = () => {
           <textarea
             value={value || ''}
             onChange={(e) => handleAnswer(e.target.value)}
-            placeholder="Type your answer..."
+            placeholder={t('survey.inputPlaceholder')}
             rows={5}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-lg resize-none"
             autoFocus
@@ -392,8 +394,8 @@ const TakeSurvey: React.FC = () => {
             {/* Rating scale labels */}
             {Object.keys(ratingLabels).length > 0 && (
               <div className="flex justify-between text-sm text-gray-500 px-2">
-                <span>{ratingLabels[1] || 'Strongly Disagree'}</span>
-                <span>{ratingLabels[maxRating] || 'Strongly Agree'}</span>
+                <span>{ratingLabels[1] || t('survey.ratingLow')}</span>
+                <span>{ratingLabels[maxRating] || t('survey.ratingHigh')}</span>
               </div>
             )}
             
@@ -428,8 +430,8 @@ const TakeSurvey: React.FC = () => {
         return (
           <div className="space-y-6">
             <div className="flex justify-between text-sm text-gray-500 px-2">
-              <span>Not at all likely</span>
-              <span>Extremely likely</span>
+              <span>{t('survey.npsLow')}</span>
+              <span>{t('survey.npsHigh')}</span>
             </div>
             <div className="grid grid-cols-11 gap-2">
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
@@ -480,7 +482,7 @@ const TakeSurvey: React.FC = () => {
             type="text"
             value={value || ''}
             onChange={(e) => handleAnswer(e.target.value)}
-            placeholder="Type your answer..."
+            placeholder={t('survey.inputPlaceholder')}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-lg"
             autoFocus
           />
@@ -488,8 +490,8 @@ const TakeSurvey: React.FC = () => {
 
       case 'text_long':
         const textPlaceholder = typeof question.options === 'object' && question.options !== null && !Array.isArray(question.options)
-          ? (question.options as any).placeholder || 'Type your answer...'
-          : 'Type your answer...';
+          ? (question.options as any).placeholder || t('survey.inputPlaceholder')
+          : t('survey.inputPlaceholder');
         return (
           <textarea
             value={value || ''}
@@ -511,7 +513,7 @@ const TakeSurvey: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          <p className="mt-4 text-gray-600">Loading survey...</p>
+          <p className="mt-4 text-gray-600">{t('survey.loading')}</p>
         </div>
       </div>
     );
@@ -526,7 +528,7 @@ const TakeSurvey: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Survey Unavailable</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('survey.unavailable')}</h2>
           <p className="text-gray-600">{error}</p>
         </div>
       </div>
@@ -569,17 +571,17 @@ const TakeSurvey: React.FC = () => {
           ) : null}
 
           <div className="text-sm text-gray-500 mb-8">
-            <p>{survey.questions.length} questions</p>
-            <p className="mt-1">Takes about {Math.ceil(survey.questions.length * 0.5)} minutes</p>
+            <p>{t('survey.questionsCount', { count: survey.questions.length })}</p>
+            <p className="mt-1">{t('survey.estimatedTime', { minutes: Math.ceil(survey.questions.length * 0.5) })}</p>
           </div>
           <button
             onClick={handleStart}
             className="w-full bg-primary-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-primary-700 transition-colors shadow-lg hover:shadow-xl"
           >
-            Start Survey
+            {t('survey.start')}
           </button>
           {survey.survey.isAnonymous && (
-            <p className="text-sm text-gray-500 mt-4">🔒 Your responses are anonymous</p>
+            <p className="text-sm text-gray-500 mt-4">🔒 {t('survey.anonymous')}</p>
           )}
         </div>
       </div>
@@ -604,17 +606,17 @@ const TakeSurvey: React.FC = () => {
           <button
             onClick={() => setShowResumeLink(!showResumeLink)}
             className="px-3 py-1.5 bg-white text-gray-600 text-sm rounded-lg shadow-md hover:bg-gray-50 flex items-center gap-1"
-            title="Save progress & get resume link"
+            title={t('survey.resumeLink')}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
-            Save Progress
+            {t('survey.saveProgress')}
           </button>
           
           {showResumeLink && (
             <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl p-4 w-72">
-              <p className="text-sm text-gray-600 mb-2">Copy this link to continue later:</p>
+              <p className="text-sm text-gray-600 mb-2">{t('survey.resumeLink')}</p>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -662,7 +664,7 @@ const TakeSurvey: React.FC = () => {
               <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              Back
+              {t('survey.back')}
             </button>
             <button
               onClick={handleNext}
@@ -672,18 +674,18 @@ const TakeSurvey: React.FC = () => {
               {submitting ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Submitting...
+                  {t('survey.submitting')}
                 </>
               ) : currentQuestionIndex === survey.questions.length - 1 ? (
                 <>
-                  Submit
+                  {t('survey.submit')}
                   <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </>
               ) : (
                 <>
-                  Continue
+                  {t('survey.continue')}
                   <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
