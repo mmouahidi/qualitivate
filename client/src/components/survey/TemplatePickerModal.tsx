@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import templateService, { Template } from '../../services/template.service';
+import { companyService } from '../../services/organization.service';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface TemplatePickerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (template: Template) => void;
+  onSelect: (template: Template, companyId?: string) => void;
 }
 
 const TemplatePickerModal: React.FC<TemplatePickerModalProps> = ({ isOpen, onClose, onSelect }) => {
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'super_admin';
+  
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['templates'],
@@ -24,7 +31,37 @@ const TemplatePickerModal: React.FC<TemplatePickerModalProps> = ({ isOpen, onClo
     enabled: isOpen,
   });
 
+  const { data: companiesData } = useQuery({
+    queryKey: ['companies-for-template'],
+    queryFn: () => companyService.listAll(),
+    enabled: isOpen && isSuperAdmin,
+  });
+
   if (!isOpen) return null;
+
+  const handleTemplateClick = (template: Template) => {
+    if (isSuperAdmin) {
+      // For super admin, show company selection step
+      setSelectedTemplate(template);
+      setSelectedCompanyId('');
+    } else {
+      // For other users, directly create
+      onSelect(template);
+    }
+  };
+
+  const handleConfirmCreate = () => {
+    if (selectedTemplate) {
+      onSelect(selectedTemplate, selectedCompanyId || undefined);
+      setSelectedTemplate(null);
+      setSelectedCompanyId('');
+    }
+  };
+
+  const handleBack = () => {
+    setSelectedTemplate(null);
+    setSelectedCompanyId('');
+  };
 
   const filteredTemplates = templates.filter((template) => {
     const matchesCategory = !selectedCategory || template.category === selectedCategory;
@@ -38,6 +75,65 @@ const TemplatePickerModal: React.FC<TemplatePickerModalProps> = ({ isOpen, onClo
     global: filteredTemplates.filter((t) => t.isGlobal),
     company: filteredTemplates.filter((t) => !t.isGlobal),
   };
+
+  // Show company selection step for super admin
+  if (isSuperAdmin && selectedTemplate) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Select Company</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="mb-4 p-3 bg-primary-50 rounded-lg border border-primary-200">
+            <p className="text-sm text-primary-700 font-medium">Template: {selectedTemplate.name}</p>
+            <p className="text-xs text-primary-600">{selectedTemplate.questionCount || 0} questions</p>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Which company should this survey belong to?
+            </label>
+            <select
+              value={selectedCompanyId}
+              onChange={(e) => setSelectedCompanyId(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              required
+            >
+              <option value="">Select a company...</option>
+              {companiesData?.data?.map((company: any) => (
+                <option key={company.id} value={company.id}>{company.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex justify-between">
+            <button
+              onClick={handleBack}
+              className="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back
+            </button>
+            <button
+              onClick={handleConfirmCreate}
+              disabled={!selectedCompanyId}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Create Survey
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -102,7 +198,7 @@ const TemplatePickerModal: React.FC<TemplatePickerModalProps> = ({ isOpen, onClo
                       <TemplateCard
                         key={template.id}
                         template={template}
-                        onSelect={() => onSelect(template)}
+                        onSelect={() => handleTemplateClick(template)}
                       />
                     ))}
                   </div>
@@ -121,7 +217,7 @@ const TemplatePickerModal: React.FC<TemplatePickerModalProps> = ({ isOpen, onClo
                       <TemplateCard
                         key={template.id}
                         template={template}
-                        onSelect={() => onSelect(template)}
+                        onSelect={() => handleTemplateClick(template)}
                       />
                     ))}
                   </div>

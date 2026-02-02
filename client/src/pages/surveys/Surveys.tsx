@@ -89,11 +89,12 @@ const Surveys: React.FC = () => {
     }
   });
 
-  const handleTemplateSelect = async (template: Template) => {
+  const handleTemplateSelect = async (template: Template, companyId?: string) => {
     createFromTemplateMutation.mutate({
       templateId: template.id,
       data: {
         title: `${template.name} - ${new Date().toLocaleDateString()}`,
+        companyId: companyId,
       }
     });
   };
