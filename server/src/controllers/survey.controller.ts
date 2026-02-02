@@ -29,8 +29,14 @@ export const listSurveys = async (req: AuthRequest, res: Response) => {
     const offset = (Number(page) - 1) * Number(limit);
 
     let query = db('surveys')
-      .select('surveys.*', 'users.first_name as creator_first_name', 'users.last_name as creator_last_name')
-      .leftJoin('users', 'surveys.created_by', 'users.id');
+      .select(
+        'surveys.*', 
+        'users.first_name as creator_first_name', 
+        'users.last_name as creator_last_name',
+        'companies.name as company_name'
+      )
+      .leftJoin('users', 'surveys.created_by', 'users.id')
+      .leftJoin('companies', 'surveys.company_id', 'companies.id');
 
     if (user.role === 'super_admin') {
       if (companyId) query = query.where('surveys.company_id', companyId);

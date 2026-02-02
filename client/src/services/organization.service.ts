@@ -73,6 +73,11 @@ export const siteService = {
     return response.data;
   },
 
+  async listByCompany(companyId: string): Promise<PaginatedResponse<SiteWithStats>> {
+    const response = await api.get('/sites', { params: { companyId, limit: 1000 } });
+    return response.data;
+  },
+
   async get(id: string): Promise<SiteWithStats> {
     const response = await api.get(`/sites/${id}`);
     return response.data;

@@ -3,17 +3,23 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { surveyService } from '../../services/survey.service';
 import templateService, { Template } from '../../services/template.service';
+import { companyService, siteService } from '../../services/organization.service';
 import TemplatePickerModal from '../../components/survey/TemplatePickerModal';
 import { DashboardLayout } from '../../components/layout';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Surveys: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'super_admin';
+  
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [hideExpired, setHideExpired] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isTemplatePickerOpen, setIsTemplatePickerOpen] = useState(false);
+  const [selectedCompanyFilter, setSelectedCompanyFilter] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -21,12 +27,32 @@ const Surveys: React.FC = () => {
     isPublic: false,
     isAnonymous: false,
     startsAt: '',
-    endsAt: ''
+    endsAt: '',
+    companyId: '',
+    siteId: ''
+  });
+  
+  // Fetch companies for super_admin
+  const { data: companiesData } = useQuery({
+    queryKey: ['companies-list'],
+    queryFn: () => companyService.listAll(),
+    enabled: isSuperAdmin,
+  });
+
+  // Fetch sites for selected company
+  const { data: sitesData } = useQuery({
+    queryKey: ['sites-list', formData.companyId],
+    queryFn: () => siteService.listByCompany(formData.companyId),
+    enabled: isSuperAdmin && !!formData.companyId,
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ['surveys', search, statusFilter],
-    queryFn: () => surveyService.list({ search, status: statusFilter })
+    queryKey: ['surveys', search, statusFilter, selectedCompanyFilter],
+    queryFn: () => surveyService.list({ 
+      search, 
+      status: statusFilter,
+      companyId: isSuperAdmin ? selectedCompanyFilter : undefined
+    })
   });
 
   const createMutation = useMutation({
@@ -34,7 +60,7 @@ const Surveys: React.FC = () => {
     onSuccess: (newSurvey) => {
       queryClient.invalidateQueries({ queryKey: ['surveys'] });
       setIsCreateModalOpen(false);
-      setFormData({ title: '', description: '', type: 'custom', isPublic: false, isAnonymous: false, startsAt: '', endsAt: '' });
+      setFormData({ title: '', description: '', type: 'custom', isPublic: false, isAnonymous: false, startsAt: '', endsAt: '', companyId: '', siteId: '' });
       navigate(`/surveys/${newSurvey.id}/edit`);
     }
   });
@@ -74,7 +100,22 @@ const Surveys: React.FC = () => {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    const payload: any = {
+      title: formData.title,
+      description: formData.description,
+      type: formData.type,
+      isPublic: formData.isPublic,
+      isAnonymous: formData.isAnonymous,
+      startsAt: formData.startsAt || undefined,
+      endsAt: formData.endsAt || undefined,
+    };
+    
+    // Super admin can specify company
+    if (isSuperAdmin && formData.companyId) {
+      payload.companyId = formData.companyId;
+    }
+    
+    createMutation.mutate(payload);
   };
 
   const getStatusBadge = (status: string) => {
@@ -128,6 +169,18 @@ const Surveys: React.FC = () => {
           onChange={(e) => setSearch(e.target.value)}
           className="input-soft flex-1"
         />
+        {isSuperAdmin && (
+          <select
+            value={selectedCompanyFilter}
+            onChange={(e) => setSelectedCompanyFilter(e.target.value)}
+            className="select-soft sm:w-48"
+          >
+            <option value="">All Companies</option>
+            {companiesData?.data?.map((company: any) => (
+              <option key={company.id} value={company.id}>{company.name}</option>
+            ))}
+          </select>
+        )}
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -161,6 +214,14 @@ const Surveys: React.FC = () => {
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-text-primary mb-1">{survey.title}</h3>
                   <p className="text-sm text-text-secondary line-clamp-2">{survey.description || 'No description'}</p>
+                  {isSuperAdmin && survey.companyName && (
+                    <p className="text-xs text-primary-600 mt-1 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      {survey.companyName}
+                    </p>
+                  )}
                 </div>
                 <span className={`badge-${survey.status === 'active' ? 'success' : survey.status === 'closed' ? 'danger' : 'neutral'} ml-2`}>
                   {survey.status}
@@ -231,6 +292,39 @@ const Surveys: React.FC = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2 className="modal-title">Create Survey</h2>
             <form onSubmit={handleCreate}>
+              {isSuperAdmin && (
+                <div className="mb-4 p-4 bg-primary-50 rounded-lg border border-primary-200">
+                  <label className="label-soft text-primary-700">Company *</label>
+                  <select
+                    required
+                    value={formData.companyId}
+                    onChange={(e) => setFormData({ ...formData, companyId: e.target.value, siteId: '' })}
+                    className="select-soft"
+                  >
+                    <option value="">Select a company...</option>
+                    {companiesData?.data?.map((company: any) => (
+                      <option key={company.id} value={company.id}>{company.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-primary-600 mt-1">As super admin, select which company this survey belongs to</p>
+                  
+                  {formData.companyId && sitesData?.data && sitesData.data.length > 0 && (
+                    <div className="mt-3">
+                      <label className="label-soft text-primary-700">Site (optional)</label>
+                      <select
+                        value={formData.siteId}
+                        onChange={(e) => setFormData({ ...formData, siteId: e.target.value })}
+                        className="select-soft"
+                      >
+                        <option value="">All sites in company</option>
+                        {sitesData.data.map((site: any) => (
+                          <option key={site.id} value={site.id}>{site.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="mb-4">
                 <label className="label-soft">Title</label>
                 <input
