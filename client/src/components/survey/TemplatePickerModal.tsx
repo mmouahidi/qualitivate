@@ -39,6 +39,14 @@ const TemplatePickerModal: React.FC<TemplatePickerModalProps> = ({ isOpen, onClo
 
   if (!isOpen) return null;
 
+  const handleClose = () => {
+    setSelectedTemplate(null);
+    setSelectedCompanyId('');
+    setSearchTerm('');
+    setSelectedCategory('');
+    onClose();
+  };
+
   const handleTemplateClick = (template: Template) => {
     if (isSuperAdmin) {
       // For super admin, show company selection step
@@ -52,9 +60,8 @@ const TemplatePickerModal: React.FC<TemplatePickerModalProps> = ({ isOpen, onClo
 
   const handleConfirmCreate = () => {
     if (selectedTemplate) {
+      // Call onSelect first - it will close the modal via the parent
       onSelect(selectedTemplate, selectedCompanyId || undefined);
-      setSelectedTemplate(null);
-      setSelectedCompanyId('');
     }
   };
 
@@ -83,7 +90,7 @@ const TemplatePickerModal: React.FC<TemplatePickerModalProps> = ({ isOpen, onClo
         <div className="bg-white rounded-lg p-6 w-full max-w-md">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-gray-900">Select Company</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -144,7 +151,7 @@ const TemplatePickerModal: React.FC<TemplatePickerModalProps> = ({ isOpen, onClo
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Choose a Template</h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-400 hover:text-gray-600"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -233,7 +240,7 @@ const TemplatePickerModal: React.FC<TemplatePickerModalProps> = ({ isOpen, onClo
         {/* Footer */}
         <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="px-4 py-2 text-gray-700 hover:text-gray-900"
           >
             Cancel
