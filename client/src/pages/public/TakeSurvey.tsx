@@ -390,38 +390,53 @@ const TakeSurvey: React.FC = () => {
           : {};
         
         return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {/* Rating scale labels */}
             {Object.keys(ratingLabels).length > 0 && (
-              <div className="flex justify-between text-sm text-gray-500 px-2">
-                <span>{ratingLabels[1] || t('survey.ratingLow')}</span>
-                <span>{ratingLabels[maxRating] || t('survey.ratingHigh')}</span>
+              <div className="flex justify-between text-sm font-medium text-gray-600 px-2">
+                <span className="flex items-center gap-2">
+                  <span className="text-red-500">😟</span>
+                  {ratingLabels[1] || t('survey.ratingLow')}
+                </span>
+                <span className="flex items-center gap-2">
+                  {ratingLabels[maxRating] || t('survey.ratingHigh')}
+                  <span className="text-green-500">😊</span>
+                </span>
               </div>
             )}
             
-            {/* Rating buttons */}
-            <div className="flex justify-center gap-3 py-4">
-              {Array.from({ length: maxRating }, (_, i) => i + 1).map((rating) => (
-                <button
-                  key={rating}
-                  onClick={() => handleAnswer(rating)}
-                  className={`w-14 h-14 rounded-xl font-bold text-xl transition-all ${
-                    value === rating
-                      ? 'bg-primary-500 text-white shadow-lg scale-110'
-                      : 'bg-gray-100 text-gray-700 hover:bg-primary-100 hover:scale-105'
-                  }`}
-                  title={ratingLabels[rating] || `Rating ${rating}`}
-                >
-                  {rating}
-                </button>
-              ))}
+            {/* Enhanced rating buttons with gradient */}
+            <div className="flex justify-center gap-2 sm:gap-3 py-6">
+              {Array.from({ length: maxRating }, (_, i) => i + 1).map((rating) => {
+                const isSelected = value === rating;
+                const percentage = (rating / maxRating) * 100;
+                return (
+                  <button
+                    key={rating}
+                    onClick={() => handleAnswer(rating)}
+                    className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl font-bold text-lg sm:text-xl transition-all duration-300 ${
+                      isSelected
+                        ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-2xl scale-125 ring-4 ring-primary-200'
+                        : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-primary-300 hover:bg-primary-50 hover:scale-110 shadow-sm'
+                    }`}
+                    title={ratingLabels[rating] || `Rating ${rating}`}
+                  >
+                    {rating}
+                    {isSelected && (
+                      <span className=\"absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse\" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
             
-            {/* Show selected rating label */}
-            {value && ratingLabels[value] && (
-              <p className="text-center text-gray-600 text-sm mt-2">
-                {ratingLabels[value]}
-              </p>
+            {/* Show selected rating label with animation */}
+            {value && (
+              <div className=\"text-center animate-fade-in\">
+                <p className=\"text-primary-600 font-semibold text-lg\">
+                  {ratingLabels[value] || `${value}/${maxRating}`}
+                </p>
+              </div>
             )}
           </div>
         );
@@ -429,28 +444,70 @@ const TakeSurvey: React.FC = () => {
       case 'nps':
         return (
           <div className="space-y-6">
-            <div className="flex justify-between text-sm text-gray-500 px-2">
-              <span>{t('survey.npsLow')}</span>
-              <span>{t('survey.npsHigh')}</span>
+            <div className="flex justify-between text-sm font-medium text-gray-600 px-2 mb-2">
+              <span className="flex items-center gap-1">
+                <span className="text-red-500">😞</span>
+                <span className="hidden sm:inline">{t('survey.npsLow')}</span>
+              </span>
+              <span className="text-gray-400 text-xs">0-10</span>
+              <span className="flex items-center gap-1">
+                <span className="hidden sm:inline">{t('survey.npsHigh')}</span>
+                <span className="text-green-500">🤩</span>
+              </span>
             </div>
-            <div className="grid grid-cols-11 gap-2">
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                <button
-                  key={num}
-                  onClick={() => handleAnswer(num)}
-                  className={`aspect-square rounded-xl font-bold text-lg transition-all ${value === num
-                      ? num <= 6
-                        ? 'bg-red-500 text-white shadow-lg scale-110'
-                        : num <= 8
-                          ? 'bg-yellow-500 text-white shadow-lg scale-110'
-                          : 'bg-green-500 text-white shadow-lg scale-110'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105'
+            
+            {/* Color-coded NPS grid */}
+            <div className="grid grid-cols-11 gap-1.5 sm:gap-2">
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
+                const isSelected = value === num;
+                const isDetractor = num <= 6;
+                const isPassive = num === 7 || num === 8;
+                const isPromoter = num >= 9;
+                
+                return (
+                  <button
+                    key={num}
+                    onClick={() => handleAnswer(num)}
+                    className={`aspect-square rounded-lg sm:rounded-xl font-bold text-sm sm:text-lg transition-all duration-300 relative ${
+                      isSelected
+                        ? isDetractor
+                          ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-2xl scale-125 ring-4 ring-red-200'
+                          : isPassive
+                            ? 'bg-gradient-to-br from-yellow-500 to-yellow-600 text-white shadow-2xl scale-125 ring-4 ring-yellow-200'
+                            : 'bg-gradient-to-br from-green-500 to-green-600 text-white shadow-2xl scale-125 ring-4 ring-green-200'
+                        : isDetractor
+                          ? 'bg-red-50 border-2 border-red-200 text-red-700 hover:bg-red-100 hover:scale-110'
+                          : isPassive
+                            ? 'bg-yellow-50 border-2 border-yellow-200 text-yellow-700 hover:bg-yellow-100 hover:scale-110'
+                            : 'bg-green-50 border-2 border-green-200 text-green-700 hover:bg-green-100 hover:scale-110'
                     }`}
-                >
-                  {num}
-                </button>
-              ))}
+                  >
+                    {num}
+                    {isSelected && (
+                      <span className=\"absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-white rounded-full animate-pulse shadow-lg\" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
+            
+            {/* NPS Category indicator */}
+            {value !== undefined && (
+              <div className=\"text-center animate-fade-in\">
+                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold ${
+                  value <= 6
+                    ? 'bg-red-100 text-red-700'
+                    : value <= 8
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : 'bg-green-100 text-green-700'
+                }`}>
+                  {value <= 6 && '😞 Detractor'}
+                  {value === 7 || value === 8 ? '😐 Passive' : ''}
+                  {value >= 9 && '🤩 Promoter'}
+                  <span className=\"text-sm opacity-75\">({value}/10)</span>
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -592,12 +649,17 @@ const TakeSurvey: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white">
-      {/* Progress bar */}
-      <div className="fixed top-0 left-0 right-0 h-2 bg-gray-200">
+      {/* Enhanced Progress bar */}
+      <div className="fixed top-0 left-0 right-0 h-3 bg-gray-200 shadow-sm z-50">
         <div
-          className="h-full bg-primary-600 transition-all duration-500 ease-out"
+          className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-500 ease-out relative overflow-hidden"
           style={{ width: `${progress}%` }}
-        />
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+        </div>
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-600">
+          {Math.round(progress)}%
+        </div>
       </div>
 
       {/* Resume link button */}
@@ -636,16 +698,21 @@ const TakeSurvey: React.FC = () => {
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto px-4 py-16">
-        {/* Question number */}
-        <div className="text-center mb-8">
-          <span className="inline-block px-4 py-2 bg-primary-100 text-primary-700 rounded-full text-sm font-medium">
-            Question {visitedPath.length || currentQuestionIndex + 1}
-          </span>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-20">
+        {/* Question number with progress */}
+        <div className="text-center mb-6 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-50 to-primary-100 text-primary-700 rounded-full text-sm font-semibold shadow-sm">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+            </svg>
+            {t('survey.questionNumber', { number: visitedPath.length || currentQuestionIndex + 1 })}
+            <span className="text-primary-500">/</span>
+            <span className="text-primary-900">{survey?.questions.length}</span>
+          </div>
         </div>
 
-        {/* Question */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        {/* Question card with animation */}
+        <div className="bg-white rounded-3xl shadow-2xl p-8 sm:p-10 transition-all duration-300 hover:shadow-3xl animate-slide-up">
           <h2 className="text-2xl font-semibold text-gray-900 mb-8 text-center">
             {currentQuestion.content}
             {currentQuestion.isRequired && <span className="text-red-500 ml-1">*</span>}
@@ -655,11 +722,11 @@ const TakeSurvey: React.FC = () => {
             {renderQuestion(currentQuestion)}
           </div>
 
-          <div className="flex justify-between pt-4 border-t border-gray-100">
+          <div className="flex justify-between pt-6 border-t border-gray-100 gap-4">
             <button
               onClick={handlePrevious}
               disabled={visitedPath.length <= 1}
-              className="px-6 py-3 text-gray-600 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed flex items-center"
+              className="px-6 py-3 text-gray-600 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center rounded-xl transition-all duration-200 font-medium"
             >
               <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -669,7 +736,7 @@ const TakeSurvey: React.FC = () => {
             <button
               onClick={handleNext}
               disabled={submitting || (currentQuestion.isRequired && answers[currentQuestion.id] === undefined)}
-              className="px-8 py-3 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-lg"
+              className="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl font-semibold hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-500 flex items-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
             >
               {submitting ? (
                 <>

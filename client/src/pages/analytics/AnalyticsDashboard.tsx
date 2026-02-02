@@ -81,71 +81,81 @@ const AnalyticsDashboard: React.FC = () => {
         </select>
       }
     >
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <div className="card-soft">
+      {/* Stats Grid - Enhanced */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+        <div className="card-soft hover-lift group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-text-secondary">Total Surveys</p>
-              <p className="text-3xl font-bold text-text-primary">{analytics.surveys.total}</p>
+              <p className="text-3xl font-bold text-text-primary mt-1">{analytics.surveys.total}</p>
             </div>
-            <div className="p-3 bg-primary-100 rounded-full">
+            <div className="p-3 bg-gradient-to-br from-primary-100 to-primary-200 rounded-xl group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2 text-sm">
-            <span className="text-green-600">{analytics.surveys.active} active</span>
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded-lg font-medium">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              {analytics.surveys.active} active
+            </span>
             <span className="text-text-secondary">{analytics.surveys.draft} draft</span>
             <span className="text-text-muted">{analytics.surveys.closed} closed</span>
           </div>
         </div>
 
-        <div className="card-soft">
+        <div className="card-soft hover-lift group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-text-secondary">Total Responses</p>
-              <p className="text-3xl font-bold text-text-primary">{analytics.responses.total}</p>
+              <p className="text-3xl font-bold text-text-primary mt-1">{analytics.responses.total}</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
+            <div className="p-3 bg-gradient-to-br from-green-100 to-green-200 rounded-xl group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
           </div>
           <div className="mt-4">
-            <span className="text-green-600 text-sm">{analytics.responses.completed} completed</span>
+            <span className="inline-flex items-center gap-1 text-sm font-medium text-green-600">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              {analytics.responses.completed} completed
+            </span>
           </div>
         </div>
 
-        <div className="card-soft">
+        <div className="card-soft hover-lift group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-text-secondary">Completion Rate</p>
-              <p className="text-3xl font-bold text-text-primary">{analytics.responses.completionRate}%</p>
+              <p className="text-3xl font-bold text-text-primary mt-1">{analytics.responses.completionRate}%</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-full">
+            <div className="p-3 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
           <div className="mt-4">
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="relative w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-1000 ease-out"
                 style={{ width: `${analytics.responses.completionRate}%` }}
-              ></div>
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="card-soft">
+        <div className="card-soft hover-lift group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-text-secondary">Overall NPS</p>
-              <p className={`text-3xl font-bold ${getNPSColor(analytics.overallNps)}`}>
+              <p className={`text-3xl font-bold mt-1 ${getNPSColor(analytics.overallNps)}`}>
                 {analytics.overallNps !== null ? analytics.overallNps : 'N/A'}
               </p>
             </div>
