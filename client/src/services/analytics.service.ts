@@ -128,7 +128,52 @@ export interface CompanyAnalytics {
   }>;
 }
 
+// Role-specific dashboard types
+export interface RoleDashboardData {
+  role: string;
+  stats: Record<string, number | null>;
+  companyLeaderboard?: Array<{
+    id: string;
+    name: string;
+    surveyCount: number;
+    responseCount: number;
+  }>;
+  platformTrend?: Array<{
+    date: string;
+    responses: number;
+  }>;
+  siteBreakdown?: Array<{
+    id: string;
+    name: string;
+    userCount: number;
+  }>;
+  topSurveys?: Array<{
+    id: string;
+    title: string;
+    type?: string;
+    responseCount: number;
+    completedCount?: number;
+  }>;
+  responseTrend?: Array<{
+    date: string;
+    responses: number;
+    completed: number;
+  }>;
+}
+
 class AnalyticsService {
+  /**
+   * Get role-specific dashboard analytics
+   */
+  async getRoleDashboard(startDate?: string, endDate?: string): Promise<RoleDashboardData> {
+    const params: Record<string, string> = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    
+    const response = await api.get<RoleDashboardData>('/analytics/my-dashboard', { params });
+    return response.data;
+  }
+
   /**
    * Get company-wide analytics dashboard
    */

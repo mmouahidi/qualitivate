@@ -118,6 +118,14 @@ class UserService {
     };
     return roles[currentUserRole] || ['user'];
   }
+
+  /**
+   * Bulk create users
+   */
+  async bulkCreateUsers(users: InviteUserData[]): Promise<{ created: number; failed: { email: string; error: string }[] }> {
+    const response = await api.post<{ created: number; failed: { email: string; error: string }[] }>('/users/bulk', { users });
+    return response.data;
+  }
 }
 
 export const userService = new UserService();

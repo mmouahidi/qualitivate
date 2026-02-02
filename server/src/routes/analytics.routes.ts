@@ -6,13 +6,17 @@ import {
   getResponses,
   getResponseDetails,
   exportResponses,
-  getCompanyAnalytics
+  getCompanyAnalytics,
+  getRoleDashboard
 } from '../controllers/analytics.controller';
 
 const router = Router();
 
 // All analytics routes require authentication
 router.use(authenticate);
+
+// Role-specific dashboard (available to all authenticated users)
+router.get('/my-dashboard', getRoleDashboard);
 
 // Company-wide analytics dashboard
 router.get(

@@ -356,3 +356,128 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Failed to delete user' });
   }
 };
+
+/**
+ * Bulk create users from CSV/array data
+ */
+export const bulkCreateUsers = async (req: AuthRequest, res: Response) => {
+  try {
+    const { users } = req.body;
+    const currentUser = req.user!;
+
+    if (!Array.isArray(users) || users.length === 0) {
+      return res.status(400).json({ error: 'Users array is required' });
+    }
+
+    if (users.length > 500) {
+      return res.status(400).json({ error: 'Maximum 500 users per batch' });
+    }
+
+    const results = {
+      created: 0,
+      failed: [] as { email: string; error: string }[]
+    };
+
+    for (const userData of users) {
+      try {
+        const { email, firstName, lastName, role = 'user', companyId, siteId, departmentId, password } = userData;
+
+        if (!email || !password) {
+          results.failed.push({ email: email || 'unknown', error: 'Email and password are required' });
+          continue;
+        }
+
+        // Check if email exists
+        const existingUser = await db('users').where({ email }).first();
+        if (existingUser) {
+          results.failed.push({ email, error: 'Email already exists' });
+          continue;
+        }
+
+        // Validate role
+        const allowedRoles = ['user'];
+        if (currentUser.role === 'super_admin') {
+          allowedRoles.push('super_admin', 'company_admin', 'site_admin', 'department_admin');
+        } else if (currentUser.role === 'company_admin') {
+          allowedRoles.push('company_admin', 'site_admin', 'department_admin');
+        } else if (currentUser.role === 'site_admin') {
+          allowedRoles.push('site_admin', 'department_admin');
+        } else if (currentUser.role === 'department_admin') {
+          allowedRoles.push('department_admin');
+        }
+
+        if (!allowedRoles.includes(role)) {
+          results.failed.push({ email, error: 'Cannot assign this role' });
+          continue;
+        }
+
+        // Set target company/site/department based on current user role
+        let targetCompanyId = companyId;
+        let targetSiteId = siteId;
+        let targetDepartmentId = departmentId;
+
+        if (currentUser.role === 'company_admin') {
+          targetCompanyId = currentUser.companyId;
+        } else if (currentUser.role === 'site_admin') {
+          targetCompanyId = currentUser.companyId;
+          targetSiteId = currentUser.siteId;
+        } else if (currentUser.role === 'department_admin') {
+          targetCompanyId = currentUser.companyId;
+          targetSiteId = currentUser.siteId;
+          targetDepartmentId = currentUser.departmentId;
+        }
+
+        // Validate company
+        if (targetCompanyId) {
+          const company = await db('companies').where({ id: targetCompanyId }).first();
+          if (!company) {
+            results.failed.push({ email, error: 'Company not found' });
+            continue;
+          }
+        }
+
+        // Validate site
+        if (targetSiteId) {
+          const site = await db('sites').where({ id: targetSiteId }).first();
+          if (!site || (targetCompanyId && site.company_id !== targetCompanyId)) {
+            results.failed.push({ email, error: 'Site not found or does not belong to company' });
+            continue;
+          }
+        }
+
+        // Validate department
+        if (targetDepartmentId) {
+          const department = await db('departments').where({ id: targetDepartmentId }).first();
+          if (!department || (targetSiteId && department.site_id !== targetSiteId)) {
+            results.failed.push({ email, error: 'Department not found or does not belong to site' });
+            continue;
+          }
+        }
+
+        const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+        await db('users').insert({
+          id: uuidv4(),
+          email,
+          password_hash: passwordHash,
+          first_name: firstName || '',
+          last_name: lastName || '',
+          role,
+          company_id: targetCompanyId || null,
+          site_id: targetSiteId || null,
+          department_id: targetDepartmentId || null,
+          is_active: true
+        });
+
+        results.created++;
+      } catch (err: any) {
+        results.failed.push({ email: userData.email || 'unknown', error: err.message || 'Unknown error' });
+      }
+    }
+
+    res.status(201).json(results);
+  } catch (error) {
+    console.error('Bulk create users error:', error);
+    res.status(500).json({ error: 'Failed to bulk create users' });
+  }
+};

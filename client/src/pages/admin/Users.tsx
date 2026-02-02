@@ -1,17 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { userService, User } from '../../services/user.service';
+import { userService, User, InviteUserData } from '../../services/user.service';
+import { companyService, siteService } from '../../services/organization.service';
 import { DashboardLayout } from '../../components/layout';
 
 const Users: React.FC = () => {
     const { user: currentUser } = useAuth();
     const queryClient = useQueryClient();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    
     const [search, setSearch] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [formData, setFormData] = useState({ email: '', password: '', firstName: '', lastName: '', role: 'user' });
+    const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+    const [formData, setFormData] = useState({
+        email: '',
+        password: '',
+        firstName: '',
+        lastName: '',
+        role: 'user',
+        companyId: '',
+        siteId: ''
+    });
     const [error, setError] = useState<string | null>(null);
+    const [bulkData, setBulkData] = useState<InviteUserData[]>([]);
+    const [bulkResult, setBulkResult] = useState<{ created: number; failed: { email: string; error: string }[] } | null>(null);
+
+    // Fetch companies for super_admin
+    const { data: companiesData } = useQuery({
+        queryKey: ['companies-list'],
+        queryFn: () => companyService.listAll(),
+        enabled: currentUser?.role === 'super_admin'
+    });
+
+    // Fetch sites based on selected company
+    const { data: sitesData } = useQuery({
+        queryKey: ['sites-list', formData.companyId],
+        queryFn: () => formData.companyId ? siteService.listByCompany(formData.companyId) : siteService.list({ limit: 1000 }),
+        enabled: !!formData.companyId || currentUser?.role === 'company_admin'
+    });
 
     const { data, isLoading } = useQuery({
         queryKey: ['users', search],
@@ -23,11 +51,22 @@ const Users: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
             setIsCreateModalOpen(false);
-            setFormData({ email: '', password: '', firstName: '', lastName: '', role: 'user' });
+            setFormData({ email: '', password: '', firstName: '', lastName: '', role: 'user', companyId: '', siteId: '' });
             setError(null);
         },
         onError: (err: any) => {
             setError(err.response?.data?.error || 'Failed to create user');
+        }
+    });
+
+    const bulkMutation = useMutation({
+        mutationFn: userService.bulkCreateUsers,
+        onSuccess: (result) => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            setBulkResult(result);
+        },
+        onError: (err: any) => {
+            setError(err.response?.data?.error || 'Failed to bulk create users');
         }
     });
 
@@ -44,7 +83,16 @@ const Users: React.FC = () => {
 
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
-        createMutation.mutate(formData);
+        const payload: InviteUserData = {
+            email: formData.email,
+            password: formData.password,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            role: formData.role
+        };
+        if (formData.companyId) payload.companyId = formData.companyId;
+        if (formData.siteId) payload.siteId = formData.siteId;
+        createMutation.mutate(payload);
     };
 
     const handleDelete = (id: string) => {
@@ -53,14 +101,93 @@ const Users: React.FC = () => {
         }
     };
 
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const text = event.target?.result as string;
+            const lines = text.split('\n').filter(line => line.trim());
+            
+            if (lines.length < 2) {
+                setError('CSV file must have at least a header row and one data row');
+                return;
+            }
+
+            const header = lines[0].toLowerCase().split(',').map(h => h.trim());
+            const emailIndex = header.findIndex(h => h === 'email');
+            const passwordIndex = header.findIndex(h => h === 'password');
+            const firstNameIndex = header.findIndex(h => h.includes('first') || h === 'firstname');
+            const lastNameIndex = header.findIndex(h => h.includes('last') || h === 'lastname');
+            const roleIndex = header.findIndex(h => h === 'role');
+            const companyIdIndex = header.findIndex(h => h === 'companyid' || h === 'company_id');
+            const siteIdIndex = header.findIndex(h => h === 'siteid' || h === 'site_id');
+
+            if (emailIndex === -1 || passwordIndex === -1) {
+                setError('CSV must have "email" and "password" columns');
+                return;
+            }
+
+            const users: InviteUserData[] = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+                if (!values[emailIndex]) continue;
+
+                const user: InviteUserData = {
+                    email: values[emailIndex],
+                    password: values[passwordIndex],
+                    firstName: firstNameIndex >= 0 ? values[firstNameIndex] || '' : '',
+                    lastName: lastNameIndex >= 0 ? values[lastNameIndex] || '' : '',
+                    role: roleIndex >= 0 ? values[roleIndex] || 'user' : 'user'
+                };
+                if (companyIdIndex >= 0 && values[companyIdIndex]) {
+                    user.companyId = values[companyIdIndex];
+                }
+                if (siteIdIndex >= 0 && values[siteIdIndex]) {
+                    user.siteId = values[siteIdIndex];
+                }
+                users.push(user);
+            }
+
+            setBulkData(users);
+            setBulkResult(null);
+            setError(null);
+        };
+        reader.readAsText(file);
+    };
+
+    const handleBulkUpload = () => {
+        if (bulkData.length === 0) {
+            setError('No users to upload');
+            return;
+        }
+        bulkMutation.mutate(bulkData);
+    };
+
+    const downloadTemplate = () => {
+        const csvContent = 'email,password,firstName,lastName,role,companyId,siteId\nuser@example.com,password123,John,Doe,user,,\n';
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'users_template.csv';
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+
     const getRoleBadgeClass = (role: string) => {
         switch (role) {
             case 'super_admin': return 'badge-danger';
             case 'company_admin': return 'badge-warning';
-            case 'site_manager': return 'badge-primary';
+            case 'site_admin': return 'badge-primary';
+            case 'department_admin': return 'badge-info';
             default: return 'badge-neutral';
         }
     };
+
+    const companies = companiesData?.data || [];
+    const sites = sitesData?.data || [];
 
     if (currentUser?.role !== 'super_admin' && currentUser?.role !== 'company_admin') {
         return (
@@ -86,7 +213,18 @@ const Users: React.FC = () => {
             title="Users"
             subtitle="Manage user accounts and permissions"
             headerActions={
-                currentUser?.role === 'super_admin' && (
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => {
+                            setBulkData([]);
+                            setBulkResult(null);
+                            setIsBulkModalOpen(true);
+                        }}
+                        className="btn-secondary"
+                    >
+                        <UploadIcon className="w-5 h-5 mr-2" />
+                        Bulk Upload
+                    </button>
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
                         className="btn-primary"
@@ -94,7 +232,7 @@ const Users: React.FC = () => {
                         <PlusIcon className="w-5 h-5 mr-2" />
                         Add User
                     </button>
-                )
+                </div>
             }
         >
             {/* Search */}
@@ -138,6 +276,7 @@ const Users: React.FC = () => {
                                     <th>Email</th>
                                     <th>Name</th>
                                     <th>Role</th>
+                                    <th>Company</th>
                                     <th>Created</th>
                                     <th className="text-right">Actions</th>
                                 </tr>
@@ -153,8 +292,15 @@ const Users: React.FC = () => {
                                         </td>
                                         <td>
                                             <span className={getRoleBadgeClass(user.role)}>
-                                                {user.role.replace('_', ' ')}
+                                                {user.role.replace(/_/g, ' ')}
                                             </span>
+                                        </td>
+                                        <td className="text-text-secondary text-sm">
+                                            {user.company_id ? (
+                                                <span className="truncate max-w-[150px] inline-block">
+                                                    {companies.find(c => c.id === user.company_id)?.name || 'Assigned'}
+                                                </span>
+                                            ) : '—'}
                                         </td>
                                         <td className="text-text-secondary">
                                             {new Date(user.created_at).toLocaleDateString()}
@@ -173,7 +319,7 @@ const Users: React.FC = () => {
                                 ))}
                                 {(!data?.data || data.data.length === 0) && (
                                     <tr>
-                                        <td colSpan={5} className="text-center py-8 text-text-secondary">
+                                        <td colSpan={6} className="text-center py-8 text-text-secondary">
                                             No users found
                                         </td>
                                     </tr>
@@ -187,7 +333,7 @@ const Users: React.FC = () => {
             {/* Create User Modal */}
             {isCreateModalOpen && (
                 <div className="modal-overlay" onClick={() => setIsCreateModalOpen(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
                         <h2 className="modal-title">Create User</h2>
                         <form onSubmit={handleCreate}>
                             <div className="space-y-4">
@@ -245,11 +391,58 @@ const Users: React.FC = () => {
                                         className="select-soft"
                                     >
                                         <option value="user">User</option>
+                                        <option value="department_admin">Department Admin</option>
                                         <option value="site_admin">Site Admin</option>
                                         <option value="company_admin">Company Admin</option>
-                                        <option value="super_admin">Super Admin</option>
+                                        {currentUser?.role === 'super_admin' && (
+                                            <option value="super_admin">Super Admin</option>
+                                        )}
                                     </select>
                                 </div>
+
+                                {/* Company Selection - Only for super_admin */}
+                                {currentUser?.role === 'super_admin' && (
+                                    <div>
+                                        <label className="label-soft">Company</label>
+                                        <select
+                                            value={formData.companyId}
+                                            onChange={(e) => setFormData({ ...formData, companyId: e.target.value, siteId: '' })}
+                                            className="select-soft"
+                                        >
+                                            <option value="">— No Company (Super Admin) —</option>
+                                            {companies.map((company) => (
+                                                <option key={company.id} value={company.id}>
+                                                    {company.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="text-xs text-text-muted mt-1">
+                                            Leave empty for platform-level users (super admins)
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Site Selection - When company is selected */}
+                                {(formData.companyId || currentUser?.role === 'company_admin') && (
+                                    <div>
+                                        <label className="label-soft">Site</label>
+                                        <select
+                                            value={formData.siteId}
+                                            onChange={(e) => setFormData({ ...formData, siteId: e.target.value })}
+                                            className="select-soft"
+                                        >
+                                            <option value="">— No Site (Company Level) —</option>
+                                            {sites.map((site) => (
+                                                <option key={site.id} value={site.id}>
+                                                    {site.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="text-xs text-text-muted mt-1">
+                                            Leave empty for company-level access
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex justify-end gap-3 mt-6">
                                 <button
@@ -278,6 +471,140 @@ const Users: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Bulk Upload Modal */}
+            {isBulkModalOpen && (
+                <div className="modal-overlay" onClick={() => setIsBulkModalOpen(false)}>
+                    <div className="modal-content max-w-2xl" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="modal-title">Bulk Upload Users</h2>
+                        
+                        <div className="space-y-4">
+                            {/* Instructions */}
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <h3 className="font-medium text-blue-800 mb-2">CSV Format Instructions</h3>
+                                <p className="text-sm text-blue-700 mb-2">
+                                    Upload a CSV file with the following columns:
+                                </p>
+                                <ul className="text-sm text-blue-700 list-disc ml-5 space-y-1">
+                                    <li><strong>email</strong> (required) - User's email address</li>
+                                    <li><strong>password</strong> (required) - Initial password</li>
+                                    <li><strong>firstName</strong> - First name</li>
+                                    <li><strong>lastName</strong> - Last name</li>
+                                    <li><strong>role</strong> - user, department_admin, site_admin, company_admin</li>
+                                    <li><strong>companyId</strong> - Company UUID (super_admin only)</li>
+                                    <li><strong>siteId</strong> - Site UUID</li>
+                                </ul>
+                                <button
+                                    onClick={downloadTemplate}
+                                    className="mt-3 text-sm text-blue-600 hover:text-blue-800 underline"
+                                >
+                                    Download CSV Template
+                                </button>
+                            </div>
+
+                            {/* File Upload */}
+                            <div>
+                                <label className="label-soft">Upload CSV File</label>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept=".csv"
+                                    onChange={handleFileUpload}
+                                    className="input-soft"
+                                />
+                            </div>
+
+                            {/* Preview */}
+                            {bulkData.length > 0 && !bulkResult && (
+                                <div className="border border-border rounded-lg overflow-hidden">
+                                    <div className="bg-gray-50 px-4 py-2 border-b border-border">
+                                        <span className="font-medium">{bulkData.length} users ready to upload</span>
+                                    </div>
+                                    <div className="max-h-48 overflow-y-auto">
+                                        <table className="table-soft text-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Email</th>
+                                                    <th>Name</th>
+                                                    <th>Role</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {bulkData.slice(0, 10).map((user, i) => (
+                                                    <tr key={i}>
+                                                        <td>{user.email}</td>
+                                                        <td>{user.firstName} {user.lastName}</td>
+                                                        <td>{user.role}</td>
+                                                    </tr>
+                                                ))}
+                                                {bulkData.length > 10 && (
+                                                    <tr>
+                                                        <td colSpan={3} className="text-center text-text-muted">
+                                                            ...and {bulkData.length - 10} more
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Results */}
+                            {bulkResult && (
+                                <div className="space-y-3">
+                                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                        <p className="text-green-800 font-medium">
+                                            ✓ {bulkResult.created} users created successfully
+                                        </p>
+                                    </div>
+                                    
+                                    {bulkResult.failed.length > 0 && (
+                                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                            <p className="text-red-800 font-medium mb-2">
+                                                ✗ {bulkResult.failed.length} users failed
+                                            </p>
+                                            <div className="max-h-32 overflow-y-auto">
+                                                <ul className="text-sm text-red-700 space-y-1">
+                                                    {bulkResult.failed.map((f, i) => (
+                                                        <li key={i}>{f.email}: {f.error}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button
+                                type="button"
+                                onClick={() => setIsBulkModalOpen(false)}
+                                className="btn-secondary"
+                            >
+                                {bulkResult ? 'Close' : 'Cancel'}
+                            </button>
+                            {!bulkResult && (
+                                <button
+                                    onClick={handleBulkUpload}
+                                    disabled={bulkMutation.isPending || bulkData.length === 0}
+                                    className="btn-primary"
+                                >
+                                    {bulkMutation.isPending ? (
+                                        <>
+                                            <span className="spinner spinner-sm mr-2"></span>
+                                            Uploading...
+                                        </>
+                                    ) : (
+                                        `Upload ${bulkData.length} Users`
+                                    )}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </DashboardLayout>
     );
 };
@@ -286,6 +613,12 @@ const Users: React.FC = () => {
 const PlusIcon = ({ className }: { className?: string }) => (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+    </svg>
+);
+
+const UploadIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
     </svg>
 );
 
