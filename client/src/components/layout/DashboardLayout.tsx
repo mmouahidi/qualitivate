@@ -2,7 +2,6 @@ import React from 'react';
 import { 
   LayoutDashboard, 
   ClipboardList, 
-  FileText, 
   BarChart3, 
   Building2, 
   Building, 
@@ -15,7 +14,6 @@ import { Sidebar, NavItem, MobileMenuButton } from './Sidebar';
 export const defaultNavigation: NavItem[] = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { name: 'Surveys', path: '/surveys', icon: ClipboardList, roles: ['super_admin', 'company_admin', 'site_admin', 'department_admin'] },
-  { name: 'Templates', path: '/templates', icon: FileText, roles: ['super_admin', 'company_admin'] },
   { name: 'Analytics', path: '/analytics', icon: BarChart3, roles: ['super_admin', 'company_admin', 'site_admin', 'department_admin'] },
   { name: 'Sites', path: '/sites', icon: Building2, roles: ['super_admin', 'company_admin'] },
   { name: 'Companies', path: '/companies', icon: Building, roles: ['super_admin'] },

@@ -7,7 +7,6 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Companies from './pages/admin/Companies';
 import Users from './pages/admin/Users';
-import Templates from './pages/admin/Templates';
 import Sites from './pages/organizations/Sites';
 import Surveys from './pages/surveys/Surveys';
 import SurveyEditor from './pages/surveys/SurveyEditor';
@@ -72,14 +71,6 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Users />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/templates"
-              element={
-                <ProtectedRoute>
-                  <Templates />
                 </ProtectedRoute>
               }
             />
