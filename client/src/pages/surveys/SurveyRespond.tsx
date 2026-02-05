@@ -291,11 +291,14 @@ const SurveyRespond: React.FC = () => {
         );
 
       case 'text_long':
+        const textLongPlaceholder = typeof question.options === 'object' && question.options !== null && !Array.isArray(question.options) && 'placeholder' in question.options
+          ? (question.options as Record<string, any>).placeholder
+          : 'Type your answer...';
         return (
           <textarea
             value={value || ''}
             onChange={(e) => handleAnswer(e.target.value)}
-            placeholder={typeof question.options === 'object' && question.options?.placeholder ? question.options.placeholder : 'Type your answer...'}
+            placeholder={textLongPlaceholder}
             rows={4}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-lg resize-none"
           />
