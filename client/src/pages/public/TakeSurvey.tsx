@@ -202,11 +202,22 @@ const TakeSurvey: React.FC = () => {
   };
 
   const handleNext = async () => {
-    if (!currentQuestion || !responseId || !survey) return;
+    if (!currentQuestion || !responseId || !survey) {
+      console.error('handleNext: Missing required data', { 
+        hasCurrentQuestion: !!currentQuestion, 
+        hasResponseId: !!responseId, 
+        hasSurvey: !!survey 
+      });
+      return;
+    }
 
     const answerValue = answers[currentQuestion.id];
     if (answerValue !== undefined) {
-      await responseService.saveAnswer(responseId, currentQuestion.id, answerValue);
+      try {
+        await responseService.saveAnswer(responseId, currentQuestion.id, answerValue);
+      } catch (err) {
+        console.error('Failed to save answer:', err);
+      }
     }
 
     // Save progress after each answer
@@ -214,6 +225,8 @@ const TakeSurvey: React.FC = () => {
 
     // Use logic engine to determine next question
     const questions = survey.questions;
+    const currentIdx = questions.findIndex(q => q.id === currentQuestion.id);
+    
     const result = evaluateLogic(
       {
         id: currentQuestion.id,
@@ -231,14 +244,45 @@ const TakeSurvey: React.FC = () => {
       answers
     );
 
+    console.log('Navigation debug:', {
+      currentIdx,
+      currentQuestionId: currentQuestion.id,
+      nextQuestionIndex: result.nextQuestionIndex,
+      totalQuestions: questions.length,
+      answerValue
+    });
+
     if (result.nextQuestionIndex === 'end' || result.nextQuestionIndex >= questions.length) {
       handleSubmit();
-    } else {
+    } else if (typeof result.nextQuestionIndex === 'number' && result.nextQuestionIndex >= 0 && result.nextQuestionIndex < questions.length) {
       const nextQuestion = questions[result.nextQuestionIndex];
-      setVisitedPath(prev => [...prev, nextQuestion.id]);
-      setCurrentQuestionIndex(result.nextQuestionIndex);
-      // Save updated progress
-      setTimeout(() => saveProgressToStorage(), 100);
+      if (nextQuestion) {
+        // Use functional updates to ensure state consistency
+        setVisitedPath(prev => [...prev, nextQuestion.id]);
+        setCurrentQuestionIndex(result.nextQuestionIndex);
+        // Save updated progress
+        setTimeout(() => saveProgressToStorage(), 100);
+      } else {
+        console.error('Next question not found at index:', result.nextQuestionIndex);
+        // Fallback: try simple increment if logic evaluation failed
+        const simpleNextIdx = currentIdx + 1;
+        if (simpleNextIdx < questions.length) {
+          setVisitedPath(prev => [...prev, questions[simpleNextIdx].id]);
+          setCurrentQuestionIndex(simpleNextIdx);
+        } else {
+          handleSubmit();
+        }
+      }
+    } else {
+      console.error('Invalid next question index:', result.nextQuestionIndex);
+      // Fallback: try simple increment
+      const simpleNextIdx = currentIdx + 1;
+      if (simpleNextIdx < questions.length) {
+        setVisitedPath(prev => [...prev, questions[simpleNextIdx].id]);
+        setCurrentQuestionIndex(simpleNextIdx);
+      } else {
+        handleSubmit();
+      }
     }
   };
 
@@ -285,6 +329,25 @@ const TakeSurvey: React.FC = () => {
     alert(t('survey.resumeLinkCopied'));
   };
 
+  // Helper function to get choices from options (handles both array and object formats)
+  const getChoices = (options: any): string[] => {
+    if (!options) return [];
+    if (Array.isArray(options)) return options;
+    if (typeof options === 'string') {
+      try {
+        const parsed = JSON.parse(options);
+        if (Array.isArray(parsed)) return parsed;
+        if (parsed.choices && Array.isArray(parsed.choices)) return parsed.choices;
+      } catch (e) {
+        return [];
+      }
+    }
+    if (typeof options === 'object' && options.choices) {
+      return Array.isArray(options.choices) ? options.choices : [];
+    }
+    return [];
+  };
+
   const renderQuestion = (question: Question) => {
     const value = answers[question.id];
 
@@ -314,9 +377,10 @@ const TakeSurvey: React.FC = () => {
         );
 
       case 'single_choice':
+        const singleChoices = getChoices(question.options);
         return (
           <div className="space-y-3">
-            {question.options?.map((option, idx) => (
+            {singleChoices.map((option, idx) => (
               <button
                 key={idx}
                 onClick={() => handleAnswer(option)}
@@ -342,9 +406,10 @@ const TakeSurvey: React.FC = () => {
         );
 
       case 'multiple_choice':
+        const multiChoices = getChoices(question.options);
         return (
           <div className="space-y-3">
-            {question.options?.map((option, idx) => {
+            {multiChoices.map((option, idx) => {
               const isSelected = (value || []).includes(option);
               return (
                 <button
@@ -389,18 +454,21 @@ const TakeSurvey: React.FC = () => {
           ? (question.options as any).labels || {}
           : {};
         
+        const lowEmoji = '\u{1F61F}'; // 😟
+        const highEmoji = '\u{1F60A}'; // 😊
+        
         return (
           <div className="space-y-6">
             {/* Rating scale labels */}
             {Object.keys(ratingLabels).length > 0 && (
               <div className="flex justify-between text-sm font-medium text-gray-600 px-2">
                 <span className="flex items-center gap-2">
-                  <span className="text-red-500">😟</span>
+                  <span className="text-red-500">{'😟'}</span>
                   {ratingLabels[1] || t('survey.ratingLow')}
                 </span>
                 <span className="flex items-center gap-2">
                   {ratingLabels[maxRating] || t('survey.ratingHigh')}
-                  <span className="text-green-500">😊</span>
+                  <span className="text-green-500">{'😊'}</span>
                 </span>
               </div>
             )}
@@ -423,7 +491,7 @@ const TakeSurvey: React.FC = () => {
                   >
                     {rating}
                     {isSelected && (
-                      <span className=\"absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse\" />
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
                     )}
                   </button>
                 );
@@ -432,8 +500,8 @@ const TakeSurvey: React.FC = () => {
             
             {/* Show selected rating label with animation */}
             {value && (
-              <div className=\"text-center animate-fade-in\">
-                <p className=\"text-primary-600 font-semibold text-lg\">
+              <div className="text-center animate-fade-in">
+                <p className="text-primary-600 font-semibold text-lg">
                   {ratingLabels[value] || `${value}/${maxRating}`}
                 </p>
               </div>
@@ -446,13 +514,13 @@ const TakeSurvey: React.FC = () => {
           <div className="space-y-6">
             <div className="flex justify-between text-sm font-medium text-gray-600 px-2 mb-2">
               <span className="flex items-center gap-1">
-                <span className="text-red-500">😞</span>
+                <span className="text-red-500">{'😞'}</span>
                 <span className="hidden sm:inline">{t('survey.npsLow')}</span>
               </span>
               <span className="text-gray-400 text-xs">0-10</span>
               <span className="flex items-center gap-1">
                 <span className="hidden sm:inline">{t('survey.npsHigh')}</span>
-                <span className="text-green-500">🤩</span>
+                <span className="text-green-500">{'🤩'}</span>
               </span>
             </div>
             
@@ -484,7 +552,7 @@ const TakeSurvey: React.FC = () => {
                   >
                     {num}
                     {isSelected && (
-                      <span className=\"absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-white rounded-full animate-pulse shadow-lg\" />
+                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-white rounded-full animate-pulse shadow-lg" />
                     )}
                   </button>
                 );
@@ -493,7 +561,7 @@ const TakeSurvey: React.FC = () => {
             
             {/* NPS Category indicator */}
             {value !== undefined && (
-              <div className=\"text-center animate-fade-in\">
+              <div className="text-center animate-fade-in">
                 <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold ${
                   value <= 6
                     ? 'bg-red-100 text-red-700'
@@ -504,7 +572,7 @@ const TakeSurvey: React.FC = () => {
                   {value <= 6 && '😞 Detractor'}
                   {value === 7 || value === 8 ? '😐 Passive' : ''}
                   {value >= 9 && '🤩 Promoter'}
-                  <span className=\"text-sm opacity-75\">({value}/10)</span>
+                  <span className="text-sm opacity-75">({value}/10)</span>
                 </div>
               </div>
             )}
@@ -560,8 +628,116 @@ const TakeSurvey: React.FC = () => {
           />
         );
 
+      case 'matrix':
+        // Matrix questions - render as a table of radio buttons
+        const matrixOptions = typeof question.options === 'object' && question.options !== null && !Array.isArray(question.options)
+          ? question.options as { rows?: string[]; columns?: string[] }
+          : { rows: [], columns: [] };
+        const rows = matrixOptions.rows || [];
+        const columns = matrixOptions.columns || [];
+        const matrixValue = value || {};
+
+        return (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className="p-2 text-left"></th>
+                  {columns.map((col, idx) => (
+                    <th key={idx} className="p-2 text-center text-sm font-medium text-gray-600">
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, rowIdx) => (
+                  <tr key={rowIdx} className={rowIdx % 2 === 0 ? 'bg-gray-50' : ''}>
+                    <td className="p-3 text-gray-800">{row}</td>
+                    {columns.map((col, colIdx) => (
+                      <td key={colIdx} className="p-2 text-center">
+                        <button
+                          onClick={() => handleAnswer({ ...matrixValue, [row]: col })}
+                          className={`w-5 h-5 rounded-full border-2 transition-all ${
+                            matrixValue[row] === col
+                              ? 'border-primary-500 bg-primary-500'
+                              : 'border-gray-300 hover:border-primary-300'
+                          }`}
+                        >
+                          {matrixValue[row] === col && (
+                            <svg className="w-3 h-3 text-white mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </button>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+
+      case 'dropdown':
+        // Dropdown/select question type
+        const dropdownOptions = Array.isArray(question.options) ? question.options : [];
+        return (
+          <select
+            value={value || ''}
+            onChange={(e) => handleAnswer(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-lg bg-white"
+          >
+            <option value="">{t('survey.selectPlaceholder')}</option>
+            {dropdownOptions.map((option, idx) => (
+              <option key={idx} value={option}>{option}</option>
+            ))}
+          </select>
+        );
+
+      case 'boolean':
+        // Yes/No question type
+        return (
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={() => handleAnswer(true)}
+              className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all ${
+                value === true
+                  ? 'bg-green-500 text-white shadow-lg scale-105'
+                  : 'bg-gray-100 text-gray-700 hover:bg-green-50 hover:text-green-700'
+              }`}
+            >
+              {t('common.yes') || 'Yes'}
+            </button>
+            <button
+              onClick={() => handleAnswer(false)}
+              className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all ${
+                value === false
+                  ? 'bg-red-500 text-white shadow-lg scale-105'
+                  : 'bg-gray-100 text-gray-700 hover:bg-red-50 hover:text-red-700'
+              }`}
+            >
+              {t('common.no') || 'No'}
+            </button>
+          </div>
+        );
+
       default:
-        return null;
+        // Fallback for unknown question types - show as text input
+        console.warn(`Unknown question type: ${question.type}, falling back to text input`);
+        return (
+          <div>
+            <input
+              type="text"
+              value={value || ''}
+              onChange={(e) => handleAnswer(e.target.value)}
+              placeholder={t('survey.inputPlaceholder')}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-lg"
+              autoFocus
+            />
+            <p className="text-xs text-gray-400 mt-2">Question type: {question.type}</p>
+          </div>
+        );
     }
   };
 
@@ -592,7 +768,16 @@ const TakeSurvey: React.FC = () => {
     );
   }
 
-  if (!survey) return null;
+  if (!survey) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          <p className="mt-4 text-gray-600">{t('survey.loading')}</p>
+        </div>
+      </div>
+    );
+  }
 
   // Welcome screen
   if (!started) {
@@ -645,7 +830,36 @@ const TakeSurvey: React.FC = () => {
     );
   }
 
-  if (!currentQuestion) return null;
+  if (!currentQuestion) {
+    console.error('currentQuestion is undefined', {
+      currentQuestionIndex,
+      surveyQuestionsLength: survey?.questions?.length,
+      questions: survey?.questions?.map(q => ({ id: q.id, type: q.type }))
+    });
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-lg text-center">
+          <div className="text-red-500 mb-4">
+            <svg className="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('survey.error')}</h2>
+          <p className="text-gray-600 mb-6">{t('survey.questionNotFound')}</p>
+          <p className="text-xs text-gray-400 mb-4">Debug: Index {currentQuestionIndex} of {survey?.questions?.length || 0} questions</p>
+          <button
+            onClick={() => {
+              setCurrentQuestionIndex(0);
+              setVisitedPath(survey?.questions[0] ? [survey.questions[0].id] : []);
+            }}
+            className="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 transition-colors"
+          >
+            {t('survey.restart')}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white">

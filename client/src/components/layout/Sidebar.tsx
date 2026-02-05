@@ -52,23 +52,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ navigation }) => {
   });
 
   const sidebarContent = (
-    <>
+    <div className="flex flex-col h-full">
       {/* Brand */}
       <div className={`
-        sidebar-smart-brand
+        sidebar-smart-brand flex-shrink-0
         ${isExpanded ? 'sidebar-smart-brand-expanded' : 'sidebar-smart-brand-collapsed'}
       `}>
         <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden">
           {isExpanded ? (
-            <img src="/src/assets/images/logo.png" alt="Qualitivate" className="h-10 w-auto object-contain" />
+            <img src="/logo.png" alt="Qualitivate" className="h-10 w-auto object-contain" />
           ) : (
-            <img src="/src/assets/images/icon.png" alt="Qualitivate" className="h-8 w-8 object-contain" />
+            <img src="/icon.png" alt="Qualitivate" className="h-8 w-8 object-contain" />
           )}
         </Link>
 
         {/* Collapse toggle - Desktop only */}
         <button
           onClick={toggleCollapsed}
+          aria-label={isCollapsed ? t('sidebar.expand') : t('sidebar.collapse')}
+          aria-expanded={!isCollapsed}
           className={`
             hidden lg:flex
             absolute -right-3 top-8 
@@ -76,6 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ navigation }) => {
             items-center justify-center 
             text-text-secondary hover:text-primary-600 hover:border-primary-300
             transition-all duration-200 shadow-sm
+            focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
             ${isExpanded ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
           `}
           title={isCollapsed ? t('sidebar.expand') : t('sidebar.collapse')}
@@ -90,14 +93,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ navigation }) => {
         {/* Close button - Mobile only */}
         <button
           onClick={closeMobile}
-          className="lg:hidden absolute right-4 top-6 p-1 text-text-secondary hover:text-text-primary"
+          aria-label={t('sidebar.closeMenu')}
+          className="lg:hidden absolute right-4 top-6 p-1 text-text-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 rounded"
         >
           <X className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Navigation */}
-      <nav className="sidebar-smart-nav">
+      {/* Navigation - Scrollable */}
+      <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 space-y-1">
         {filteredNavigation.map((item) => (
           <Link
             key={item.name}
@@ -122,9 +126,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ navigation }) => {
         ))}
       </nav>
 
-      {/* Footer - Profile & Sign Out */}
+      {/* Footer - Profile & Sign Out - Fixed at bottom */}
       <div className={`
-        sidebar-smart-footer
+        flex-shrink-0 py-4 border-t border-border bg-surface
         ${isExpanded ? 'px-4' : 'px-2'}
       `}>
         {/* Profile Link */}
@@ -157,9 +161,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ navigation }) => {
         
         <button
           onClick={logout}
+          aria-label={t('sidebar.signOut')}
           className={`
             btn-ghost w-full text-sm text-red-600 hover:text-red-700 hover:bg-red-50
-            flex items-center
+            flex items-center focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-lg
             ${isExpanded ? 'justify-start px-2' : 'justify-center'}
           `}
           title={!isExpanded ? t('sidebar.signOut') : undefined}
@@ -168,7 +173,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ navigation }) => {
           {isExpanded && <span className="ml-2">{t('sidebar.signOut')}</span>}
         </button>
       </div>
-    </>
+    </div>
   );
 
   return (

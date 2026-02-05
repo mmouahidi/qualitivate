@@ -68,40 +68,40 @@ const Dashboard: React.FC = () => {
         
         if (dashboardData.role === 'super_admin') {
             return [
-                { label: 'Total Companies', value: s.totalCompanies?.toString() || '0', icon: Building2, color: 'bg-purple-100 text-purple-600' },
-                { label: 'Total Users', value: s.totalUsers?.toString() || '0', icon: Users, color: 'bg-blue-100 text-blue-600' },
-                { label: 'Active Surveys', value: s.activeSurveys?.toString() || '0', icon: ClipboardList, color: 'bg-green-100 text-green-600' },
+                { label: 'Total Companies', value: s.totalCompanies?.toString() || '0', icon: Building2, color: 'bg-primary-100 text-primary-600' },
+                { label: 'Total Users', value: s.totalUsers?.toString() || '0', icon: Users, color: 'bg-primary-100 text-primary-700' },
+                { label: 'Active Surveys', value: s.activeSurveys?.toString() || '0', icon: ClipboardList, color: 'bg-secondary-100 text-secondary-600' },
                 { label: 'Total Responses', value: s.totalResponses?.toString() || '0', icon: Activity, color: 'bg-amber-100 text-amber-600' },
-                { label: 'Completion Rate', value: `${s.completionRate || 0}%`, icon: Target, color: 'bg-teal-100 text-teal-600' },
+                { label: 'Completion Rate', value: `${s.completionRate || 0}%`, icon: Target, color: 'bg-secondary-100 text-secondary-700' },
             ];
         }
         
         if (dashboardData.role === 'company_admin') {
             return [
-                { label: 'Sites', value: s.totalSites?.toString() || '0', icon: Building2, color: 'bg-purple-100 text-purple-600' },
-                { label: 'Users', value: `${s.activeUsers || 0}/${s.totalUsers || 0}`, icon: Users, color: 'bg-blue-100 text-blue-600' },
-                { label: 'Active Surveys', value: s.activeSurveys?.toString() || '0', icon: ClipboardList, color: 'bg-green-100 text-green-600' },
+                { label: 'Sites', value: s.totalSites?.toString() || '0', icon: Building2, color: 'bg-primary-100 text-primary-600' },
+                { label: 'Users', value: `${s.activeUsers || 0}/${s.totalUsers || 0}`, icon: Users, color: 'bg-primary-100 text-primary-700' },
+                { label: 'Active Surveys', value: s.activeSurveys?.toString() || '0', icon: ClipboardList, color: 'bg-secondary-100 text-secondary-600' },
                 { label: 'Responses', value: s.completedResponses?.toString() || '0', icon: Activity, color: 'bg-amber-100 text-amber-600' },
-                { label: 'Completion Rate', value: `${s.completionRate || 0}%`, icon: Target, color: 'bg-teal-100 text-teal-600' },
-                { label: 'NPS Score', value: s.npsScore !== null ? s.npsScore?.toString() : '—', icon: TrendingUp, color: s.npsScore && s.npsScore > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600' },
+                { label: 'Completion Rate', value: `${s.completionRate || 0}%`, icon: Target, color: 'bg-secondary-100 text-secondary-700' },
+                { label: 'NPS Score', value: s.npsScore !== null ? s.npsScore?.toString() : '—', icon: TrendingUp, color: s.npsScore && s.npsScore > 0 ? 'bg-secondary-100 text-secondary-600' : 'bg-accent-100 text-accent-600' },
             ];
         }
         
         if (dashboardData.role === 'site_admin') {
             return [
-                { label: 'Site Users', value: `${s.activeUsers || 0}/${s.siteUsers || 0}`, icon: Users, color: 'bg-blue-100 text-blue-600' },
-                { label: 'Active Surveys', value: s.activeSurveys?.toString() || '0', icon: ClipboardList, color: 'bg-green-100 text-green-600' },
+                { label: 'Site Users', value: `${s.activeUsers || 0}/${s.siteUsers || 0}`, icon: Users, color: 'bg-primary-100 text-primary-600' },
+                { label: 'Active Surveys', value: s.activeSurveys?.toString() || '0', icon: ClipboardList, color: 'bg-secondary-100 text-secondary-600' },
                 { label: 'Responses', value: s.completedResponses?.toString() || '0', icon: Activity, color: 'bg-amber-100 text-amber-600' },
-                { label: 'Completion Rate', value: `${s.completionRate || 0}%`, icon: Target, color: 'bg-teal-100 text-teal-600' },
+                { label: 'Completion Rate', value: `${s.completionRate || 0}%`, icon: Target, color: 'bg-secondary-100 text-secondary-700' },
             ];
         }
         
         if (dashboardData.role === 'department_admin') {
             return [
-                { label: 'Dept Users', value: `${s.activeUsers || 0}/${s.departmentUsers || 0}`, icon: Users, color: 'bg-blue-100 text-blue-600' },
-                { label: 'Available Surveys', value: s.availableSurveys?.toString() || '0', icon: ClipboardList, color: 'bg-green-100 text-green-600' },
+                { label: 'Dept Users', value: `${s.activeUsers || 0}/${s.departmentUsers || 0}`, icon: Users, color: 'bg-primary-100 text-primary-600' },
+                { label: 'Available Surveys', value: s.availableSurveys?.toString() || '0', icon: ClipboardList, color: 'bg-secondary-100 text-secondary-600' },
                 { label: 'Responses', value: s.completedResponses?.toString() || '0', icon: Activity, color: 'bg-amber-100 text-amber-600' },
-                { label: 'Completion Rate', value: `${s.completionRate || 0}%`, icon: Target, color: 'bg-teal-100 text-teal-600' },
+                { label: 'Completion Rate', value: `${s.completionRate || 0}%`, icon: Target, color: 'bg-secondary-100 text-secondary-700' },
             ];
         }
         
@@ -184,21 +184,21 @@ const Dashboard: React.FC = () => {
                                     <Globe className="w-5 h-5 text-accent-600" /> Platform Overview
                                 </h2>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-4 bg-green-50 rounded-lg text-center">
-                                        <p className="text-2xl font-bold text-green-700">{dashboardData.stats.activeUsers || 0}</p>
-                                        <p className="text-sm text-green-600">Active Users</p>
+                                    <div className="p-4 bg-secondary-50 rounded-lg text-center">
+                                        <p className="text-2xl font-bold text-secondary-700">{dashboardData.stats.activeUsers || 0}</p>
+                                        <p className="text-sm text-secondary-600">Active Users</p>
                                     </div>
-                                    <div className="p-4 bg-blue-50 rounded-lg text-center">
-                                        <p className="text-2xl font-bold text-blue-700">{dashboardData.stats.totalSurveys || 0}</p>
-                                        <p className="text-sm text-blue-600">Total Surveys</p>
+                                    <div className="p-4 bg-primary-50 rounded-lg text-center">
+                                        <p className="text-2xl font-bold text-primary-700">{dashboardData.stats.totalSurveys || 0}</p>
+                                        <p className="text-sm text-primary-600">Total Surveys</p>
                                     </div>
                                     <div className="p-4 bg-amber-50 rounded-lg text-center">
                                         <p className="text-2xl font-bold text-amber-700">{dashboardData.stats.completedResponses || 0}</p>
                                         <p className="text-sm text-amber-600">Completed</p>
                                     </div>
-                                    <div className="p-4 bg-purple-50 rounded-lg text-center">
-                                        <p className="text-2xl font-bold text-purple-700">{dashboardData.stats.completionRate || 0}%</p>
-                                        <p className="text-sm text-purple-600">Completion Rate</p>
+                                    <div className="p-4 bg-primary-50 rounded-lg text-center">
+                                        <p className="text-2xl font-bold text-primary-700">{dashboardData.stats.completionRate || 0}%</p>
+                                        <p className="text-sm text-primary-600">Completion Rate</p>
                                     </div>
                                 </div>
                             </div>
@@ -283,8 +283,8 @@ const Dashboard: React.FC = () => {
                         {(user?.role === 'super_admin' || user?.role === 'company_admin') && (
                             <Link to="/sites" className="card-soft group cursor-pointer">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-green-100 rounded-soft flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                                        <Building2 className="w-6 h-6 text-green-600" />
+                                    <div className="w-12 h-12 bg-secondary-100 rounded-soft flex items-center justify-center group-hover:bg-secondary-200 transition-colors">
+                                        <Building2 className="w-6 h-6 text-secondary-600" />
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-gray-900">{t('dashboard.manageSites')}</h3>
@@ -300,7 +300,7 @@ const Dashboard: React.FC = () => {
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.recentActivity')}</h2>
                         <div className="text-center py-8 text-gray-600">
                             <img
-                                src="/src/assets/images/dashboard-empty.png"
+                                src="/dashboard-empty.png"
                                 alt="Empty Dashboard"
                                 className="w-64 h-auto mx-auto mb-6 opacity-80"
                             />

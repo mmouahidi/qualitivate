@@ -253,7 +253,9 @@ export const createSurveyFromTemplate = async (req: AuthRequest, res: Response) 
   try {
     const user = req.user!;
     const { id } = req.params;
-    const { title, description, companyId } = req.body;
+    const { title, description, company_id } = req.body;
+
+    console.log('Creating survey from template:', { templateId: id, title, company_id, userId: user.id, userCompanyId: user.companyId });
 
     // Get template with questions
     const template = await db('survey_templates').where('id', id).first();
@@ -269,13 +271,15 @@ export const createSurveyFromTemplate = async (req: AuthRequest, res: Response) 
 
     // Determine target company
     let targetCompanyId = user.companyId;
-    if (user.role === 'super_admin' && companyId) {
-      targetCompanyId = companyId;
+    if (user.role === 'super_admin' && company_id) {
+      targetCompanyId = company_id;
     }
 
     if (!targetCompanyId) {
       return res.status(400).json({ error: 'Company ID is required' });
     }
+
+    console.log('Target company ID:', targetCompanyId);
 
     const templateQuestions = await db('template_questions')
       .where('template_id', id)
@@ -286,6 +290,19 @@ export const createSurveyFromTemplate = async (req: AuthRequest, res: Response) 
     try {
       // Create survey
       const surveyId = uuidv4();
+      
+      // Parse default_settings if it's a string
+      let parsedSettings = {};
+      if (template.default_settings) {
+        try {
+          parsedSettings = typeof template.default_settings === 'string' 
+            ? JSON.parse(template.default_settings) 
+            : template.default_settings;
+        } catch (e) {
+          parsedSettings = {};
+        }
+      }
+      
       await trx('surveys').insert({
         id: surveyId,
         company_id: targetCompanyId,
@@ -297,7 +314,7 @@ export const createSurveyFromTemplate = async (req: AuthRequest, res: Response) 
         is_public: true,
         is_anonymous: template.is_anonymous,
         default_language: 'en',
-        settings: JSON.stringify(template.default_settings || {}),
+        settings: JSON.stringify(parsedSettings),
       });
 
       // Copy questions

@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 // import Register from './pages/Register';
@@ -36,12 +37,13 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/book-demo" element={<BookDemo />} />
-            <Route path="/login" element={<Login />} />
+      <ToastProvider>
+        <AuthProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/book-demo" element={<BookDemo />} />
+              <Route path="/login" element={<Login />} />
             {/* <Route path="/register" element={<Register />} />  -- Removed as per request */}
 
             {/* Public survey response route - no auth required */}
@@ -147,9 +149,10 @@ function App() {
               }
             />
             <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Router>
-      </AuthProvider>
+            </Routes>
+          </Router>
+        </AuthProvider>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

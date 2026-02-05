@@ -42,7 +42,10 @@
     "ratingLow": "Pas du tout d'accord",
     "ratingHigh": "Tout à fait d'accord",
     "required": "Obligatoire",
-    "optional": "Facultatif"
+    "optional": "Facultatif",
+    "error": "Erreur",
+    "questionNotFound": "Impossible de charger la question. Cela peut être dû à une erreur de navigation.",
+    "restart": "Redémarrer l'enquête"
   },
   "thankYou": {
     "title": "Merci !",

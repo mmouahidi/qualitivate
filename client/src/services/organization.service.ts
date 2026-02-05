@@ -51,7 +51,16 @@ export const companyService = {
     return response.data;
   },
 
-  async create(data: { name: string; slug: string; settings?: Record<string, any> }): Promise<Company> {
+  async create(data: { 
+    name: string; 
+    slug: string; 
+    activity?: string;
+    address?: string;
+    city?: string;
+    sitesCount?: number;
+    employeesCount?: number;
+    settings?: Record<string, any> 
+  }): Promise<Company> {
     const response = await api.post('/companies', data);
     return response.data;
   },

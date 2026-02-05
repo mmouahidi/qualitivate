@@ -52,11 +52,32 @@ export const getPublicSurvey = async (req: Request, res: Response) => {
     // Apply translations to questions
     const translatedQuestions = questions.map(q => {
       const translation = translationMap.get(q.id);
+      
+      // Parse options if it's a string
+      let parsedOptions = q.options;
+      if (typeof q.options === 'string') {
+        try {
+          parsedOptions = JSON.parse(q.options);
+        } catch (e) {
+          parsedOptions = {};
+        }
+      }
+      
+      // Parse translation options if available and is a string
+      let translatedOptions = translation?.options || parsedOptions;
+      if (typeof translatedOptions === 'string') {
+        try {
+          translatedOptions = JSON.parse(translatedOptions);
+        } catch (e) {
+          translatedOptions = parsedOptions;
+        }
+      }
+      
       return {
         id: q.id,
         type: q.type,
         content: translation?.content || q.content,
-        options: translation?.options || q.options,
+        options: translatedOptions,
         isRequired: q.is_required,
         orderIndex: q.order_index
       };
@@ -132,7 +153,13 @@ export const startResponse = async (req: AuthRequest, res: Response) => {
 export const saveAnswer = async (req: Request, res: Response) => {
   try {
     const { responseId } = req.params;
-    const { questionId, value } = req.body;
+    // Accept both camelCase and snake_case
+    const questionId = req.body.questionId || req.body.question_id;
+    const { value } = req.body;
+
+    if (!questionId) {
+      return res.status(400).json({ error: 'Question ID is required' });
+    }
 
     // Verify response exists and is not completed
     const response = await db('responses')
@@ -191,7 +218,8 @@ export const submitAnswers = async (req: Request, res: Response) => {
       .filter(q => q.is_required)
       .map(q => q.id);
 
-    const answeredQuestionIds = answers.map((a: any) => a.questionId);
+    // Support both camelCase and snake_case
+    const answeredQuestionIds = answers.map((a: any) => a.questionId || a.question_id);
 
     // Check if all required questions are answered
     const missingRequired = requiredQuestionIds.filter(
@@ -208,11 +236,12 @@ export const submitAnswers = async (req: Request, res: Response) => {
     // Save all answers in transaction
     await db.transaction(async (trx) => {
       for (const answer of answers) {
+        const questionId = answer.questionId || answer.question_id;
         await trx('answers')
           .insert({
             id: uuidv4(),
             response_id: responseId,
-            question_id: answer.questionId,
+            question_id: questionId,
             value: JSON.stringify(answer.value),
             updated_at: new Date()
           })

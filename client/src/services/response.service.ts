@@ -16,9 +16,9 @@ export interface PublicSurvey {
 
 export interface Question {
   id: string;
-  type: 'text' | 'textarea' | 'single_choice' | 'multiple_choice' | 'rating' | 'nps' | 'date' | 'number';
+  type: 'text' | 'textarea' | 'single_choice' | 'multiple_choice' | 'rating' | 'nps' | 'date' | 'number' | 'text_short' | 'text_long' | 'rating_scale' | 'matrix';
   content: string;
-  options?: string[];
+  options?: string[] | Record<string, any>;
   isRequired: boolean;
   orderIndex: number;
 }

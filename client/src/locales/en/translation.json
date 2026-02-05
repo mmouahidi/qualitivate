@@ -16,7 +16,8 @@
     "templates": "Templates",
     "signOut": "Sign Out",
     "expand": "Expand sidebar",
-    "collapse": "Collapse sidebar"
+    "collapse": "Collapse sidebar",
+    "closeMenu": "Close menu"
   },
   "survey": {
     "loading": "Loading survey...",
@@ -42,7 +43,10 @@
     "ratingLow": "Strongly Disagree",
     "ratingHigh": "Strongly Agree",
     "required": "Required",
-    "optional": "Optional"
+    "optional": "Optional",
+    "error": "Error",
+    "questionNotFound": "Unable to load the question. This may be due to a navigation error.",
+    "restart": "Restart Survey"
   },
   "thankYou": {
     "title": "Thank You!",
@@ -345,6 +349,32 @@
       "siteAdmin": "Site Admin",
       "departmentAdmin": "Department Admin",
       "user": "User"
+    }
+  },
+  "emptyState": {
+    "surveys": {
+      "title": "No Surveys Yet",
+      "description": "Create your first survey to start collecting valuable feedback from your audience."
+    },
+    "responses": {
+      "title": "No Responses Yet",
+      "description": "Once people start completing your surveys, their responses will appear here."
+    },
+    "users": {
+      "title": "No Users Found",
+      "description": "Invite team members to collaborate and manage surveys together."
+    },
+    "sites": {
+      "title": "No Sites Yet",
+      "description": "Add sites to organize your surveys by location or department."
+    },
+    "analytics": {
+      "title": "No Data Available",
+      "description": "Analytics will appear once you have survey responses to analyze."
+    },
+    "custom": {
+      "title": "Nothing Here",
+      "description": "There's nothing to show at the moment."
     }
   }
 }

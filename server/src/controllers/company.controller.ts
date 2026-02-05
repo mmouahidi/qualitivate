@@ -90,7 +90,7 @@ export const getCompany = async (req: AuthRequest, res: Response) => {
 
 export const createCompany = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, slug, settings = {} } = req.body;
+    const { name, slug, activity, address, city, sites_count, employees_count, settings = {} } = req.body;
 
     const existingCompany = await db('companies').where({ slug }).first();
     if (existingCompany) {
@@ -102,6 +102,11 @@ export const createCompany = async (req: AuthRequest, res: Response) => {
         id: uuidv4(),
         name,
         slug,
+        activity,
+        address,
+        city,
+        sites_count: sites_count || 0,
+        employees_count: employees_count || 0,
         settings
       })
       .returning('*');
@@ -116,7 +121,7 @@ export const createCompany = async (req: AuthRequest, res: Response) => {
 export const updateCompany = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, slug, settings } = req.body;
+    const { name, slug, activity, address, city, sites_count, employees_count, settings } = req.body;
     const user = req.user!;
 
     const company = await db('companies').where({ id }).first();
@@ -142,6 +147,11 @@ export const updateCompany = async (req: AuthRequest, res: Response) => {
 
     if (name !== undefined) updateData.name = name;
     if (slug !== undefined) updateData.slug = slug;
+    if (activity !== undefined) updateData.activity = activity;
+    if (address !== undefined) updateData.address = address;
+    if (city !== undefined) updateData.city = city;
+    if (sites_count !== undefined) updateData.sites_count = sites_count;
+    if (employees_count !== undefined) updateData.employees_count = employees_count;
     if (settings !== undefined) updateData.settings = settings;
 
     const [updatedCompany] = await db('companies')

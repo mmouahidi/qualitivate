@@ -10,7 +10,15 @@ const Companies: React.FC = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', slug: '' });
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    slug: '', 
+    activity: '',
+    address: '',
+    city: '',
+    sitesCount: 0,
+    employeesCount: 0
+  });
   const [error, setError] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -23,7 +31,15 @@ const Companies: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       setIsCreateModalOpen(false);
-      setFormData({ name: '', slug: '' });
+      setFormData({ 
+        name: '', 
+        slug: '', 
+        activity: '',
+        address: '',
+        city: '',
+        sitesCount: 0,
+        employeesCount: 0
+      });
       setError(null);
     },
     onError: (err: any) => {
@@ -111,7 +127,10 @@ const Companies: React.FC = () => {
               <thead>
                 <tr>
                   <th>Name</th>
-                  <th>Slug</th>
+                  <th>Activity</th>
+                  <th>City</th>
+                  <th>Sites</th>
+                  <th>Employees</th>
                   <th>Created</th>
                   <th className="text-right">Actions</th>
                 </tr>
@@ -120,7 +139,10 @@ const Companies: React.FC = () => {
                 {data?.data?.map((company: Company) => (
                   <tr key={company.id}>
                     <td className="font-medium">{company.name}</td>
-                    <td className="text-text-secondary">{company.slug}</td>
+                    <td className="text-text-secondary">{company.activity || '-'}</td>
+                    <td className="text-text-secondary">{company.city || '-'}</td>
+                    <td className="text-text-secondary">{company.sitesCount || 0}</td>
+                    <td className="text-text-secondary">{company.employeesCount || 0}</td>
                     <td className="text-text-secondary">
                       {new Date(company.createdAt).toLocaleDateString()}
                     </td>
@@ -138,7 +160,7 @@ const Companies: React.FC = () => {
                 ))}
                 {(!data?.data || data.data.length === 0) && (
                   <tr>
-                    <td colSpan={4} className="text-center py-8 text-text-secondary">
+                    <td colSpan={7} className="text-center py-8 text-text-secondary">
                       No companies found
                     </td>
                   </tr>
@@ -151,26 +173,79 @@ const Companies: React.FC = () => {
 
       {isCreateModalOpen && (
         <div className="modal-overlay" onClick={() => setIsCreateModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content max-w-xl" onClick={(e) => e.stopPropagation()}>
             <h2 className="modal-title">Create Company</h2>
             <form onSubmit={handleCreate}>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="mb-4">
+                  <label className="label-soft">Company Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="input-soft"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="label-soft">Slug *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.slug}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                    className="input-soft"
+                  />
+                </div>
+              </div>
               <div className="mb-4">
-                <label className="label-soft">Company Name</label>
+                <label className="label-soft">Activity</label>
                 <input
                   type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  value={formData.activity}
+                  onChange={(e) => setFormData({ ...formData, activity: e.target.value })}
                   className="input-soft"
+                  placeholder="e.g., Food Manufacturing, IT Services..."
                 />
               </div>
               <div className="mb-4">
-                <label className="label-soft">Slug</label>
+                <label className="label-soft">Address</label>
                 <input
                   type="text"
-                  required
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  className="input-soft"
+                  placeholder="Street address"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="mb-4">
+                  <label className="label-soft">City</label>
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="input-soft"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="label-soft">Number of Sites</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.sitesCount}
+                    onChange={(e) => setFormData({ ...formData, sitesCount: parseInt(e.target.value) || 0 })}
+                    className="input-soft"
+                  />
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="label-soft">Number of Employees</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={formData.employeesCount}
+                  onChange={(e) => setFormData({ ...formData, employeesCount: parseInt(e.target.value) || 0 })}
                   className="input-soft"
                 />
               </div>

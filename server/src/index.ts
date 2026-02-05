@@ -14,6 +14,7 @@ import analyticsRoutes from './routes/analytics.routes';
 import distributionRoutes from './routes/distribution.routes';
 import templateRoutes from './routes/template.routes';
 import { camelCaseResponse } from './utils/transformCase';
+import path from 'path';
 
 dotenv.config();
 
@@ -78,6 +79,28 @@ app.use('/api/responses', responseRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/distributions', distributionRoutes);
 app.use('/api/templates', templateRoutes);
+
+// Calculate client build path correctly whether running from src or dist
+const clientBuildPath = path.join(__dirname, '../../client/dist');
+
+// Serve static files from the client build directory
+app.use(express.static(clientBuildPath));
+
+// Handle React routing, return all requests to React app
+app.get('*', (req, res, next) => {
+  // If the request is for an API endpoint that wasn't handled above, rely on 404 or next()
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  
+  res.sendFile(path.join(clientBuildPath, 'index.html'), (err) => {
+    if (err) {
+      if (!res.headersSent) {
+        res.status(500).send('Client build not found. Please run "npm run build" in the client directory.');
+      }
+    }
+  });
+});
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

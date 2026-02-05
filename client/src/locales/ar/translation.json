@@ -41,7 +41,10 @@
     "ratingLow": "لا أوافق بشدة",
     "ratingHigh": "أوافق بشدة",
     "required": "مطلوب",
-    "optional": "اختياري"
+    "optional": "اختياري",
+    "error": "خطأ",
+    "questionNotFound": "تعذر تحميل السؤال. قد يكون هذا بسبب خطأ في التنقل.",
+    "restart": "إعادة تشغيل الاستطلاع"
   },
   "thankYou": {
     "title": "شكراً لك!",

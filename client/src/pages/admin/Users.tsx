@@ -5,15 +5,19 @@ import { useAuth } from '../../contexts/AuthContext';
 import { userService, User, InviteUserData } from '../../services/user.service';
 import { companyService, siteService } from '../../services/organization.service';
 import { DashboardLayout } from '../../components/layout';
+import { ConfirmModal } from '../../components/ui';
+import { useToast } from '../../contexts/ToastContext';
 
 const Users: React.FC = () => {
     const { user: currentUser } = useAuth();
     const queryClient = useQueryClient();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const toast = useToast();
     
     const [search, setSearch] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+    const [deleteModalState, setDeleteModalState] = useState<{ isOpen: boolean; userId: string | null }>({ isOpen: false, userId: null });
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -75,9 +79,12 @@ const Users: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
             setError(null);
+            setDeleteModalState({ isOpen: false, userId: null });
+            toast.success('User deleted', 'The user has been removed successfully.');
         },
         onError: (err: any) => {
             setError(err.response?.data?.error || 'Failed to delete user');
+            toast.error('Failed to delete user', err.response?.data?.error || 'An error occurred.');
         }
     });
 
@@ -96,8 +103,12 @@ const Users: React.FC = () => {
     };
 
     const handleDelete = (id: string) => {
-        if (confirm('Are you sure you want to delete this user?')) {
-            deleteMutation.mutate(id);
+        setDeleteModalState({ isOpen: true, userId: id });
+    };
+
+    const confirmDelete = () => {
+        if (deleteModalState.userId) {
+            deleteMutation.mutate(deleteModalState.userId);
         }
     };
 
@@ -605,6 +616,20 @@ const Users: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModalState.isOpen}
+                onClose={() => setDeleteModalState({ isOpen: false, userId: null })}
+                onConfirm={confirmDelete}
+                title="Delete User"
+                message="Are you sure you want to delete this user? This action cannot be undone."
+                confirmLabel="Delete"
+                cancelLabel="Cancel"
+                variant="danger"
+                icon="delete"
+                isLoading={deleteMutation.isPending}
+            />
         </DashboardLayout>
     );
 };

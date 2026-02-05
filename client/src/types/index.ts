@@ -19,6 +19,11 @@ export interface Company {
   id: string;
   name: string;
   slug: string;
+  activity?: string;
+  address?: string;
+  city?: string;
+  sitesCount?: number;
+  employeesCount?: number;
   settings: Record<string, any>;
   createdAt: string;
   updatedAt: string;
