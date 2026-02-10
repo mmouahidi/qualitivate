@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import logger from '../config/logger';
 
 const SALT_ROUNDS = 10;
 
@@ -92,7 +93,7 @@ export const listUsers = async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('List users error:', error);
+    logger.error('List users error:', { error });
     res.status(500).json({ error: 'Failed to list users' });
   }
 };
@@ -126,7 +127,7 @@ export const getUser = async (req: AuthRequest, res: Response) => {
 
     res.json(user);
   } catch (error) {
-    console.error('Get user error:', error);
+    logger.error('Get user error:', { error });
     res.status(500).json({ error: 'Failed to get user' });
   }
 };
@@ -211,7 +212,7 @@ export const inviteUser = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(newUser);
   } catch (error) {
-    console.error('Invite user error:', error);
+    logger.error('Invite user error:', { error });
     res.status(500).json({ error: 'Failed to invite user' });
   }
 };
@@ -318,7 +319,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
 
     res.json(updatedUser);
   } catch (error) {
-    console.error('Update user error:', error);
+    logger.error('Update user error:', { error });
     res.status(500).json({ error: 'Failed to update user' });
   }
 };
@@ -352,7 +353,7 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
-    console.error('Delete user error:', error);
+    logger.error('Delete user error:', { error });
     res.status(500).json({ error: 'Failed to delete user' });
   }
 };
@@ -477,7 +478,7 @@ export const bulkCreateUsers = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(results);
   } catch (error) {
-    console.error('Bulk create users error:', error);
+    logger.error('Bulk create users error:', { error });
     res.status(500).json({ error: 'Failed to bulk create users' });
   }
 };

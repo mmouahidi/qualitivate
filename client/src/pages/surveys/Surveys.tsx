@@ -15,7 +15,7 @@ const Surveys: React.FC = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const isSuperAdmin = user?.role === 'super_admin';
-  
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [hideExpired, setHideExpired] = useState(true);
@@ -33,7 +33,7 @@ const Surveys: React.FC = () => {
     companyId: '',
     siteId: ''
   });
-  
+
   // Fetch companies for super_admin
   const { data: companiesData } = useQuery({
     queryKey: ['companies-list'],
@@ -50,10 +50,10 @@ const Surveys: React.FC = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ['surveys', search, statusFilter, selectedCompanyFilter],
-    queryFn: () => surveyService.list({ 
-      search, 
+    queryFn: () => surveyService.list({
+      search,
       status: statusFilter,
-      companyId: isSuperAdmin ? selectedCompanyFilter : undefined
+      companyId: isSuperAdmin && selectedCompanyFilter ? selectedCompanyFilter : undefined
     })
   });
 
@@ -112,12 +112,12 @@ const Surveys: React.FC = () => {
       startsAt: formData.startsAt || undefined,
       endsAt: formData.endsAt || undefined,
     };
-    
+
     // Super admin can specify company
     if (isSuperAdmin && formData.companyId) {
       payload.companyId = formData.companyId;
     }
-    
+
     createMutation.mutate(payload);
   };
 
@@ -319,11 +319,11 @@ const Surveys: React.FC = () => {
                     ))}
                   </select>
                   <p className="text-xs text-primary-600 mt-1">
-                    {formData.companyId 
-                      ? 'Survey belongs to selected company' 
+                    {formData.companyId
+                      ? 'Survey belongs to selected company'
                       : 'General survey accessible to all users'}
                   </p>
-                  
+
                   {formData.companyId && sitesData?.data && sitesData.data.length > 0 && (
                     <div className="mt-3">
                       <label className="label-soft text-primary-700">Site (optional)</label>

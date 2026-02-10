@@ -1,7 +1,10 @@
+// IMPORTANT: Import env first to validate environment variables before anything else
+import { env } from './config/env';
 import express, { Application } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
+import morgan from 'morgan';
 import authRoutes from './routes/auth.routes';
 import companyRoutes from './routes/company.routes';
 import siteRoutes from './routes/site.routes';
@@ -14,26 +17,55 @@ import analyticsRoutes from './routes/analytics.routes';
 import distributionRoutes from './routes/distribution.routes';
 import templateRoutes from './routes/template.routes';
 import { camelCaseResponse } from './utils/transformCase';
+import db from './config/database';
+import logger from './config/logger';
+import correlationId from './middlewares/correlationId.middleware';
+import { initSentry, captureException, addRequestContext } from './config/sentry';
 import path from 'path';
 
-dotenv.config();
+// Initialize Sentry before app setup
+initSentry();
 
 const app: Application = express();
-const PORT = process.env.PORT || 5000;
+const PORT = env.PORT;
+const isDevelopment = env.NODE_ENV !== 'production';
+
+// Request correlation ID - must be first for traceability
+app.use(correlationId);
+
+// Security headers with Helmet
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      scriptSrc: ["'self'"],
+      connectSrc: ["'self'", env.FRONTEND_URL],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Required for serving React app
+}));
+
+// Request logging
+app.use(morgan(isDevelopment ? 'dev' : 'combined', {
+  skip: (req) => req.path === '/api/health', // Skip logging health checks
+}));
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || true,
+  origin: env.FRONTEND_URL,
   credentials: true
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Request size limits (prevent DoS via large payloads)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Transform all JSON responses to camelCase
 app.use(camelCaseResponse());
 
 // Rate limiting (disabled in development mode)
-const isDevelopment = process.env.NODE_ENV !== 'production';
 
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -92,7 +124,7 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) {
     return next();
   }
-  
+
   res.sendFile(path.join(clientBuildPath, 'index.html'), (err) => {
     if (err) {
       if (!res.headersSent) {
@@ -102,21 +134,52 @@ app.get('*', (req, res, next) => {
   });
 });
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Health check with database connectivity
+app.get('/api/health', async (req, res) => {
+  try {
+    await db.raw('SELECT 1');
+    res.json({
+      status: 'ok',
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+      environment: env.NODE_ENV,
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      database: 'disconnected',
+      timestamp: new Date().toISOString(),
+      environment: env.NODE_ENV,
+    });
+  }
 });
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
+  // Add request context and capture error in Sentry
+  addRequestContext(req);
+  captureException(err, {
+    path: req.path,
+    method: req.method,
+    correlationId: req.correlationId,
+  });
+
+  logger.error('Unhandled error', {
+    error: err.message,
+    stack: err.stack,
+    path: req.path,
+    correlationId: req.correlationId
+  });
+
   res.status(err.status || 500).json({
     error: err.message || 'Internal Server Error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    correlationId: req.correlationId,
+    ...(isDevelopment && { stack: err.stack })
   });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`Server running on port ${PORT}`);
+  logger.info(`Environment: ${env.NODE_ENV}`);
 });
 
 export default app;

@@ -34,7 +34,7 @@ const TakeSurvey: React.FC = () => {
   const [anonymousToken, setAnonymousToken] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [visitedPath, setVisitedPath] = useState<string[]>([]);
-  
+
   // Language selector state
   const [availableLanguages, setAvailableLanguages] = useState<string[]>([]);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
@@ -47,7 +47,7 @@ const TakeSurvey: React.FC = () => {
   const loadSurveyAndProgress = async () => {
     try {
       setLoading(true);
-      
+
       // Load available languages
       try {
         const langResult = await responseService.getSurveyLanguages(surveyId!);
@@ -55,18 +55,18 @@ const TakeSurvey: React.FC = () => {
       } catch (e) {
         // Languages endpoint may fail, continue without multi-language
       }
-      
+
       // Check for saved progress in localStorage
       const savedProgress = getSavedProgress();
       const resumeId = resumeResponseId || savedProgress?.responseId;
-      
+
       // Load survey
-      const data = await responseService.getPublicSurvey(surveyId!, { 
+      const data = await responseService.getPublicSurvey(surveyId!, {
         dist: distributionId
       });
       setSurvey(data);
       setSelectedLanguage(data.survey.defaultLanguage || 'en');
-      
+
       // Restore progress if available
       if (resumeId) {
         await restoreProgress(resumeId, savedProgress, data);
@@ -115,7 +115,11 @@ const TakeSurvey: React.FC = () => {
 
   const clearSavedProgress = () => {
     if (surveyId) {
-      localStorage.removeItem(`${SURVEY_PROGRESS_KEY}${surveyId}`);
+      try {
+        localStorage.removeItem(`${SURVEY_PROGRESS_KEY}${surveyId}`);
+      } catch (e) {
+        console.warn('LocalStorage access denied', e);
+      }
     }
   };
 
@@ -126,7 +130,7 @@ const TakeSurvey: React.FC = () => {
         setResponseId(serverProgress.responseId);
         setAnonymousToken(serverProgress.anonymousToken);
         setAnswers(serverProgress.answers || {});
-        
+
         // Use local progress for navigation state if available
         if (localProgress && localProgress.responseId === resumeId) {
           setVisitedPath(localProgress.visitedPath.length ? localProgress.visitedPath : [surveyData.questions[0]?.id]);
@@ -159,9 +163,9 @@ const TakeSurvey: React.FC = () => {
     setSelectedLanguage(langCode);
     setLoading(true);
     try {
-      const data = await responseService.getPublicSurvey(surveyId!, { 
+      const data = await responseService.getPublicSurvey(surveyId!, {
         dist: distributionId,
-        lang: langCode 
+        lang: langCode
       });
       setSurvey(data);
     } catch (err: any) {
@@ -173,9 +177,9 @@ const TakeSurvey: React.FC = () => {
 
   const handleStart = async () => {
     try {
-      const result = await responseService.startResponse(surveyId!, { 
+      const result = await responseService.startResponse(surveyId!, {
         distributionId,
-        language: selectedLanguage 
+        language: selectedLanguage
       });
       setResponseId(result.responseId);
       setAnonymousToken(result.anonymousToken);
@@ -192,7 +196,7 @@ const TakeSurvey: React.FC = () => {
 
   const currentQuestion = survey?.questions[currentQuestionIndex];
   // Calculate progress based on visited path for more accurate progress when using skip logic
-  const progress = survey 
+  const progress = survey
     ? Math.min(100, ((visitedPath.length || 1) / survey.questions.length) * 100)
     : 0;
 
@@ -203,10 +207,10 @@ const TakeSurvey: React.FC = () => {
 
   const handleNext = async () => {
     if (!currentQuestion || !responseId || !survey) {
-      console.error('handleNext: Missing required data', { 
-        hasCurrentQuestion: !!currentQuestion, 
-        hasResponseId: !!responseId, 
-        hasSurvey: !!survey 
+      console.error('handleNext: Missing required data', {
+        hasCurrentQuestion: !!currentQuestion,
+        hasResponseId: !!responseId,
+        hasSurvey: !!survey
       });
       return;
     }
@@ -226,7 +230,7 @@ const TakeSurvey: React.FC = () => {
     // Use logic engine to determine next question
     const questions = survey.questions;
     const currentIdx = questions.findIndex(q => q.id === currentQuestion.id);
-    
+
     const result = evaluateLogic(
       {
         id: currentQuestion.id,
@@ -293,7 +297,7 @@ const TakeSurvey: React.FC = () => {
     const newPath = visitedPath.slice(0, -1);
     const previousQuestionId = newPath[newPath.length - 1];
     const previousIndex = survey.questions.findIndex(q => q.id === previousQuestionId);
-    
+
     if (previousIndex !== -1) {
       setVisitedPath(newPath);
       setCurrentQuestionIndex(previousIndex);
@@ -385,8 +389,8 @@ const TakeSurvey: React.FC = () => {
                 key={idx}
                 onClick={() => handleAnswer(option)}
                 className={`w-full text-left p-4 border-2 rounded-xl transition-all ${value === option
-                    ? 'border-primary-500 bg-primary-50 shadow-md'
-                    : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50'
+                  ? 'border-primary-500 bg-primary-50 shadow-md'
+                  : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50'
                   }`}
               >
                 <div className="flex items-center">
@@ -423,8 +427,8 @@ const TakeSurvey: React.FC = () => {
                     }
                   }}
                   className={`w-full text-left p-4 border-2 rounded-xl transition-all ${isSelected
-                      ? 'border-primary-500 bg-primary-50 shadow-md'
-                      : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50'
+                    ? 'border-primary-500 bg-primary-50 shadow-md'
+                    : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50'
                     }`}
                 >
                   <div className="flex items-center">
@@ -453,10 +457,10 @@ const TakeSurvey: React.FC = () => {
         const ratingLabels = typeof question.options === 'object' && question.options !== null && !Array.isArray(question.options)
           ? (question.options as any).labels || {}
           : {};
-        
+
         const lowEmoji = '\u{1F61F}'; // 😟
         const highEmoji = '\u{1F60A}'; // 😊
-        
+
         return (
           <div className="space-y-6">
             {/* Rating scale labels */}
@@ -472,7 +476,7 @@ const TakeSurvey: React.FC = () => {
                 </span>
               </div>
             )}
-            
+
             {/* Enhanced rating buttons with gradient */}
             <div className="flex justify-center gap-2 sm:gap-3 py-6">
               {Array.from({ length: maxRating }, (_, i) => i + 1).map((rating) => {
@@ -482,11 +486,10 @@ const TakeSurvey: React.FC = () => {
                   <button
                     key={rating}
                     onClick={() => handleAnswer(rating)}
-                    className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl font-bold text-lg sm:text-xl transition-all duration-300 ${
-                      isSelected
+                    className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl font-bold text-lg sm:text-xl transition-all duration-300 ${isSelected
                         ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-2xl scale-125 ring-4 ring-primary-200'
                         : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-primary-300 hover:bg-primary-50 hover:scale-110 shadow-sm'
-                    }`}
+                      }`}
                     title={ratingLabels[rating] || `Rating ${rating}`}
                   >
                     {rating}
@@ -497,7 +500,7 @@ const TakeSurvey: React.FC = () => {
                 );
               })}
             </div>
-            
+
             {/* Show selected rating label with animation */}
             {value && (
               <div className="text-center animate-fade-in">
@@ -523,7 +526,7 @@ const TakeSurvey: React.FC = () => {
                 <span className="text-green-500">{'🤩'}</span>
               </span>
             </div>
-            
+
             {/* Color-coded NPS grid */}
             <div className="grid grid-cols-11 gap-1.5 sm:gap-2">
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
@@ -531,13 +534,12 @@ const TakeSurvey: React.FC = () => {
                 const isDetractor = num <= 6;
                 const isPassive = num === 7 || num === 8;
                 const isPromoter = num >= 9;
-                
+
                 return (
                   <button
                     key={num}
                     onClick={() => handleAnswer(num)}
-                    className={`aspect-square rounded-lg sm:rounded-xl font-bold text-sm sm:text-lg transition-all duration-300 relative ${
-                      isSelected
+                    className={`aspect-square rounded-lg sm:rounded-xl font-bold text-sm sm:text-lg transition-all duration-300 relative ${isSelected
                         ? isDetractor
                           ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-2xl scale-125 ring-4 ring-red-200'
                           : isPassive
@@ -548,7 +550,7 @@ const TakeSurvey: React.FC = () => {
                           : isPassive
                             ? 'bg-yellow-50 border-2 border-yellow-200 text-yellow-700 hover:bg-yellow-100 hover:scale-110'
                             : 'bg-green-50 border-2 border-green-200 text-green-700 hover:bg-green-100 hover:scale-110'
-                    }`}
+                      }`}
                   >
                     {num}
                     {isSelected && (
@@ -558,17 +560,16 @@ const TakeSurvey: React.FC = () => {
                 );
               })}
             </div>
-            
+
             {/* NPS Category indicator */}
             {value !== undefined && (
               <div className="text-center animate-fade-in">
-                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold ${
-                  value <= 6
+                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold ${value <= 6
                     ? 'bg-red-100 text-red-700'
                     : value <= 8
                       ? 'bg-yellow-100 text-yellow-700'
                       : 'bg-green-100 text-green-700'
-                }`}>
+                  }`}>
                   {value <= 6 && '😞 Detractor'}
                   {value === 7 || value === 8 ? '😐 Passive' : ''}
                   {value >= 9 && '🤩 Promoter'}
@@ -658,11 +659,10 @@ const TakeSurvey: React.FC = () => {
                       <td key={colIdx} className="p-2 text-center">
                         <button
                           onClick={() => handleAnswer({ ...matrixValue, [row]: col })}
-                          className={`w-5 h-5 rounded-full border-2 transition-all ${
-                            matrixValue[row] === col
+                          className={`w-5 h-5 rounded-full border-2 transition-all ${matrixValue[row] === col
                               ? 'border-primary-500 bg-primary-500'
                               : 'border-gray-300 hover:border-primary-300'
-                          }`}
+                            }`}
                         >
                           {matrixValue[row] === col && (
                             <svg className="w-3 h-3 text-white mx-auto" fill="currentColor" viewBox="0 0 20 20">
@@ -701,21 +701,19 @@ const TakeSurvey: React.FC = () => {
           <div className="flex justify-center gap-4">
             <button
               onClick={() => handleAnswer(true)}
-              className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all ${
-                value === true
+              className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all ${value === true
                   ? 'bg-green-500 text-white shadow-lg scale-105'
                   : 'bg-gray-100 text-gray-700 hover:bg-green-50 hover:text-green-700'
-              }`}
+                }`}
             >
               {t('common.yes') || 'Yes'}
             </button>
             <button
               onClick={() => handleAnswer(false)}
-              className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all ${
-                value === false
+              className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all ${value === false
                   ? 'bg-red-500 text-white shadow-lg scale-105'
                   : 'bg-gray-100 text-gray-700 hover:bg-red-50 hover:text-red-700'
-              }`}
+                }`}
             >
               {t('common.no') || 'No'}
             </button>
@@ -782,7 +780,7 @@ const TakeSurvey: React.FC = () => {
   // Welcome screen
   if (!started) {
     const welcomeMessage = survey.survey.settings?.welcomeMessage;
-    
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-lg text-center">
@@ -804,7 +802,7 @@ const TakeSurvey: React.FC = () => {
           )}
 
           <h1 className="text-3xl font-bold text-gray-900 mb-4">{survey.survey.title}</h1>
-          
+
           {/* Custom welcome message or default description */}
           {welcomeMessage ? (
             <div className="text-gray-600 mb-6 whitespace-pre-wrap">{welcomeMessage}</div>
@@ -889,7 +887,7 @@ const TakeSurvey: React.FC = () => {
             </svg>
             {t('survey.saveProgress')}
           </button>
-          
+
           {showResumeLink && (
             <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl p-4 w-72">
               <p className="text-sm text-gray-600 mb-2">{t('survey.resumeLink')}</p>

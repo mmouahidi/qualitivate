@@ -41,7 +41,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     onDelete,
     onDuplicate,
 }) => {
-    const [localContent, setLocalContent] = useState(question.content);
+    const [localContent, setLocalContent] = useState(question.content || '');
     const [localRequired, setLocalRequired] = useState(question.is_required);
     const [localChoices, setLocalChoices] = useState<string[]>(question.options?.choices || []);
     const cardRef = useRef<HTMLDivElement>(null);

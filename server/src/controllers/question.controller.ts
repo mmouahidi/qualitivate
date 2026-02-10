@@ -2,55 +2,16 @@ import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import logger from '../config/logger';
+import {
+  VALID_QUESTION_TYPES,
+  QuestionType,
+  isValidQuestionType,
+  VALID_LANGUAGE_CODES,
+  isValidLanguageCode,
+  validateQuestionOptions,
+} from '../types/domain';
 
-// Valid question types
-const VALID_QUESTION_TYPES = ['nps', 'multiple_choice', 'text_short', 'text_long', 'rating_scale', 'matrix'] as const;
-type QuestionType = typeof VALID_QUESTION_TYPES[number];
-
-// Valid language codes (ISO 639-1)
-const VALID_LANGUAGE_CODES = ['en', 'es', 'fr', 'de', 'it', 'pt', 'nl', 'pl', 'ru', 'zh', 'ja', 'ko', 'ar', 'hi', 'sv', 'da', 'no', 'fi'] as const;
-
-const isValidQuestionType = (type: string): type is QuestionType =>
-  VALID_QUESTION_TYPES.includes(type as QuestionType);
-
-const isValidLanguageCode = (code: string): boolean =>
-  VALID_LANGUAGE_CODES.includes(code as any) || /^[a-z]{2}(-[A-Z]{2})?$/.test(code);
-
-// Validate options based on question type
-const validateQuestionOptions = (type: QuestionType, options: any): { valid: boolean; error?: string } => {
-  switch (type) {
-    case 'multiple_choice':
-      if (options.choices) {
-        if (!Array.isArray(options.choices) || options.choices.length === 0) {
-          return { valid: false, error: 'multiple_choice requires non-empty choices array' };
-        }
-        const uniqueChoices = new Set(options.choices);
-        if (uniqueChoices.size !== options.choices.length) {
-          return { valid: false, error: 'multiple_choice choices must be unique' };
-        }
-      }
-      break;
-    case 'rating_scale':
-      if (options.min !== undefined && options.max !== undefined) {
-        if (typeof options.min !== 'number' || typeof options.max !== 'number') {
-          return { valid: false, error: 'rating_scale min and max must be numbers' };
-        }
-        if (options.min >= options.max) {
-          return { valid: false, error: 'rating_scale min must be less than max' };
-        }
-      }
-      break;
-    case 'matrix':
-      if (options.rows && !Array.isArray(options.rows)) {
-        return { valid: false, error: 'matrix rows must be an array' };
-      }
-      if (options.columns && !Array.isArray(options.columns)) {
-        return { valid: false, error: 'matrix columns must be an array' };
-      }
-      break;
-  }
-  return { valid: true };
-};
 
 export const listQuestions = async (req: AuthRequest, res: Response) => {
   try {
@@ -73,7 +34,7 @@ export const listQuestions = async (req: AuthRequest, res: Response) => {
 
     res.json({ data: questions });
   } catch (error) {
-    console.error('List questions error:', error);
+    logger.error('List questions error:', { error });
     res.status(500).json({ error: 'Failed to list questions' });
   }
 };
@@ -127,7 +88,7 @@ export const createQuestion = async (req: AuthRequest, res: Response) => {
         survey_id: surveyId,
         type,
         content,
-        options,
+        options: JSON.stringify(options),
         is_required: isRequired,
         order_index: orderIndex
       })
@@ -135,7 +96,7 @@ export const createQuestion = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(question);
   } catch (error) {
-    console.error('Create question error:', error);
+    logger.error('Create question error:', { error });
     res.status(500).json({ error: 'Failed to create question' });
   }
 };
@@ -205,7 +166,7 @@ export const updateQuestion = async (req: AuthRequest, res: Response) => {
 
     res.json(updatedQuestion);
   } catch (error) {
-    console.error('Update question error:', error);
+    logger.error('Update question error:', { error });
     res.status(500).json({ error: 'Failed to update question' });
   }
 };
@@ -238,7 +199,7 @@ export const deleteQuestion = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Question deleted successfully' });
   } catch (error) {
-    console.error('Delete question error:', error);
+    logger.error('Delete question error:', { error });
     res.status(500).json({ error: 'Failed to delete question' });
   }
 };
@@ -276,7 +237,7 @@ export const reorderQuestions = async (req: AuthRequest, res: Response) => {
       .pluck('id');
 
     const existingSet = new Set(existingQuestions);
-    
+
     // Check all provided IDs exist in the survey
     for (const qid of questionIds) {
       if (!existingSet.has(qid)) {
@@ -286,8 +247,8 @@ export const reorderQuestions = async (req: AuthRequest, res: Response) => {
 
     // Check all survey questions are included
     if (questionIds.length !== existingQuestions.length) {
-      return res.status(400).json({ 
-        error: `questionIds count (${questionIds.length}) does not match survey questions count (${existingQuestions.length})` 
+      return res.status(400).json({
+        error: `questionIds count (${questionIds.length}) does not match survey questions count (${existingQuestions.length})`
       });
     }
 
@@ -306,7 +267,7 @@ export const reorderQuestions = async (req: AuthRequest, res: Response) => {
 
     res.json({ data: questions });
   } catch (error) {
-    console.error('Reorder questions error:', error);
+    logger.error('Reorder questions error:', { error });
     res.status(500).json({ error: 'Failed to reorder questions' });
   }
 };
@@ -335,7 +296,7 @@ export const getTranslations = async (req: AuthRequest, res: Response) => {
 
     res.json({ data: translations });
   } catch (error) {
-    console.error('Get translations error:', error);
+    logger.error('Get translations error:', { error });
     res.status(500).json({ error: 'Failed to get translations' });
   }
 };
@@ -380,10 +341,10 @@ export const createTranslation = async (req: AuthRequest, res: Response) => {
     if (existing) {
       const [updated] = await db('question_translations')
         .where({ id: existing.id })
-        .update({ 
-          content, 
+        .update({
+          content,
           options,
-          updated_at: new Date() 
+          updated_at: new Date()
         })
         .returning('*');
       return res.json(updated);
@@ -401,7 +362,7 @@ export const createTranslation = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(translation);
   } catch (error) {
-    console.error('Create translation error:', error);
+    logger.error('Create translation error:', { error });
     res.status(500).json({ error: 'Failed to create translation' });
   }
 };

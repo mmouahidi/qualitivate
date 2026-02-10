@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 // import Register from './pages/Register';
@@ -39,118 +40,120 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <AuthProvider>
-          <Router>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/book-demo" element={<BookDemo />} />
-              <Route path="/login" element={<Login />} />
-            {/* <Route path="/register" element={<Register />} />  -- Removed as per request */}
+          <ErrorBoundary>
+            <Router>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/book-demo" element={<BookDemo />} />
+                <Route path="/login" element={<Login />} />
+                {/* <Route path="/register" element={<Register />} />  -- Removed as per request */}
 
-            {/* Public survey response route - no auth required */}
-            <Route path="/survey/:surveyId/respond" element={<SurveyRespond />} />
-            <Route path="/survey/:surveyId/embed" element={<SurveyRespond />} />
-            <Route path="/survey/:surveyId/take" element={<TakeSurvey />} />
-            <Route path="/survey/:surveyId/thank-you" element={<ThankYou />} />
+                {/* Public survey response route - no auth required */}
+                <Route path="/survey/:surveyId/respond" element={<SurveyRespond />} />
+                <Route path="/survey/:surveyId/embed" element={<SurveyRespond />} />
+                <Route path="/survey/:surveyId/take" element={<TakeSurvey />} />
+                <Route path="/survey/:surveyId/thank-you" element={<ThankYou />} />
 
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/companies"
-              element={
-                <ProtectedRoute>
-                  <Companies />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/users"
-              element={
-                <ProtectedRoute>
-                  <Users />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/sites"
-              element={
-                <ProtectedRoute>
-                  <Sites />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/surveys"
-              element={
-                <ProtectedRoute>
-                  <Surveys />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/surveys/:id/edit"
-              element={
-                <ProtectedRoute>
-                  <SurveyEditor />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/surveys/:id/builder"
-              element={
-                <ProtectedRoute>
-                  <SurveyBuilder />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/surveys/:id/distribute"
-              element={
-                <ProtectedRoute>
-                  <SurveyDistribute />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/analytics"
-              element={
-                <ProtectedRoute>
-                  <AnalyticsDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/analytics/surveys/:surveyId"
-              element={
-                <ProtectedRoute>
-                  <SurveyAnalytics />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/analytics/responses/:responseId"
-              element={
-                <ProtectedRoute>
-                  <ResponseDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Router>
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/companies"
+                  element={
+                    <ProtectedRoute>
+                      <Companies />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/users"
+                  element={
+                    <ProtectedRoute>
+                      <Users />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sites"
+                  element={
+                    <ProtectedRoute>
+                      <Sites />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/surveys"
+                  element={
+                    <ProtectedRoute>
+                      <Surveys />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/surveys/:id/edit"
+                  element={
+                    <ProtectedRoute>
+                      <SurveyEditor />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/surveys/:id/builder"
+                  element={
+                    <ProtectedRoute>
+                      <SurveyBuilder />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/surveys/:id/distribute"
+                  element={
+                    <ProtectedRoute>
+                      <SurveyDistribute />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/analytics"
+                  element={
+                    <ProtectedRoute>
+                      <AnalyticsDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/analytics/surveys/:surveyId"
+                  element={
+                    <ProtectedRoute>
+                      <SurveyAnalytics />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/analytics/responses/:responseId"
+                  element={
+                    <ProtectedRoute>
+                      <ResponseDetails />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Router>
+          </ErrorBoundary>
         </AuthProvider>
       </ToastProvider>
     </QueryClientProvider>

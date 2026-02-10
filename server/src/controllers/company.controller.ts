@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import logger from '../config/logger';
 
 export const listCompanies = async (req: AuthRequest, res: Response) => {
   try {
@@ -52,7 +53,7 @@ export const listCompanies = async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('List companies error:', error);
+    logger.error('List companies error:', { error });
     res.status(500).json({ error: 'Failed to list companies' });
   }
 };
@@ -83,7 +84,7 @@ export const getCompany = async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Get company error:', error);
+    logger.error('Get company error:', { error });
     res.status(500).json({ error: 'Failed to get company' });
   }
 };
@@ -113,7 +114,7 @@ export const createCompany = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(company);
   } catch (error) {
-    console.error('Create company error:', error);
+    logger.error('Create company error:', { error });
     res.status(500).json({ error: 'Failed to create company' });
   }
 };
@@ -161,7 +162,7 @@ export const updateCompany = async (req: AuthRequest, res: Response) => {
 
     res.json(updatedCompany);
   } catch (error) {
-    console.error('Update company error:', error);
+    logger.error('Update company error:', { error });
     res.status(500).json({ error: 'Failed to update company' });
   }
 };
@@ -180,7 +181,7 @@ export const deleteCompany = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Company deleted successfully' });
   } catch (error) {
-    console.error('Delete company error:', error);
+    logger.error('Delete company error:', { error });
     res.status(500).json({ error: 'Failed to delete company' });
   }
 };

@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import logger from '../config/logger';
 
 export const listDepartments = async (req: AuthRequest, res: Response) => {
   try {
@@ -67,7 +68,7 @@ export const listDepartments = async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('List departments error:', error);
+    logger.error('List departments error:', { error });
     res.status(500).json({ error: 'Failed to list departments' });
   }
 };
@@ -108,7 +109,7 @@ export const getDepartment = async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Get department error:', error);
+    logger.error('Get department error:', { error });
     res.status(500).json({ error: 'Failed to get department' });
   }
 };
@@ -146,7 +147,7 @@ export const createDepartment = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(department);
   } catch (error) {
-    console.error('Create department error:', error);
+    logger.error('Create department error:', { error });
     res.status(500).json({ error: 'Failed to create department' });
   }
 };
@@ -189,7 +190,7 @@ export const updateDepartment = async (req: AuthRequest, res: Response) => {
 
     res.json(updatedDepartment);
   } catch (error) {
-    console.error('Update department error:', error);
+    logger.error('Update department error:', { error });
     res.status(500).json({ error: 'Failed to update department' });
   }
 };
@@ -225,7 +226,7 @@ export const deleteDepartment = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Department deleted successfully' });
   } catch (error) {
-    console.error('Delete department error:', error);
+    logger.error('Delete department error:', { error });
     res.status(500).json({ error: 'Failed to delete department' });
   }
 };

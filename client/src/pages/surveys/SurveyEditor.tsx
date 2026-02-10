@@ -203,8 +203,8 @@ const SurveyEditor: React.FC = () => {
     setEditingQuestion(question);
     setQuestionForm({
       type: question.type,
-      content: question.content,
-      isRequired: question.is_required,
+      content: question.content || '',
+      isRequired: question.is_required || false,
       options: question.options || { choices: [''] }
     });
   };

@@ -1,12 +1,13 @@
 import nodemailer from 'nodemailer';
+import { env } from '../config/env';
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
+  host: env.SMTP_HOST || 'smtp.gmail.com',
+  port: env.SMTP_PORT || 587,
   secure: false,
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
+    user: env.SMTP_USER,
+    pass: env.SMTP_PASS
   }
 });
 
@@ -136,7 +137,7 @@ This email was sent by Qualitivate.io
   `.trim();
 
   await transporter.sendMail({
-    from: process.env.SMTP_FROM || 'noreply@qualitivate.io',
+    from: env.SMTP_FROM || 'noreply@qualitivate.io',
     to,
     subject,
     text: textContent,

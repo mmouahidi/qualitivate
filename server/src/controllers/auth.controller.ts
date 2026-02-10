@@ -3,24 +3,22 @@ import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
+import { env } from '../config/env';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import { parseTokenExpiry } from '../utils/token';
+import logger from '../config/logger';
 
 const SALT_ROUNDS = 10;
 const MAX_REFRESH_TOKENS_PER_USER = 5;
 
 // JWT configuration with proper typing
 const getAccessTokenOptions = (): SignOptions => ({
-  expiresIn: (process.env.JWT_EXPIRES_IN || '1h') as any
+  expiresIn: env.JWT_EXPIRES_IN as any
 });
 
 const getRefreshTokenOptions = (): SignOptions => ({
-  expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any
+  expiresIn: env.JWT_REFRESH_EXPIRES_IN as any
 });
-
-if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
-  throw new Error('JWT_SECRET and JWT_REFRESH_SECRET must be set in environment variables');
-}
 
 export const register = async (req: AuthRequest, res: Response) => {
   try {
@@ -54,17 +52,17 @@ export const register = async (req: AuthRequest, res: Response) => {
 
     const accessToken = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET!,
+      env.JWT_SECRET,
       getAccessTokenOptions()
     );
 
     const refreshToken = jwt.sign(
       { userId: user.id },
-      process.env.JWT_REFRESH_SECRET!,
+      env.JWT_REFRESH_SECRET,
       getRefreshTokenOptions()
     );
 
-    const refreshExpiryMs = parseTokenExpiry(process.env.JWT_REFRESH_EXPIRES_IN || '7d');
+    const refreshExpiryMs = parseTokenExpiry(env.JWT_REFRESH_EXPIRES_IN);
     const expiresAt = new Date(Date.now() + refreshExpiryMs);
 
     await db('refresh_tokens').insert({
@@ -89,7 +87,7 @@ export const register = async (req: AuthRequest, res: Response) => {
       refreshToken
     });
   } catch (error) {
-    console.error('Register error:', error);
+    logger.error('Register error:', { error });
     res.status(500).json({ error: 'Failed to register user' });
   }
 };
@@ -103,13 +101,13 @@ export const login = async (req: AuthRequest, res: Response) => {
     }
 
     const user = await db('users').where({ email, is_active: true }).first();
-    
+
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-    
+
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
@@ -128,17 +126,17 @@ export const login = async (req: AuthRequest, res: Response) => {
 
     const accessToken = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET!,
+      env.JWT_SECRET,
       getAccessTokenOptions()
     );
 
     const refreshToken = jwt.sign(
       { userId: user.id },
-      process.env.JWT_REFRESH_SECRET!,
+      env.JWT_REFRESH_SECRET,
       getRefreshTokenOptions()
     );
 
-    const refreshExpiryMs = parseTokenExpiry(process.env.JWT_REFRESH_EXPIRES_IN || '7d');
+    const refreshExpiryMs = parseTokenExpiry(env.JWT_REFRESH_EXPIRES_IN);
     const expiresAt = new Date(Date.now() + refreshExpiryMs);
 
     await db('refresh_tokens').insert({
@@ -163,7 +161,15 @@ export const login = async (req: AuthRequest, res: Response) => {
       refreshToken
     });
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error:', { error });
+    // In development, return the actual error to help debugging
+    if (env.NODE_ENV !== 'production') {
+      return res.status(500).json({
+        error: 'Failed to login',
+        details: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+    }
     res.status(500).json({ error: 'Failed to login' });
   }
 };
@@ -178,7 +184,7 @@ export const refreshAccessToken = async (req: AuthRequest, res: Response) => {
 
     let decoded: any;
     try {
-      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!);
+      decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET);
     } catch (err: any) {
       if (err.name === 'TokenExpiredError') {
         return res.status(401).json({ error: 'Refresh token expired' });
@@ -203,13 +209,13 @@ export const refreshAccessToken = async (req: AuthRequest, res: Response) => {
 
     const accessToken = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET!,
+      env.JWT_SECRET,
       getAccessTokenOptions()
     );
 
     res.json({ accessToken });
   } catch (error) {
-    console.error('Refresh token error:', error);
+    logger.error('Refresh token error:', { error });
     res.status(500).json({ error: 'Failed to refresh token' });
   }
 };
@@ -224,7 +230,7 @@ export const logout = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
-    console.error('Logout error:', error);
+    logger.error('Logout error:', { error });
     res.status(500).json({ error: 'Failed to logout' });
   }
 };
@@ -255,7 +261,7 @@ export const me = async (req: AuthRequest, res: Response) => {
       departmentId: user.department_id
     });
   } catch (error) {
-    console.error('Me error:', error);
+    logger.error('Me error:', { error });
     res.status(500).json({ error: 'Failed to get user info' });
   }
 };

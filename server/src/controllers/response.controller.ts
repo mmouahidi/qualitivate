@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import logger from '../config/logger';
 
 // Get public survey for responding (no auth required)
 export const getPublicSurvey = async (req: Request, res: Response) => {
@@ -52,7 +53,7 @@ export const getPublicSurvey = async (req: Request, res: Response) => {
     // Apply translations to questions
     const translatedQuestions = questions.map(q => {
       const translation = translationMap.get(q.id);
-      
+
       // Parse options if it's a string
       let parsedOptions = q.options;
       if (typeof q.options === 'string') {
@@ -62,7 +63,7 @@ export const getPublicSurvey = async (req: Request, res: Response) => {
           parsedOptions = {};
         }
       }
-      
+
       // Parse translation options if available and is a string
       let translatedOptions = translation?.options || parsedOptions;
       if (typeof translatedOptions === 'string') {
@@ -72,7 +73,7 @@ export const getPublicSurvey = async (req: Request, res: Response) => {
           translatedOptions = parsedOptions;
         }
       }
-      
+
       return {
         id: q.id,
         type: q.type,
@@ -97,7 +98,7 @@ export const getPublicSurvey = async (req: Request, res: Response) => {
       distributionId: dist
     });
   } catch (error) {
-    console.error('Get public survey error:', error);
+    logger.error('Get public survey error:', { error });
     res.status(500).json({ error: 'Failed to get survey' });
   }
 };
@@ -144,7 +145,7 @@ export const startResponse = async (req: AuthRequest, res: Response) => {
       anonymousToken: response.anonymous_token
     });
   } catch (error) {
-    console.error('Start response error:', error);
+    logger.error('Start response error:', { error });
     res.status(500).json({ error: 'Failed to start response' });
   }
 };
@@ -188,7 +189,7 @@ export const saveAnswer = async (req: Request, res: Response) => {
 
     res.json({ message: 'Answer saved' });
   } catch (error) {
-    console.error('Save answer error:', error);
+    logger.error('Save answer error:', { error });
     res.status(500).json({ error: 'Failed to save answer' });
   }
 };
@@ -263,7 +264,7 @@ export const submitAnswers = async (req: Request, res: Response) => {
 
     res.json({ message: 'Survey submitted successfully' });
   } catch (error) {
-    console.error('Submit answers error:', error);
+    logger.error('Submit answers error:', { error });
     res.status(500).json({ error: 'Failed to submit survey' });
   }
 };
@@ -311,7 +312,7 @@ export const completeResponse = async (req: Request, res: Response) => {
 
     res.json({ message: 'Survey completed successfully' });
   } catch (error) {
-    console.error('Complete response error:', error);
+    logger.error('Complete response error:', { error });
     res.status(500).json({ error: 'Failed to complete response' });
   }
 };
@@ -341,7 +342,7 @@ export const getSurveyLanguages = async (req: Request, res: Response) => {
 
     res.json({ languages });
   } catch (error) {
-    console.error('Get survey languages error:', error);
+    logger.error('Get survey languages error:', { error });
     res.status(500).json({ error: 'Failed to get languages' });
   }
 };
@@ -382,7 +383,7 @@ export const getResponseProgress = async (req: Request, res: Response) => {
       startedAt: response.started_at
     });
   } catch (error) {
-    console.error('Get response progress error:', error);
+    logger.error('Get response progress error:', { error });
     res.status(500).json({ error: 'Failed to get response progress' });
   }
 };
@@ -407,7 +408,7 @@ export const getSurveySettings = async (req: Request, res: Response) => {
       settings: survey.settings || {}
     });
   } catch (error) {
-    console.error('Get survey settings error:', error);
+    logger.error('Get survey settings error:', { error });
     res.status(500).json({ error: 'Failed to get survey settings' });
   }
 };
@@ -432,7 +433,7 @@ export const getUserSurveyStatus = async (req: AuthRequest, res: Response) => {
       }))
     });
   } catch (error) {
-    console.error('Get user survey status error:', error);
+    logger.error('Get user survey status error:', { error });
     res.status(500).json({ error: 'Failed to get survey status' });
   }
 };
@@ -462,7 +463,7 @@ export const getUserCompletedSurveys = async (req: AuthRequest, res: Response) =
       total: completedSurveys.length
     });
   } catch (error) {
-    console.error('Get user completed surveys error:', error);
+    logger.error('Get user completed surveys error:', { error });
     res.status(500).json({ error: 'Failed to get completed surveys' });
   }
 };

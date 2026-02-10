@@ -16,3 +16,12 @@ yarn-error.log*
 .idea/
 coverage/
 .verdent/
+
+# Antigravity Kit (AI agent config)
+.agent/
+
+# Temp files
+temp_*/
+test_output*.txt
+server.log
+

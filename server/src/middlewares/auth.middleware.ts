@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import db from '../config/database';
+import logger from '../config/logger';
+import { env } from '../config/env';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -16,16 +18,16 @@ export interface AuthRequest extends Request {
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'No token provided' });
     }
 
     const token = authHeader.substring(7);
-    
+
     let decoded: any;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET!);
+      decoded = jwt.verify(token, env.JWT_SECRET);
     } catch (err: any) {
       if (err.name === 'TokenExpiredError') {
         return res.status(401).json({ error: 'Token expired', code: 'TOKEN_EXPIRED' });
@@ -52,7 +54,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
     next();
   } catch (error) {
-    console.error('Authentication error:', error);
+    logger.error('Authentication error', { error });
     return res.status(500).json({ error: 'Authentication failed' });
   }
 };
@@ -75,16 +77,16 @@ export const authorize = (...roles: string[]) => {
 export const optionalAuthenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return next(); // No token, continue without user
     }
 
     const token = authHeader.substring(7);
-    
+
     let decoded: any;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET!);
+      decoded = jwt.verify(token, env.JWT_SECRET);
     } catch (err: any) {
       return next(); // Invalid token, continue without user
     }
@@ -106,7 +108,7 @@ export const optionalAuthenticate = async (req: AuthRequest, res: Response, next
 
     next();
   } catch (error) {
-    console.error('Optional authentication error:', error);
+    logger.warn('Optional authentication error', { error });
     next(); // Continue even on error
   }
 };
@@ -140,7 +142,7 @@ export const checkSiteAccess = async (req: AuthRequest, res: Response, next: Nex
     }
 
     const site = await db('sites').where({ id: siteId }).first();
-    
+
     if (!site) {
       return res.status(404).json({ error: 'Site not found' });
     }
@@ -173,7 +175,7 @@ export const checkDepartmentAccess = async (req: AuthRequest, res: Response, nex
       .where('departments.id', departmentId)
       .select('departments.*', 'sites.company_id')
       .first();
-    
+
     if (!department) {
       return res.status(404).json({ error: 'Department not found' });
     }

@@ -2,25 +2,17 @@ import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import logger from '../config/logger';
+import {
+  VALID_SURVEY_TYPES,
+  SurveyType,
+  isValidSurveyType,
+  VALID_SURVEY_STATUSES,
+  SurveyStatus,
+  isValidSurveyStatus,
+  isValidDateRange,
+} from '../types/domain';
 
-// Valid enum values
-const VALID_SURVEY_TYPES = ['nps', 'custom'] as const;
-const VALID_SURVEY_STATUSES = ['draft', 'active', 'closed'] as const;
-
-type SurveyType = typeof VALID_SURVEY_TYPES[number];
-type SurveyStatus = typeof VALID_SURVEY_STATUSES[number];
-
-// Validation helpers
-const isValidSurveyType = (type: string): type is SurveyType =>
-  VALID_SURVEY_TYPES.includes(type as SurveyType);
-
-const isValidSurveyStatus = (status: string): status is SurveyStatus =>
-  VALID_SURVEY_STATUSES.includes(status as SurveyStatus);
-
-const isValidDateRange = (startsAt?: string, endsAt?: string): boolean => {
-  if (!startsAt || !endsAt) return true;
-  return new Date(startsAt) <= new Date(endsAt);
-};
 
 export const listSurveys = async (req: AuthRequest, res: Response) => {
   try {
@@ -30,8 +22,8 @@ export const listSurveys = async (req: AuthRequest, res: Response) => {
 
     let query = db('surveys')
       .select(
-        'surveys.*', 
-        'users.first_name as creator_first_name', 
+        'surveys.*',
+        'users.first_name as creator_first_name',
         'users.last_name as creator_last_name',
         'companies.name as company_name'
       )
@@ -108,7 +100,7 @@ export const listSurveys = async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('List surveys error:', error);
+    logger.error('', { error });
     res.status(500).json({ error: 'Failed to list surveys' });
   }
 };
@@ -148,7 +140,7 @@ export const getSurvey = async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Get survey error:', error);
+    logger.error('', { error });
     res.status(500).json({ error: 'Failed to get survey' });
   }
 };
@@ -223,7 +215,7 @@ export const createSurvey = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(survey);
   } catch (error) {
-    console.error('Create survey error:', error);
+    logger.error('', { error });
     res.status(500).json({ error: 'Failed to create survey' });
   }
 };
@@ -315,7 +307,7 @@ export const updateSurvey = async (req: AuthRequest, res: Response) => {
 
     res.json(updatedSurvey);
   } catch (error) {
-    console.error('Update survey error:', error);
+    logger.error('', { error });
     res.status(500).json({ error: 'Failed to update survey' });
   }
 };
@@ -374,7 +366,7 @@ export const deleteSurvey = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Survey deleted successfully' });
   } catch (error) {
-    console.error('Delete survey error:', error);
+    logger.error('', { error });
     res.status(500).json({ error: 'Failed to delete survey' });
   }
 };
@@ -479,7 +471,7 @@ export const duplicateSurvey = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(result);
   } catch (error) {
-    console.error('Duplicate survey error:', error);
+    logger.error('', { error });
     res.status(500).json({ error: 'Failed to duplicate survey' });
   }
 };

@@ -13,7 +13,13 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    let token = null;
+    try {
+      token = localStorage.getItem('accessToken');
+    } catch (e) {
+      console.warn('LocalStorage access denied', e);
+    }
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -41,24 +47,39 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
+        let refreshToken = null;
+        try {
+          refreshToken = localStorage.getItem('refreshToken');
+        } catch (e) {
+          console.warn('LocalStorage access denied', e);
+        }
+
         if (refreshToken) {
           const { data } = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
-          localStorage.setItem('accessToken', data.accessToken);
-          
+
+          try {
+            localStorage.setItem('accessToken', data.accessToken);
+          } catch (e) {
+            console.warn('LocalStorage access denied', e);
+          }
+
           originalRequest.headers = originalRequest.headers ?? {};
           originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
-          
+
           return api(originalRequest);
         }
       } catch (refreshError) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        
+        try {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+        } catch (e) {
+          console.warn('LocalStorage access denied', e);
+        }
+
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
-        
+
         return Promise.reject(refreshError);
       }
     }

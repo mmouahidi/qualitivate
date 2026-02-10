@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import logger from '../config/logger';
 
 export const listSites = async (req: AuthRequest, res: Response) => {
   try {
@@ -66,7 +67,7 @@ export const listSites = async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('List sites error:', error);
+    logger.error('List sites error:', { error });
     res.status(500).json({ error: 'Failed to list sites' });
   }
 };
@@ -106,7 +107,7 @@ export const getSite = async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Get site error:', error);
+    logger.error('Get site error:', { error });
     res.status(500).json({ error: 'Failed to get site' });
   }
 };
@@ -145,7 +146,7 @@ export const createSite = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(site);
   } catch (error) {
-    console.error('Create site error:', error);
+    logger.error('Create site error:', { error });
     res.status(500).json({ error: 'Failed to create site' });
   }
 };
@@ -185,7 +186,7 @@ export const updateSite = async (req: AuthRequest, res: Response) => {
 
     res.json(updatedSite);
   } catch (error) {
-    console.error('Update site error:', error);
+    logger.error('Update site error:', { error });
     res.status(500).json({ error: 'Failed to update site' });
   }
 };
@@ -214,7 +215,7 @@ export const deleteSite = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Site deleted successfully' });
   } catch (error) {
-    console.error('Delete site error:', error);
+    logger.error('Delete site error:', { error });
     res.status(500).json({ error: 'Failed to delete site' });
   }
 };

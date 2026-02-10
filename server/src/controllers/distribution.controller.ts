@@ -2,16 +2,18 @@ import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import QRCode from 'qrcode';
 import db from '../config/database';
+import { env } from '../config/env';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import { sendSurveyInvitation } from '../services/email.service';
+import logger from '../config/logger';
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URL = env.FRONTEND_URL;
 
 // List distributions for a survey
 export const listDistributions = async (req: AuthRequest, res: Response) => {
   try {
     const { surveyId } = req.params;
-    
+
     // Check survey access
     const survey = await db('surveys').where({ id: surveyId }).first();
     if (!survey) {
@@ -24,7 +26,7 @@ export const listDistributions = async (req: AuthRequest, res: Response) => {
 
     res.json({ data: distributions });
   } catch (error) {
-    console.error('List distributions error:', error);
+    logger.error('List distributions error:', { error });
     res.status(500).json({ error: 'Failed to list distributions' });
   }
 };
@@ -33,7 +35,7 @@ export const listDistributions = async (req: AuthRequest, res: Response) => {
 export const createLinkDistribution = async (req: AuthRequest, res: Response) => {
   try {
     const { surveyId } = req.params;
-    
+
     const survey = await db('surveys').where({ id: surveyId }).first();
     if (!survey) {
       return res.status(404).json({ error: 'Survey not found' });
@@ -53,7 +55,7 @@ export const createLinkDistribution = async (req: AuthRequest, res: Response) =>
 
     res.status(201).json({ data: distribution });
   } catch (error) {
-    console.error('Create link distribution error:', error);
+    logger.error('Create link distribution error:', { error });
     res.status(500).json({ error: 'Failed to create link distribution' });
   }
 };
@@ -62,7 +64,7 @@ export const createLinkDistribution = async (req: AuthRequest, res: Response) =>
 export const createQRDistribution = async (req: AuthRequest, res: Response) => {
   try {
     const { surveyId } = req.params;
-    
+
     const survey = await db('surveys').where({ id: surveyId }).first();
     if (!survey) {
       return res.status(404).json({ error: 'Survey not found' });
@@ -70,7 +72,7 @@ export const createQRDistribution = async (req: AuthRequest, res: Response) => {
 
     const distributionId = uuidv4();
     const targetUrl = `${FRONTEND_URL}/survey/${surveyId}/respond?dist=${distributionId}`;
-    
+
     // Generate QR code as data URL
     const qrCodeDataUrl = await QRCode.toDataURL(targetUrl, {
       width: 300,
@@ -93,7 +95,7 @@ export const createQRDistribution = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json({ data: distribution });
   } catch (error) {
-    console.error('Create QR distribution error:', error);
+    logger.error('Create QR distribution error:', { error });
     res.status(500).json({ error: 'Failed to create QR distribution' });
   }
 };
@@ -103,7 +105,7 @@ export const createEmbedDistribution = async (req: AuthRequest, res: Response) =
   try {
     const { surveyId } = req.params;
     const { width = '100%', height = '600px' } = req.body;
-    
+
     const survey = await db('surveys').where({ id: surveyId }).first();
     if (!survey) {
       return res.status(404).json({ error: 'Survey not found' });
@@ -111,7 +113,7 @@ export const createEmbedDistribution = async (req: AuthRequest, res: Response) =
 
     const distributionId = uuidv4();
     const targetUrl = `${FRONTEND_URL}/survey/${surveyId}/embed?dist=${distributionId}`;
-    
+
     const embedCode = `<iframe src="${targetUrl}" width="${width}" height="${height}" frameborder="0" style="border: none;"></iframe>`;
 
     const [distribution] = await db('survey_distributions')
@@ -124,14 +126,14 @@ export const createEmbedDistribution = async (req: AuthRequest, res: Response) =
       })
       .returning('*');
 
-    res.status(201).json({ 
+    res.status(201).json({
       data: {
         ...distribution,
         embedCode
       }
     });
   } catch (error) {
-    console.error('Create embed distribution error:', error);
+    logger.error('Create embed distribution error:', { error });
     res.status(500).json({ error: 'Failed to create embed distribution' });
   }
 };
@@ -141,7 +143,7 @@ export const createEmailDistribution = async (req: AuthRequest, res: Response) =
   try {
     const { surveyId } = req.params;
     const { emails, subject, message } = req.body;
-    
+
     if (!emails || !Array.isArray(emails) || emails.length === 0) {
       return res.status(400).json({ error: 'Email list is required' });
     }
@@ -149,7 +151,7 @@ export const createEmailDistribution = async (req: AuthRequest, res: Response) =
     const survey = await db('surveys')
       .where({ id: surveyId })
       .first();
-    
+
     if (!survey) {
       return res.status(404).json({ error: 'Survey not found' });
     }
@@ -172,7 +174,7 @@ export const createEmailDistribution = async (req: AuthRequest, res: Response) =
         });
         results.push({ email, status: 'sent' });
       } catch (err) {
-        console.error(`Failed to send email to ${email}:`, err);
+        logger.warn(`Failed to send email to ${email}`, { error: err });
         results.push({ email, status: 'failed' });
       }
     }
@@ -188,12 +190,12 @@ export const createEmailDistribution = async (req: AuthRequest, res: Response) =
       })
       .returning('*');
 
-    res.status(201).json({ 
+    res.status(201).json({
       data: distribution,
       results
     });
   } catch (error) {
-    console.error('Create email distribution error:', error);
+    logger.error('Create email distribution error:', { error });
     res.status(500).json({ error: 'Failed to send email invitations' });
   }
 };
@@ -203,7 +205,7 @@ export const sendToGroup = async (req: AuthRequest, res: Response) => {
   try {
     const { surveyId } = req.params;
     const { departmentId, siteId, companyId, subject, message } = req.body;
-    
+
     const survey = await db('surveys').where({ id: surveyId }).first();
     if (!survey) {
       return res.status(404).json({ error: 'Survey not found' });
@@ -211,7 +213,7 @@ export const sendToGroup = async (req: AuthRequest, res: Response) => {
 
     // Build query based on group type
     let query = db('users').where({ is_active: true });
-    
+
     if (departmentId) {
       query = query.where({ department_id: departmentId });
     } else if (siteId) {
@@ -223,18 +225,18 @@ export const sendToGroup = async (req: AuthRequest, res: Response) => {
     }
 
     const users = await query.select('email', 'first_name', 'last_name');
-    
+
     if (users.length === 0) {
       return res.status(400).json({ error: 'No users found in the specified group' });
     }
 
     const emails = users.map(u => u.email);
-    
+
     // Reuse email distribution logic
     req.body.emails = emails;
     return createEmailDistribution(req, res);
   } catch (error) {
-    console.error('Send to group error:', error);
+    logger.error('Send to group error:', { error });
     res.status(500).json({ error: 'Failed to send to group' });
   }
 };
@@ -243,11 +245,11 @@ export const sendToGroup = async (req: AuthRequest, res: Response) => {
 export const getDistributionStats = async (req: AuthRequest, res: Response) => {
   try {
     const { distributionId } = req.params;
-    
+
     const distribution = await db('survey_distributions')
       .where({ id: distributionId })
       .first();
-    
+
     if (!distribution) {
       return res.status(404).json({ error: 'Distribution not found' });
     }
@@ -273,7 +275,7 @@ export const getDistributionStats = async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Get distribution stats error:', error);
+    logger.error('Get distribution stats error:', { error });
     res.status(500).json({ error: 'Failed to get distribution stats' });
   }
 };
@@ -282,18 +284,18 @@ export const getDistributionStats = async (req: AuthRequest, res: Response) => {
 export const deleteDistribution = async (req: AuthRequest, res: Response) => {
   try {
     const { distributionId } = req.params;
-    
+
     const deleted = await db('survey_distributions')
       .where({ id: distributionId })
       .delete();
-    
+
     if (!deleted) {
       return res.status(404).json({ error: 'Distribution not found' });
     }
 
     res.json({ message: 'Distribution deleted successfully' });
   } catch (error) {
-    console.error('Delete distribution error:', error);
+    logger.error('Delete distribution error:', { error });
     res.status(500).json({ error: 'Failed to delete distribution' });
   }
 };

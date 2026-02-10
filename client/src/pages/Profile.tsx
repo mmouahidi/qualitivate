@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-    User, 
-    Mail, 
-    Building2, 
-    MapPin, 
-    Shield, 
+import {
+    User,
+    Mail,
+    Building2,
+    MapPin,
+    Shield,
     Calendar,
     Save,
     Loader2,
@@ -58,7 +58,11 @@ const Profile: React.FC = () => {
     const handleLanguageChange = (lang: string) => {
         setSelectedLanguage(lang);
         i18n.changeLanguage(lang);
-        localStorage.setItem('language', lang);
+        try {
+            localStorage.setItem('language', lang);
+        } catch (e) {
+            console.warn('LocalStorage access denied', e);
+        }
     };
 
     const getRoleDisplayName = (role: string) => {
@@ -273,11 +277,10 @@ const Profile: React.FC = () => {
                                         <button
                                             key={lang.code}
                                             onClick={() => handleLanguageChange(lang.code)}
-                                            className={`px-4 py-2 rounded-lg border transition-all ${
-                                                selectedLanguage === lang.code
+                                            className={`px-4 py-2 rounded-lg border transition-all ${selectedLanguage === lang.code
                                                     ? 'border-primary-500 bg-primary-50 text-primary-700'
                                                     : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                                            }`}
+                                                }`}
                                         >
                                             <span className="mr-2">{lang.flag}</span>
                                             {lang.name}

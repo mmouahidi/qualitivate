@@ -36,15 +36,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        try {
-          const userData = await authService.me();
-          setUser(userData);
-        } catch (error) {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
+      try {
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+          try {
+            const userData = await authService.me();
+            setUser(userData);
+          } catch (error) {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+          }
         }
+      } catch (e) {
+        console.warn('LocalStorage access denied', e);
       }
       setLoading(false);
     };
@@ -54,8 +58,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     const response: AuthResponse = await authService.login(email, password);
-    localStorage.setItem('accessToken', response.accessToken);
-    localStorage.setItem('refreshToken', response.refreshToken);
+    try {
+      localStorage.setItem('accessToken', response.accessToken);
+      localStorage.setItem('refreshToken', response.refreshToken);
+    } catch (e) {
+      console.warn('LocalStorage access denied', e);
+    }
     setUser(response.user);
   };
 
@@ -66,22 +74,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     lastName: string;
   }) => {
     const response: AuthResponse = await authService.register(data);
-    localStorage.setItem('accessToken', response.accessToken);
-    localStorage.setItem('refreshToken', response.refreshToken);
+    try {
+      localStorage.setItem('accessToken', response.accessToken);
+      localStorage.setItem('refreshToken', response.refreshToken);
+    } catch (e) {
+      console.warn('LocalStorage access denied', e);
+    }
     setUser(response.user);
   };
 
   const logout = async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (refreshToken) {
-      try {
-        await authService.logout(refreshToken);
-      } catch (error) {
-        console.error('Logout error:', error);
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        try {
+          await authService.logout(refreshToken);
+        } catch (error) {
+          console.error('Logout error:', error);
+        }
       }
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+    } catch (e) {
+      console.warn('LocalStorage access denied', e);
     }
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
     setUser(null);
   };
 

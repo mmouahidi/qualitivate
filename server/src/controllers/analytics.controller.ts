@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import logger from '../config/logger';
 
 /**
  * Helper function to build company/site/department filter based on user role
@@ -101,8 +102,8 @@ export const getRoleDashboard = async (req: AuthRequest, res: Response) => {
           activeSurveys: parseInt(surveyCounts?.active as string || '0'),
           totalResponses: parseInt(responseCounts?.total as string || '0'),
           completedResponses: parseInt(responseCounts?.completed as string || '0'),
-          completionRate: responseCounts?.total > 0 
-            ? Math.round((parseInt(responseCounts.completed) / parseInt(responseCounts.total)) * 100) 
+          completionRate: responseCounts?.total > 0
+            ? Math.round((parseInt(responseCounts.completed) / parseInt(responseCounts.total)) * 100)
             : 0
         },
         companyLeaderboard: companyStats.map((c: any) => ({
@@ -147,7 +148,7 @@ export const getRoleDashboard = async (req: AuthRequest, res: Response) => {
       // Site-level breakdown
       const siteStats = await db('sites')
         .where({ 'sites.company_id': user.companyId })
-        .leftJoin('users', function() {
+        .leftJoin('users', function () {
           this.on('users.site_id', '=', 'sites.id')
         })
         .select(
@@ -203,8 +204,8 @@ export const getRoleDashboard = async (req: AuthRequest, res: Response) => {
           completedResponses: parseInt(responseCounts?.completed as string || '0'),
           inProgressResponses: parseInt(responseCounts?.in_progress as string || '0'),
           abandonedResponses: parseInt(responseCounts?.abandoned as string || '0'),
-          completionRate: responseCounts?.total > 0 
-            ? Math.round((parseInt(responseCounts.completed) / parseInt(responseCounts.total)) * 100) 
+          completionRate: responseCounts?.total > 0
+            ? Math.round((parseInt(responseCounts.completed) / parseInt(responseCounts.total)) * 100)
             : 0,
           npsScore
         },
@@ -274,8 +275,8 @@ export const getRoleDashboard = async (req: AuthRequest, res: Response) => {
           activeSurveys: parseInt(surveyCounts?.active as string || '0'),
           totalResponses: parseInt(responseCounts?.total as string || '0'),
           completedResponses: parseInt(responseCounts?.completed as string || '0'),
-          completionRate: responseCounts?.total > 0 
-            ? Math.round((parseInt(responseCounts.completed) / parseInt(responseCounts.total)) * 100) 
+          completionRate: responseCounts?.total > 0
+            ? Math.round((parseInt(responseCounts.completed) / parseInt(responseCounts.total)) * 100)
             : 0,
           npsScore
         },
@@ -319,8 +320,8 @@ export const getRoleDashboard = async (req: AuthRequest, res: Response) => {
           availableSurveys: parseInt(surveyCounts?.active as string || '0'),
           totalResponses: parseInt(responseCounts?.total as string || '0'),
           completedResponses: parseInt(responseCounts?.completed as string || '0'),
-          completionRate: responseCounts?.total > 0 
-            ? Math.round((parseInt(responseCounts.completed) / parseInt(responseCounts.total)) * 100) 
+          completionRate: responseCounts?.total > 0
+            ? Math.round((parseInt(responseCounts.completed) / parseInt(responseCounts.total)) * 100)
             : 0
         }
       };
@@ -358,7 +359,7 @@ export const getRoleDashboard = async (req: AuthRequest, res: Response) => {
 
     res.json(dashboardData);
   } catch (error) {
-    console.error('Get role dashboard error:', error);
+    logger.error('Get role dashboard error:', { error });
     res.status(500).json({ error: 'Failed to fetch dashboard analytics' });
   }
 };
@@ -487,8 +488,8 @@ export const getSurveyAnalytics = async (req: AuthRequest, res: Response) => {
     // Calculate completion rate
     const totalResponses = parseInt(responseStats?.total_responses || '0', 10);
     const completedResponses = parseInt(responseStats?.completed_responses || '0', 10);
-    const completionRate = totalResponses > 0 
-      ? Math.round((completedResponses / totalResponses) * 100) 
+    const completionRate = totalResponses > 0
+      ? Math.round((completedResponses / totalResponses) * 100)
       : 0;
 
     res.json({
@@ -515,7 +516,7 @@ export const getSurveyAnalytics = async (req: AuthRequest, res: Response) => {
       questionCount: questions.length
     });
   } catch (error) {
-    console.error('Get survey analytics error:', error);
+    logger.error('Get survey analytics error:', { error });
     res.status(500).json({ error: 'Failed to fetch survey analytics' });
   }
 };
@@ -644,7 +645,7 @@ export const getQuestionAnalytics = async (req: AuthRequest, res: Response) => {
       questions: questionAnalytics
     });
   } catch (error) {
-    console.error('Get question analytics error:', error);
+    logger.error('Get question analytics error:', { error });
     res.status(500).json({ error: 'Failed to fetch question analytics' });
   }
 };
@@ -751,7 +752,7 @@ export const getResponses = async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Get responses error:', error);
+    logger.error('Get responses error:', { error });
     res.status(500).json({ error: 'Failed to fetch responses' });
   }
 };
@@ -844,7 +845,7 @@ export const getResponseDetails = async (req: AuthRequest, res: Response) => {
       }))
     });
   } catch (error) {
-    console.error('Get response details error:', error);
+    logger.error('Get response details error:', { error });
     res.status(500).json({ error: 'Failed to fetch response details' });
   }
 };
@@ -912,7 +913,7 @@ export const exportResponses = async (req: AuthRequest, res: Response) => {
           completedAt: r.completed_at
         };
         questions.forEach((q: any) => {
-          row[`Q${q.order_index + 1}: ${q.content.substring(0, 50)}`] = 
+          row[`Q${q.order_index + 1}: ${q.content.substring(0, 50)}`] =
             answerMap[r.id]?.[q.id] ?? '';
         });
         return row;
@@ -965,7 +966,7 @@ export const exportResponses = async (req: AuthRequest, res: Response) => {
     res.setHeader('Content-Disposition', `attachment; filename="${survey.title.replace(/[^a-z0-9]/gi, '_')}_responses.csv"`);
     res.send(csv);
   } catch (error) {
-    console.error('Export responses error:', error);
+    logger.error('Export responses error:', { error });
     res.status(500).json({ error: 'Failed to export responses' });
   }
 };
@@ -997,7 +998,7 @@ export const getCompanyAnalytics = async (req: AuthRequest, res: Response) => {
     // Get total responses
     let responseQuery = db('responses')
       .join('surveys', 'responses.survey_id', 'surveys.id');
-    
+
     if (user.role !== 'super_admin') {
       responseQuery = responseQuery.where('surveys.company_id', user.companyId);
     }
@@ -1092,8 +1093,8 @@ export const getCompanyAnalytics = async (req: AuthRequest, res: Response) => {
       responses: {
         total: parseInt(responseStats?.total || '0', 10),
         completed: parseInt(responseStats?.completed || '0', 10),
-        completionRate: responseStats?.total > 0 
-          ? Math.round((responseStats.completed / responseStats.total) * 100) 
+        completionRate: responseStats?.total > 0
+          ? Math.round((responseStats.completed / responseStats.total) * 100)
           : 0
       },
       overallNps,
@@ -1107,7 +1108,7 @@ export const getCompanyAnalytics = async (req: AuthRequest, res: Response) => {
       trend: responseTrend
     });
   } catch (error) {
-    console.error('Get company analytics error:', error);
+    logger.error('Get company analytics error:', { error });
     res.status(500).json({ error: 'Failed to fetch company analytics' });
   }
 };
@@ -1231,8 +1232,8 @@ export const exportPDFReport = async (req: AuthRequest, res: Response) => {
         completedResponses,
         inProgressResponses: parseInt(responseStats?.in_progress_responses || '0', 10),
         abandonedResponses: parseInt(responseStats?.abandoned_responses || '0', 10),
-        completionRate: totalResponses > 0 
-          ? Math.round((completedResponses / totalResponses) * 100) 
+        completionRate: totalResponses > 0
+          ? Math.round((completedResponses / totalResponses) * 100)
           : 0,
         avgCompletionTimeSeconds: Math.round(avgCompletionTime?.avg_seconds || 0),
         firstResponseAt: responseStats?.first_response,
@@ -1324,7 +1325,7 @@ export const exportPDFReport = async (req: AuthRequest, res: Response) => {
     // ===== Generate PDF =====
     const { PDFReportService } = await import('../services/pdfReport.service');
     const pdfService = new PDFReportService();
-    
+
     await pdfService.generateReport(surveyAnalytics, questionAnalytics, companyInfo);
 
     // Stream PDF to response
@@ -1332,7 +1333,7 @@ export const exportPDFReport = async (req: AuthRequest, res: Response) => {
     pdfService.streamToResponse(res, filename);
 
   } catch (error) {
-    console.error('Export PDF report error:', error);
+    logger.error('Export PDF report error:', { error });
     res.status(500).json({ error: 'Failed to generate PDF report' });
   }
 };

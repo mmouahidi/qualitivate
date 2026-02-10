@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import logger from '../config/logger';
 
 // Get user's notifications
 export const getNotifications = async (req: AuthRequest, res: Response) => {
@@ -31,7 +32,7 @@ export const getNotifications = async (req: AuthRequest, res: Response) => {
             unreadCount: Number(unreadCount?.count || 0)
         });
     } catch (error) {
-        console.error('Get notifications error:', error);
+        logger.error('Get notifications error:', { error });
         res.status(500).json({ error: 'Failed to get notifications' });
     }
 };
@@ -52,7 +53,7 @@ export const markAsRead = async (req: AuthRequest, res: Response) => {
 
         res.json({ message: 'Notification marked as read' });
     } catch (error) {
-        console.error('Mark as read error:', error);
+        logger.error('Mark as read error:', { error });
         res.status(500).json({ error: 'Failed to mark notification' });
     }
 };
@@ -68,7 +69,7 @@ export const markAllAsRead = async (req: AuthRequest, res: Response) => {
 
         res.json({ message: 'All notifications marked as read' });
     } catch (error) {
-        console.error('Mark all as read error:', error);
+        logger.error('Mark all as read error:', { error });
         res.status(500).json({ error: 'Failed to mark notifications' });
     }
 };
@@ -89,7 +90,7 @@ export const deleteNotification = async (req: AuthRequest, res: Response) => {
 
         res.json({ message: 'Notification deleted' });
     } catch (error) {
-        console.error('Delete notification error:', error);
+        logger.error('Delete notification error:', { error });
         res.status(500).json({ error: 'Failed to delete notification' });
     }
 };
@@ -106,7 +107,7 @@ export const getUnreadCount = async (req: AuthRequest, res: Response) => {
 
         res.json({ count: Number(result?.count || 0) });
     } catch (error) {
-        console.error('Get unread count error:', error);
+        logger.error('Get unread count error:', { error });
         res.status(500).json({ error: 'Failed to get count' });
     }
 };
@@ -132,7 +133,7 @@ export const createNotification = async (
         });
         return true;
     } catch (error) {
-        console.error('Create notification error:', error);
+        logger.error('Create notification error:', { error });
         return false;
     }
 };
@@ -158,7 +159,7 @@ export const notifySurveyAssigned = async (surveyId: string, companyId: string, 
 
         return users.length;
     } catch (error) {
-        console.error('Notify survey assigned error:', error);
+        logger.error('Notify survey assigned error:', { error });
         return 0;
     }
 };

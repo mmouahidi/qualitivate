@@ -18,15 +18,24 @@ const STORAGE_KEY = 'sidebar-collapsed';
 export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Get initial state from localStorage
   const [isCollapsed, setIsCollapsed] = useState(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === 'true';
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored === 'true';
+    } catch (e) {
+      console.warn('LocalStorage access denied', e);
+      return false;
+    }
   });
   const [isHovered, setIsHovered] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   // Persist collapsed state
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, String(isCollapsed));
+    try {
+      localStorage.setItem(STORAGE_KEY, String(isCollapsed));
+    } catch (e) {
+      console.warn('LocalStorage access denied', e);
+    }
   }, [isCollapsed]);
 
   // Close mobile sidebar on escape key

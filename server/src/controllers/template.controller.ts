@@ -2,19 +2,16 @@ import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import logger from '../config/logger';
+import {
+  VALID_TEMPLATE_TYPES,
+  TemplateType,
+  isValidTemplateType,
+  VALID_QUESTION_TYPES,
+  QuestionType,
+  isValidQuestionType,
+} from '../types/domain';
 
-// Valid enum values
-const VALID_TEMPLATE_TYPES = ['nps', 'custom'] as const;
-const VALID_QUESTION_TYPES = ['nps', 'multiple_choice', 'text_short', 'text_long', 'rating_scale', 'matrix'] as const;
-
-type TemplateType = typeof VALID_TEMPLATE_TYPES[number];
-type QuestionType = typeof VALID_QUESTION_TYPES[number];
-
-const isValidTemplateType = (type: string): type is TemplateType => 
-  VALID_TEMPLATE_TYPES.includes(type as TemplateType);
-
-const isValidQuestionType = (type: string): type is QuestionType => 
-  VALID_QUESTION_TYPES.includes(type as QuestionType);
 
 // List templates (global + company-specific)
 export const listTemplates = async (req: AuthRequest, res: Response) => {
@@ -60,7 +57,7 @@ export const listTemplates = async (req: AuthRequest, res: Response) => {
 
     res.json(templates);
   } catch (error: any) {
-    console.error('Error listing templates:', error);
+    logger.error('Error listing templates:', { error });
     res.status(500).json({ error: 'Failed to list templates' });
   }
 };
@@ -97,7 +94,7 @@ export const getTemplate = async (req: AuthRequest, res: Response) => {
 
     res.json({ ...template, questions });
   } catch (error: any) {
-    console.error('Error getting template:', error);
+    logger.error('Error getting template:', { error });
     res.status(500).json({ error: 'Failed to get template' });
   }
 };
@@ -131,7 +128,7 @@ export const createTemplate = async (req: AuthRequest, res: Response) => {
 
     try {
       const templateId = uuidv4();
-      
+
       await trx('survey_templates').insert({
         id: templateId,
         company_id: isGlobal ? null : user.companyId,
@@ -176,7 +173,7 @@ export const createTemplate = async (req: AuthRequest, res: Response) => {
       throw error;
     }
   } catch (error: any) {
-    console.error('Error creating template:', error);
+    logger.error('Error creating template:', { error });
     res.status(500).json({ error: error.message || 'Failed to create template' });
   }
 };
@@ -214,7 +211,7 @@ export const updateTemplate = async (req: AuthRequest, res: Response) => {
     const updated = await db('survey_templates').where('id', id).first();
     res.json(updated);
   } catch (error: any) {
-    console.error('Error updating template:', error);
+    logger.error('Error updating template:', { error });
     res.status(500).json({ error: 'Failed to update template' });
   }
 };
@@ -243,7 +240,7 @@ export const deleteTemplate = async (req: AuthRequest, res: Response) => {
     await db('survey_templates').where('id', id).delete();
     res.json({ message: 'Template deleted successfully' });
   } catch (error: any) {
-    console.error('Error deleting template:', error);
+    logger.error('Error deleting template:', { error });
     res.status(500).json({ error: 'Failed to delete template' });
   }
 };
@@ -255,7 +252,7 @@ export const createSurveyFromTemplate = async (req: AuthRequest, res: Response) 
     const { id } = req.params;
     const { title, description, company_id } = req.body;
 
-    console.log('Creating survey from template:', { templateId: id, title, company_id, userId: user.id, userCompanyId: user.companyId });
+    logger.debug('Creating survey from template:', { templateId: id, title, company_id, userId: user.id, userCompanyId: user.companyId });
 
     // Get template with questions
     const template = await db('survey_templates').where('id', id).first();
@@ -271,15 +268,15 @@ export const createSurveyFromTemplate = async (req: AuthRequest, res: Response) 
 
     // Determine target company
     let targetCompanyId = user.companyId;
-    if (user.role === 'super_admin' && company_id) {
-      targetCompanyId = company_id;
+    if (user.role === 'super_admin') {
+      targetCompanyId = company_id || null;
     }
 
-    if (!targetCompanyId) {
+    if (user.role !== 'super_admin' && !targetCompanyId) {
       return res.status(400).json({ error: 'Company ID is required' });
     }
 
-    console.log('Target company ID:', targetCompanyId);
+    logger.debug('Target company ID:', { targetCompanyId });
 
     const templateQuestions = await db('template_questions')
       .where('template_id', id)
@@ -290,19 +287,19 @@ export const createSurveyFromTemplate = async (req: AuthRequest, res: Response) 
     try {
       // Create survey
       const surveyId = uuidv4();
-      
+
       // Parse default_settings if it's a string
       let parsedSettings = {};
       if (template.default_settings) {
         try {
-          parsedSettings = typeof template.default_settings === 'string' 
-            ? JSON.parse(template.default_settings) 
+          parsedSettings = typeof template.default_settings === 'string'
+            ? JSON.parse(template.default_settings)
             : template.default_settings;
         } catch (e) {
           parsedSettings = {};
         }
       }
-      
+
       await trx('surveys').insert({
         id: surveyId,
         company_id: targetCompanyId,
@@ -324,7 +321,7 @@ export const createSurveyFromTemplate = async (req: AuthRequest, res: Response) 
           survey_id: surveyId,
           type: q.type,
           content: q.content,
-          options: q.options,
+          options: JSON.stringify(q.options || {}),
           is_required: q.is_required,
           order_index: q.order_index,
         }));
@@ -347,7 +344,7 @@ export const createSurveyFromTemplate = async (req: AuthRequest, res: Response) 
       throw error;
     }
   } catch (error: any) {
-    console.error('Error creating survey from template:', error);
+    logger.error('Error creating survey from template:', { error });
     res.status(500).json({ error: 'Failed to create survey from template' });
   }
 };
@@ -384,7 +381,7 @@ export const saveAsTemplate = async (req: AuthRequest, res: Response) => {
 
     try {
       const templateId = uuidv4();
-      
+
       await trx('survey_templates').insert({
         id: templateId,
         company_id: isGlobal ? null : user.companyId,
@@ -405,7 +402,7 @@ export const saveAsTemplate = async (req: AuthRequest, res: Response) => {
           template_id: templateId,
           type: q.type,
           content: q.content,
-          options: q.options,
+          options: JSON.stringify(q.options || {}),
           is_required: q.is_required,
           order_index: index,
         }));
@@ -424,7 +421,7 @@ export const saveAsTemplate = async (req: AuthRequest, res: Response) => {
       throw error;
     }
   } catch (error: any) {
-    console.error('Error saving survey as template:', error);
+    logger.error('Error saving survey as template:', { error });
     res.status(500).json({ error: 'Failed to save survey as template' });
   }
 };
@@ -440,7 +437,7 @@ export const getTemplateCategories = async (req: AuthRequest, res: Response) => 
 
     res.json(categories.map((c) => c.category));
   } catch (error: any) {
-    console.error('Error getting template categories:', error);
+    logger.error('Error getting template categories:', { error });
     res.status(500).json({ error: 'Failed to get template categories' });
   }
 };
