@@ -2,20 +2,4 @@
 # https://nixpacks.com/docs/configuration/file
 
 [phases.setup]
-nixPkgs = ["nodejs_18", "npm-9_x"]
-
-[phases.install]
-cmds = [
-  "npm ci --include=dev",
-  "cd client && npm ci --include=dev",
-  "cd server && npm ci --include=dev"
-]
-
-[phases.build]
-cmds = [
-  "cd client && npm run build",
-  "cd server && npm run build"
-]
-
-[start]
-cmd = "cd server && npx knex migrate:latest --knexfile dist/config/knexfile.js && node dist/index.js"
+nixPkgs = ["nodejs_20"]
