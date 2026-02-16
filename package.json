@@ -13,7 +13,12 @@
     "dev:client": "npm run dev --workspace=client",
     "build": "npm run build --workspaces",
     "build:server": "npm run build --workspace=server",
-    "build:client": "npm run build --workspace=client"
+    "build:client": "npm run build --workspace=client",
+    "build:all": "npm run build:client && npm run build:server",
+    "start": "cd server && npx knex migrate:latest --knexfile dist/config/knexfile.js && node dist/index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

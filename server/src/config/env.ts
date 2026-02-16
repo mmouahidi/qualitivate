@@ -16,29 +16,46 @@ const envSchema = Joi.object({
         .default('development'),
     PORT: Joi.number().port().default(5000),
 
-    // Database (required in production, optional in dev with defaults)
-    DB_HOST: Joi.string().when('NODE_ENV', {
-        is: 'production',
-        then: Joi.string().required(),
-        otherwise: Joi.string().default('localhost'),
+    // Database: DATABASE_URL takes priority (used by Railway/PaaS)
+    // Individual DB_* vars are only required in production if DATABASE_URL is not set
+    DATABASE_URL: Joi.string().optional(),
+    DB_HOST: Joi.string().when('DATABASE_URL', {
+        is: Joi.exist(),
+        then: Joi.string().optional(),
+        otherwise: Joi.string().when('NODE_ENV', {
+            is: 'production',
+            then: Joi.string().required(),
+            otherwise: Joi.string().default('localhost'),
+        }),
     }),
     DB_PORT: Joi.number().port().default(5432),
-    DB_NAME: Joi.string().when('NODE_ENV', {
-        is: 'production',
-        then: Joi.string().required(),
-        otherwise: Joi.string().default('qualitivate'),
+    DB_NAME: Joi.string().when('DATABASE_URL', {
+        is: Joi.exist(),
+        then: Joi.string().optional(),
+        otherwise: Joi.string().when('NODE_ENV', {
+            is: 'production',
+            then: Joi.string().required(),
+            otherwise: Joi.string().default('qualitivate'),
+        }),
     }),
-    DB_USER: Joi.string().when('NODE_ENV', {
-        is: 'production',
-        then: Joi.string().required(),
-        otherwise: Joi.string().default('postgres'),
+    DB_USER: Joi.string().when('DATABASE_URL', {
+        is: Joi.exist(),
+        then: Joi.string().optional(),
+        otherwise: Joi.string().when('NODE_ENV', {
+            is: 'production',
+            then: Joi.string().required(),
+            otherwise: Joi.string().default('postgres'),
+        }),
     }),
-    DB_PASSWORD: Joi.string().when('NODE_ENV', {
-        is: 'production',
-        then: Joi.string().required(),
-        otherwise: Joi.string().default('postgres'),
+    DB_PASSWORD: Joi.string().when('DATABASE_URL', {
+        is: Joi.exist(),
+        then: Joi.string().optional(),
+        otherwise: Joi.string().when('NODE_ENV', {
+            is: 'production',
+            then: Joi.string().required(),
+            otherwise: Joi.string().default('postgres'),
+        }),
     }),
-    DATABASE_URL: Joi.string().uri().optional(),
 
     // JWT (always required)
     JWT_SECRET: Joi.string().min(32).required().messages({
@@ -60,7 +77,14 @@ const envSchema = Joi.object({
     SMTP_FROM: Joi.string().email().optional(),
 
     // Frontend URL
-    FRONTEND_URL: Joi.string().uri().default('http://localhost:5173'),
+    FRONTEND_URL: Joi.string().uri().default(
+        process.env.RAILWAY_PUBLIC_DOMAIN
+            ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+            : 'http://localhost:5173'
+    ),
+    // Railway-specific variables (auto-injected)
+    RAILWAY_PUBLIC_DOMAIN: Joi.string().optional(),
+    RAILWAY_ENVIRONMENT: Joi.string().optional(),
 }).unknown(true); // Allow other env vars
 
 // Validate and export
