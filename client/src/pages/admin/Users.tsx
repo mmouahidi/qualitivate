@@ -17,6 +17,8 @@ const Users: React.FC = () => {
     const [search, setSearch] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+    const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
+    const [credentialsTarget, setCredentialsTarget] = useState<{ id: string | null; email: string }>({ id: null, email: '' });
     const [deleteModalState, setDeleteModalState] = useState<{ isOpen: boolean; userId: string | null }>({ isOpen: false, userId: null });
     const [formData, setFormData] = useState({
         email: '',
@@ -30,6 +32,7 @@ const Users: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [bulkData, setBulkData] = useState<InviteUserData[]>([]);
     const [bulkResult, setBulkResult] = useState<{ created: number; failed: { email: string; error: string }[] } | null>(null);
+    const [credentialsForm, setCredentialsForm] = useState({ email: '', password: '' });
 
     // Fetch companies for super_admin
     const { data: companiesData } = useQuery({
@@ -88,6 +91,22 @@ const Users: React.FC = () => {
         }
     });
 
+    const updateCredentialsMutation = useMutation({
+        mutationFn: ({ id, data }: { id: string; data: { email?: string; password?: string } }) =>
+            userService.updateUser(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            setIsCredentialsModalOpen(false);
+            setCredentialsTarget({ id: null, email: '' });
+            setCredentialsForm({ email: '', password: '' });
+            toast.success('Credentials updated', 'User credentials updated successfully.');
+        },
+        onError: (err: any) => {
+            setError(err.response?.data?.error || 'Failed to update credentials');
+            toast.error('Failed to update credentials', err.response?.data?.error || 'An error occurred.');
+        }
+    });
+
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
         const payload: InviteUserData = {
@@ -104,6 +123,12 @@ const Users: React.FC = () => {
 
     const handleDelete = (id: string) => {
         setDeleteModalState({ isOpen: true, userId: id });
+    };
+
+    const handleEditCredentials = (id: string, email: string) => {
+        setCredentialsTarget({ id, email });
+        setCredentialsForm({ email, password: '' });
+        setIsCredentialsModalOpen(true);
     };
 
     const confirmDelete = () => {
@@ -174,6 +199,27 @@ const Users: React.FC = () => {
             return;
         }
         bulkMutation.mutate(bulkData);
+    };
+
+    const handleUpdateCredentials = (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        if (!credentialsTarget.id) return;
+
+        const updates: { email?: string; password?: string } = {};
+        if (credentialsForm.email && credentialsForm.email !== credentialsTarget.email) {
+            updates.email = credentialsForm.email;
+        }
+        if (credentialsForm.password) {
+            updates.password = credentialsForm.password;
+        }
+
+        if (Object.keys(updates).length === 0) {
+            setError('Provide a new email and/or password');
+            return;
+        }
+
+        updateCredentialsMutation.mutate({ id: credentialsTarget.id, data: updates });
     };
 
     const downloadTemplate = () => {
@@ -297,8 +343,8 @@ const Users: React.FC = () => {
                                     <tr key={user.id}>
                                         <td className="font-medium">{user.email}</td>
                                         <td className="text-text-secondary">
-                                            {user.first_name && user.last_name
-                                                ? `${user.first_name} ${user.last_name}`
+                                            {user.firstName && user.lastName
+                                                ? `${user.firstName} ${user.lastName}`
                                                 : '—'}
                                         </td>
                                         <td>
@@ -307,23 +353,33 @@ const Users: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="text-text-secondary text-sm">
-                                            {user.company_id ? (
+                                            {user.companyId ? (
                                                 <span className="truncate max-w-[150px] inline-block">
-                                                    {companies.find(c => c.id === user.company_id)?.name || 'Assigned'}
+                                                    {companies.find(c => c.id === user.companyId)?.name || 'Assigned'}
                                                 </span>
                                             ) : '—'}
                                         </td>
                                         <td className="text-text-secondary">
-                                            {new Date(user.created_at).toLocaleDateString()}
+                                            {new Date(user.createdAt).toLocaleDateString()}
                                         </td>
                                         <td className="text-right">
-                                            {currentUser?.role === 'super_admin' && user.id !== currentUser.id && (
-                                                <button
-                                                    onClick={() => handleDelete(user.id)}
-                                                    className="btn-ghost text-red-600 hover:text-red-700 hover:bg-red-50 text-sm"
-                                                >
-                                                    Delete
-                                                </button>
+                                            {(currentUser?.role === 'super_admin' || currentUser?.role === 'company_admin') && user.id !== currentUser.id && (
+                                                <div className="flex gap-2 justify-end">
+                                                    <button
+                                                        onClick={() => handleEditCredentials(user.id, user.email)}
+                                                        className="btn-ghost text-text-secondary hover:text-text-primary text-sm"
+                                                    >
+                                                        Edit Credentials
+                                                    </button>
+                                                    {currentUser?.role === 'super_admin' && (
+                                                        <button
+                                                            onClick={() => handleDelete(user.id)}
+                                                            className="btn-ghost text-red-600 hover:text-red-700 hover:bg-red-50 text-sm"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    )}
+                                                </div>
                                             )}
                                         </td>
                                     </tr>
@@ -613,6 +669,54 @@ const Users: React.FC = () => {
                                 </button>
                             )}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Credentials Modal */}
+            {isCredentialsModalOpen && (
+                <div className="modal-overlay" onClick={() => setIsCredentialsModalOpen(false)}>
+                    <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="modal-title">Edit User Credentials</h2>
+                        <form onSubmit={handleUpdateCredentials} className="space-y-4">
+                            <div>
+                                <label className="label-soft">Email</label>
+                                <input
+                                    type="email"
+                                    value={credentialsForm.email}
+                                    onChange={(e) => setCredentialsForm({ ...credentialsForm, email: e.target.value })}
+                                    className="input-soft"
+                                    placeholder="user@example.com"
+                                />
+                            </div>
+                            <div>
+                                <label className="label-soft">New Password</label>
+                                <input
+                                    type="password"
+                                    value={credentialsForm.password}
+                                    onChange={(e) => setCredentialsForm({ ...credentialsForm, password: e.target.value })}
+                                    className="input-soft"
+                                    placeholder="Min 8 characters"
+                                    minLength={8}
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCredentialsModalOpen(false)}
+                                    className="btn-secondary"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={updateCredentialsMutation.isPending}
+                                    className="btn-primary"
+                                >
+                                    {updateCredentialsMutation.isPending ? 'Updating...' : 'Update Credentials'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

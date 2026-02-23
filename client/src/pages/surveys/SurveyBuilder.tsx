@@ -262,9 +262,21 @@ const SurveyBuilder: React.FC = () => {
 
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 py-6">
-                <div className={`grid gap-6 ${showPreview ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 max-w-3xl mx-auto'}`}>
+                <div className="grid grid-cols-12 gap-6">
+                    {/* Toolbox */}
+                    <aside className="col-span-12 lg:col-span-3 hidden lg:block">
+                        <div className="sticky top-24">
+                            <QuestionTypeSelector
+                                onSelect={handleAddQuestion}
+                                columns={1}
+                                title="Toolbox"
+                                className="shadow-soft"
+                            />
+                        </div>
+                    </aside>
+
                     {/* Builder Panel */}
-                    <div className="space-y-4">
+                    <div className={`col-span-12 ${showPreview ? 'lg:col-span-6' : 'lg:col-span-9'} space-y-4`}>
                         {/* Survey Header Card */}
                         <div className="bg-surface rounded-xl border-2 border-border p-6">
                             <div className="border-l-4 border-primary-500 pl-4">
@@ -339,9 +351,9 @@ const SurveyBuilder: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Add Question Button */}
+                        {/* Add Question Button (Mobile) */}
                         {survey?.questions && survey.questions.length > 0 && (
-                            <div className="flex justify-center">
+                            <div className="flex justify-center lg:hidden">
                                 <div className="relative">
                                     <button
                                         onClick={() => setShowTypeSelector(!showTypeSelector)}
@@ -363,9 +375,9 @@ const SurveyBuilder: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Floating Type Selector for Empty State */}
+                        {/* Floating Type Selector for Empty State (Mobile) */}
                         {showTypeSelector && (!survey?.questions || survey.questions.length === 0) && (
-                            <div className="flex justify-center">
+                            <div className="flex justify-center lg:hidden">
                                 <QuestionTypeSelector onSelect={handleAddQuestion} />
                             </div>
                         )}
@@ -373,18 +385,20 @@ const SurveyBuilder: React.FC = () => {
 
                     {/* Preview Panel */}
                     {showPreview && (
-                        <div className="hidden lg:block sticky top-24 h-[calc(100vh-8rem)]">
-                            <div className="bg-background rounded-xl border border-border h-full p-4 overflow-auto">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-sm font-medium text-text-muted">Live Preview</h3>
-                                    <div className="flex gap-1">
-                                        <button className="px-2 py-1 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded">Desktop</button>
-                                        <button className="px-2 py-1 text-xs text-text-muted hover:bg-surface-hover rounded">Mobile</button>
+                        <aside className="col-span-12 lg:col-span-3">
+                            <div className="sticky top-24 h-[calc(100vh-8rem)]">
+                                <div className="bg-background rounded-xl border border-border h-full p-4 overflow-auto">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-sm font-medium text-text-muted">Live Preview</h3>
+                                        <div className="flex gap-1">
+                                            <button className="px-2 py-1 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded">Desktop</button>
+                                            <button className="px-2 py-1 text-xs text-text-muted hover:bg-surface-hover rounded">Mobile</button>
+                                        </div>
                                     </div>
+                                    <LivePreview survey={survey || null} />
                                 </div>
-                                <LivePreview survey={survey || null} />
                             </div>
-                        </div>
+                        </aside>
                     )}
                 </div>
             </div>

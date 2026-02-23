@@ -22,6 +22,8 @@ const Surveys: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isTemplatePickerOpen, setIsTemplatePickerOpen] = useState(false);
   const [selectedCompanyFilter, setSelectedCompanyFilter] = useState('');
+  const [activateImmediately, setActivateImmediately] = useState(false);
+  const [createError, setCreateError] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -63,7 +65,12 @@ const Surveys: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['surveys'] });
       setIsCreateModalOpen(false);
       setFormData({ title: '', description: '', type: 'custom', isPublic: false, isAnonymous: false, startsAt: '', endsAt: '', companyId: '', siteId: '' });
+      setActivateImmediately(false);
+      setCreateError('');
       navigate(`/surveys/${newSurvey.id}/builder`);
+    },
+    onError: (err: any) => {
+      setCreateError(err?.response?.data?.error || 'Failed to create survey');
     }
   });
 
@@ -113,6 +120,10 @@ const Surveys: React.FC = () => {
       endsAt: formData.endsAt || undefined,
     };
 
+    if (activateImmediately) {
+      payload.status = 'active';
+    }
+
     // Super admin can specify company
     if (isSuperAdmin && formData.companyId) {
       payload.companyId = formData.companyId;
@@ -133,9 +144,13 @@ const Surveys: React.FC = () => {
   // Filter expired surveys if toggle is enabled
   const filteredSurveys = (data?.data || []).filter((survey: any) => {
     if (!hideExpired) return true;
-    if (!survey.ends_at) return true;
-    return new Date(survey.ends_at) >= new Date();
+    if (!survey.endsAt) return true;
+    return new Date(survey.endsAt) >= new Date();
   });
+
+  const totalCount = data?.pagination?.total ?? filteredSurveys.length;
+  const activeCount = (data?.data || []).filter((survey: any) => survey.status === 'active').length;
+  const draftCount = (data?.data || []).filter((survey: any) => survey.status === 'draft').length;
 
   return (
     <DashboardLayout
@@ -164,6 +179,42 @@ const Surveys: React.FC = () => {
         </div>
       }
     >
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="card-soft flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2V9m3 8v-4m3 4V7M6 21h12a2 2 0 002-2V5a2 2 0 00-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs text-text-muted">{t('surveys.total', 'Total Surveys')}</p>
+            <p className="text-2xl font-semibold text-text-primary">{totalCount}</p>
+          </div>
+        </div>
+        <div className="card-soft flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-green-100 text-green-600 flex items-center justify-center">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs text-text-muted">{t('surveys.active', 'Active')}</p>
+            <p className="text-2xl font-semibold text-text-primary">{activeCount}</p>
+          </div>
+        </div>
+        <div className="card-soft flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs text-text-muted">{t('surveys.draft', 'Draft')}</p>
+            <p className="text-2xl font-semibold text-text-primary">{draftCount}</p>
+          </div>
+        </div>
+      </div>
+
       <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
         <input
           type="text"
@@ -243,11 +294,11 @@ const Surveys: React.FC = () => {
 
               <div className="flex flex-wrap items-center gap-2 mb-4 text-sm">
                 <span className="badge-primary">{survey.type}</span>
-                {survey.is_public && <span className="badge-purple">Public</span>}
-                {survey.is_anonymous && <span className="badge-warning">Anonymous</span>}
-                {survey.ends_at && (
-                  <span className={`flex items-center gap-1 text-xs ${new Date(survey.ends_at) < new Date() ? 'text-red-600' : 'text-text-muted'}`}>
-                    ⏰ {new Date(survey.ends_at) < new Date() ? 'Expired' : `Due ${new Date(survey.ends_at).toLocaleDateString()}`}
+                {survey.isPublic && <span className="badge-purple">Public</span>}
+                {survey.isAnonymous && <span className="badge-warning">Anonymous</span>}
+                {survey.endsAt && (
+                  <span className={`flex items-center gap-1 text-xs ${new Date(survey.endsAt) < new Date() ? 'text-red-600' : 'text-text-muted'}`}>
+                    ⏰ {new Date(survey.endsAt) < new Date() ? 'Expired' : `Due ${new Date(survey.endsAt).toLocaleDateString()}`}
                   </span>
                 )}
               </div>
@@ -288,13 +339,25 @@ const Surveys: React.FC = () => {
               </div>
             </div>
           ))}
-          {(!filteredSurveys || filteredSurveys.length === 0) && (
-            <div className="col-span-full text-center py-12 text-text-secondary">
+      {(!filteredSurveys || filteredSurveys.length === 0) && (
+        <div className="col-span-full text-center py-12 text-text-secondary">
               <svg className="w-12 h-12 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               <p>{t('surveys.noSurveys')}</p>
               <p className="text-sm mt-1">{t('surveys.noSurveysDesc')}</p>
+              {(search || statusFilter || selectedCompanyFilter) && (
+                <button
+                  onClick={() => {
+                    setSearch('');
+                    setStatusFilter('');
+                    setSelectedCompanyFilter('');
+                  }}
+                  className="mt-4 btn-secondary"
+                >
+                  {t('surveys.clearFilters', 'Clear filters')}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -304,6 +367,11 @@ const Surveys: React.FC = () => {
         <div className="modal-overlay" onClick={() => setIsCreateModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2 className="modal-title">{t('surveys.createSurvey', 'Create Survey')}</h2>
+            {createError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {createError}
+              </div>
+            )}
             <form onSubmit={handleCreate}>
               {isSuperAdmin && (
                 <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
@@ -389,6 +457,15 @@ const Surveys: React.FC = () => {
                     className="mr-2"
                   />
                   <span className="text-sm text-text-secondary">{t('surveys.anonymousResponses', 'Anonymous responses')}</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={activateImmediately}
+                    onChange={(e) => setActivateImmediately(e.target.checked)}
+                    className="mr-2"
+                  />
+                  <span className="text-sm text-text-secondary">{t('surveys.activateImmediately', 'Activate immediately')}</span>
                 </label>
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">

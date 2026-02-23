@@ -31,6 +31,25 @@ export const loginSchema = Joi.object({
   })
 });
 
+export const credentialsSchema = Joi.object({
+  currentPassword: Joi.string().required().messages({
+    'any.required': 'Current password is required'
+  }),
+  newPassword: Joi.string().min(8).optional().messages({
+    'string.min': 'New password must be at least 8 characters'
+  }),
+  email: Joi.string().email().optional().messages({
+    'string.email': 'Invalid email format'
+  })
+}).custom((value, helpers) => {
+  if (!value.newPassword && !value.email) {
+    return helpers.error('any.custom');
+  }
+  return value;
+}).messages({
+  'any.custom': 'At least one of email or newPassword must be provided'
+});
+
 export const inviteUserSchema = Joi.object({
   email: Joi.string().email().required(),
   firstName: Joi.string().min(1).max(100).required(),

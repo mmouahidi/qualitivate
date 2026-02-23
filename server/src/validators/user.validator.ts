@@ -41,6 +41,7 @@ export const updateUserSchema: ValidationSchema = {
     }),
     body: Joi.object({
         email: Joi.string().email().optional(),
+        password: Joi.string().min(8).optional(),
         firstName: Joi.string().min(1).max(100).optional(),
         lastName: Joi.string().min(1).max(100).optional(),
         role: Joi.string()
@@ -69,9 +70,9 @@ export const bulkCreateUsersSchema: ValidationSchema = {
                 siteId: Joi.string().uuid().optional(),
                 departmentId: Joi.string().uuid().optional(),
             })
-        ).min(1).max(100).required().messages({
+        ).min(1).max(500).required().messages({
             'array.min': 'At least one user is required',
-            'array.max': 'Maximum 100 users can be created at once'
+            'array.max': 'Maximum 500 users can be created at once'
         })
     })
 };

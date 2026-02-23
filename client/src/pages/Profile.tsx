@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
     User,
     Mail,
     Building2,
     MapPin,
     Shield,
+    AlertCircle,
     Calendar,
     Save,
     Loader2,
@@ -31,7 +33,8 @@ interface ProfileUpdateData {
 
 const Profile: React.FC = () => {
     const { t, i18n } = useTranslation();
-    const { user } = useAuth();
+    const { user, logout, refreshUser } = useAuth();
+    const navigate = useNavigate();
     const { theme, setTheme } = useTheme();
     const queryClient = useQueryClient();
 
@@ -49,6 +52,17 @@ const Profile: React.FC = () => {
         } catch { return user?.email || 'default'; }
     });
     const [avatarRefreshKey, setAvatarRefreshKey] = useState(0);
+    const [credentialsError, setCredentialsError] = useState('');
+    const [credentialsSuccess, setCredentialsSuccess] = useState('');
+    const [emailForm, setEmailForm] = useState({
+        email: user?.email || '',
+        currentPassword: ''
+    });
+    const [passwordForm, setPasswordForm] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
 
     // DiceBear avatar styles for gallery
     const avatarStyles = ['initials', 'thumbs', 'shapes', 'icons', 'bottts', 'fun-emoji', 'identicon', 'rings'];
@@ -66,6 +80,10 @@ const Profile: React.FC = () => {
 
     const currentAvatarUrl = getAvatarUrl(avatarSeed, 'initials', 96);
 
+    React.useEffect(() => {
+        setEmailForm((prev) => ({ ...prev, email: user?.email || '' }));
+    }, [user?.email]);
+
     const updateProfileMutation = useMutation({
         mutationFn: async (data: ProfileUpdateData) => {
             const response = await api.put('/auth/profile', data);
@@ -75,13 +93,68 @@ const Profile: React.FC = () => {
             setSuccessMessage(t('profile.updateSuccess'));
             setIsEditing(false);
             queryClient.invalidateQueries({ queryKey: ['user'] });
+            refreshUser();
             setTimeout(() => setSuccessMessage(''), 3000);
+        },
+    });
+
+    const updateCredentialsMutation = useMutation({
+        mutationFn: async (data: { currentPassword: string; newPassword?: string; email?: string }) => {
+            const response = await api.put('/auth/credentials', data);
+            return response.data;
+        },
+        onSuccess: (data) => {
+            setCredentialsError('');
+            setCredentialsSuccess(t('profile.credentialsUpdated', 'Credentials updated. Please sign in again.'));
+            setEmailForm((prev) => ({ ...prev, currentPassword: '' }));
+            setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            if (data?.requiresReauth) {
+                setTimeout(async () => {
+                    await logout();
+                    navigate('/login');
+                }, 1000);
+            }
+        },
+        onError: (err: any) => {
+            setCredentialsError(err?.response?.data?.error || 'Failed to update credentials');
         },
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         updateProfileMutation.mutate(formData);
+    };
+
+    const handleEmailChange = (e: React.FormEvent) => {
+        e.preventDefault();
+        setCredentialsError('');
+        setCredentialsSuccess('');
+        if (!emailForm.email || !emailForm.currentPassword) {
+            setCredentialsError('Email and current password are required');
+            return;
+        }
+        updateCredentialsMutation.mutate({
+            email: emailForm.email,
+            currentPassword: emailForm.currentPassword
+        });
+    };
+
+    const handlePasswordChange = (e: React.FormEvent) => {
+        e.preventDefault();
+        setCredentialsError('');
+        setCredentialsSuccess('');
+        if (!passwordForm.currentPassword || !passwordForm.newPassword) {
+            setCredentialsError('Current password and new password are required');
+            return;
+        }
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+            setCredentialsError('Passwords do not match');
+            return;
+        }
+        updateCredentialsMutation.mutate({
+            currentPassword: passwordForm.currentPassword,
+            newPassword: passwordForm.newPassword
+        });
     };
 
     const handleLanguageChange = (lang: string) => {
@@ -324,6 +397,109 @@ const Profile: React.FC = () => {
                                 )}
                             </div>
                         )}
+                    </div>
+
+                    {/* Security & Credentials */}
+                    <div className="card-soft">
+                        <h3 className="text-lg font-semibold text-text-primary flex items-center gap-2 mb-6">
+                            <Shield className="w-5 h-5 text-primary-600" />
+                            {t('profile.security', 'Security')}
+                        </h3>
+
+                        {credentialsError && (
+                            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4 shrink-0" /> {credentialsError}
+                            </div>
+                        )}
+                        {credentialsSuccess && (
+                            <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm flex items-center gap-2">
+                                <Check className="w-4 h-4 shrink-0" /> {credentialsSuccess}
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Change Email */}
+                            <form onSubmit={handleEmailChange} className="space-y-3">
+                                <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                                    <Mail className="w-4 h-4 text-primary-600" />
+                                    {t('profile.changeEmail', 'Change Email')}
+                                </div>
+                                <div>
+                                    <label className="label-soft">{t('profile.newEmail', 'New Email')}</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={emailForm.email}
+                                        onChange={(e) => setEmailForm({ ...emailForm, email: e.target.value })}
+                                        className="input-soft w-full"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="label-soft">{t('profile.currentPassword', 'Current Password')}</label>
+                                    <input
+                                        type="password"
+                                        required
+                                        value={emailForm.currentPassword}
+                                        onChange={(e) => setEmailForm({ ...emailForm, currentPassword: e.target.value })}
+                                        className="input-soft w-full"
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={updateCredentialsMutation.isPending}
+                                    className="btn-primary w-full"
+                                >
+                                    {updateCredentialsMutation.isPending ? t('profile.updating', 'Updating...') : t('profile.updateEmail', 'Update Email')}
+                                </button>
+                            </form>
+
+                            {/* Change Password */}
+                            <form onSubmit={handlePasswordChange} className="space-y-3">
+                                <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                                    <Shield className="w-4 h-4 text-primary-600" />
+                                    {t('profile.changePassword', 'Change Password')}
+                                </div>
+                                <div>
+                                    <label className="label-soft">{t('profile.currentPassword', 'Current Password')}</label>
+                                    <input
+                                        type="password"
+                                        required
+                                        value={passwordForm.currentPassword}
+                                        onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                                        className="input-soft w-full"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="label-soft">{t('profile.newPassword', 'New Password')}</label>
+                                    <input
+                                        type="password"
+                                        required
+                                        minLength={8}
+                                        value={passwordForm.newPassword}
+                                        onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                                        className="input-soft w-full"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="label-soft">{t('profile.confirmPassword', 'Confirm Password')}</label>
+                                    <input
+                                        type="password"
+                                        required
+                                        minLength={8}
+                                        value={passwordForm.confirmPassword}
+                                        onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                                        className="input-soft w-full"
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={updateCredentialsMutation.isPending}
+                                    className="btn-primary w-full"
+                                >
+                                    {updateCredentialsMutation.isPending ? t('profile.updating', 'Updating...') : t('profile.updatePassword', 'Update Password')}
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
                     {/* Appearance */}

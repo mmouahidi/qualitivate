@@ -18,7 +18,7 @@ interface SurveyData {
   title: string;
   description?: string;
   isAnonymous?: boolean;
-  is_anonymous?: boolean;
+  isAnonymous?: boolean;
   questions?: SurveyQuestion[];
 }
 
@@ -51,7 +51,7 @@ const SurveyPreviewModal: React.FC<SurveyPreviewModalProps> = ({ survey, isOpen,
   const progress = questions.length > 0 
     ? Math.min(100, ((visitedPath.length || 1) / questions.length) * 100)
     : 0;
-  const isAnonymous = survey.isAnonymous || survey.is_anonymous;
+  const isAnonymous = survey.isAnonymous;
 
   const handleAnswer = (value: any) => {
     if (!currentQuestion) return;

@@ -220,7 +220,7 @@ export const inviteUser = async (req: AuthRequest, res: Response) => {
 export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { firstName, lastName, role, isActive, siteId, departmentId } = req.body;
+    const { email, password, firstName, lastName, role, isActive, siteId, departmentId } = req.body;
     const currentUser = req.user!;
 
     const user = await db('users').where({ id }).first();
@@ -244,6 +244,26 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     const updateData: any = {
       updated_at: new Date()
     };
+
+    if (email !== undefined) {
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: 'Invalid email' });
+      }
+      const existing = await db('users')
+        .whereRaw('lower(email) = lower(?)', [email])
+        .first();
+      if (existing && existing.id !== user.id) {
+        return res.status(409).json({ error: 'Email already exists' });
+      }
+      updateData.email = email;
+    }
+
+    if (password !== undefined) {
+      if (typeof password !== 'string' || password.length < 8) {
+        return res.status(400).json({ error: 'Password must be at least 8 characters' });
+      }
+      updateData.password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+    }
 
     if (firstName !== undefined) updateData.first_name = firstName;
     if (lastName !== undefined) updateData.last_name = lastName;

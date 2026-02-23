@@ -152,11 +152,13 @@ export const createSurvey = async (req: AuthRequest, res: Response) => {
       description,
       type,
       isPublic = false,
-      isAnonymous = false,
+      isAnonymous,
+      allowAnonymous,
       defaultLanguage = 'en',
       settings = {},
       startsAt,
-      endsAt
+      endsAt,
+      status
     } = req.body;
 
     const user = req.user!;
@@ -175,7 +177,8 @@ export const createSurvey = async (req: AuthRequest, res: Response) => {
     if (typeof isPublic !== 'boolean') {
       return res.status(400).json({ error: 'isPublic must be a boolean' });
     }
-    if (typeof isAnonymous !== 'boolean') {
+    const resolvedIsAnonymous = isAnonymous !== undefined ? isAnonymous : (allowAnonymous !== undefined ? allowAnonymous : false);
+    if (typeof resolvedIsAnonymous !== 'boolean') {
       return res.status(400).json({ error: 'isAnonymous must be a boolean' });
     }
 
@@ -195,6 +198,8 @@ export const createSurvey = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Company ID is required' });
     }
 
+    const targetStatus = status && isValidSurveyStatus(status) ? status : 'draft';
+
     const [survey] = await db('surveys')
       .insert({
         id: uuidv4(),
@@ -203,9 +208,9 @@ export const createSurvey = async (req: AuthRequest, res: Response) => {
         title,
         description: description || null,
         type,
-        status: 'draft',
+        status: targetStatus,
         is_public: isPublic,
-        is_anonymous: isAnonymous,
+        is_anonymous: resolvedIsAnonymous,
         default_language: defaultLanguage,
         settings,
         starts_at: startsAt || null,
@@ -229,6 +234,7 @@ export const updateSurvey = async (req: AuthRequest, res: Response) => {
       status,
       isPublic,
       isAnonymous,
+      allowAnonymous,
       defaultLanguage,
       settings,
       startsAt,
@@ -282,11 +288,12 @@ export const updateSurvey = async (req: AuthRequest, res: Response) => {
       }
       updateData.is_public = isPublic;
     }
-    if (isAnonymous !== undefined) {
-      if (typeof isAnonymous !== 'boolean') {
+    const resolvedIsAnonymous = isAnonymous !== undefined ? isAnonymous : allowAnonymous;
+    if (resolvedIsAnonymous !== undefined) {
+      if (typeof resolvedIsAnonymous !== 'boolean') {
         return res.status(400).json({ error: 'isAnonymous must be a boolean' });
       }
-      updateData.is_anonymous = isAnonymous;
+      updateData.is_anonymous = resolvedIsAnonymous;
     }
     if (defaultLanguage !== undefined) updateData.default_language = defaultLanguage;
     if (settings !== undefined) updateData.settings = settings;

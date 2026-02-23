@@ -13,15 +13,15 @@
    ============================================ */
 :root {
   /* Surface & Background */
-  --color-surface: #fafafa;
-  --color-surface-hover: #f1f5f9;
-  --color-background: #f1f5f9;
-  --color-border: #e2e8f0;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f6f8fb;
+  --color-background: #f4f7fb;
+  --color-border: #e6e9f2;
 
   /* Text */
-  --color-text-primary: #1e293b;
-  --color-text-secondary: #64748b;
-  --color-text-muted: #94a3b8;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #526079;
+  --color-text-muted: #7c8aa5;
 
   /* Shadows */
   --shadow-color: rgba(0, 0, 0, 0.08);

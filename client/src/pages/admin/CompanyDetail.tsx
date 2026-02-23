@@ -45,7 +45,7 @@ const CompanyDetail: React.FC = () => {
 
     // Bulk import
     const [bulkCsv, setBulkCsv] = useState('');
-    const [bulkResult, setBulkResult] = useState<{ created: number; errors: any[] } | null>(null);
+    const [bulkResult, setBulkResult] = useState<{ created: number; failed: { email: string; error: string }[] } | null>(null);
     const [bulkError, setBulkError] = useState('');
 
     // Fetch company info
@@ -574,9 +574,9 @@ const CompanyDetail: React.FC = () => {
                                 <div className="flex items-center gap-2 text-green-700 dark:text-green-300 font-medium">
                                     <CheckCircle2 className="w-4 h-4" /> {bulkResult.created} users created
                                 </div>
-                                {bulkResult.errors?.length > 0 && (
+                                {bulkResult.failed?.length > 0 && (
                                     <div className="mt-2 text-red-600 dark:text-red-400">
-                                        {bulkResult.errors.map((err, i) => <p key={i} className="text-xs">{err.email}: {err.error}</p>)}
+                                        {bulkResult.failed.map((err, i) => <p key={i} className="text-xs">{err.email}: {err.error}</p>)}
                                     </div>
                                 )}
                             </div>

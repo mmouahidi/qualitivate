@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { keysToCamel, keysToSnake } from '../utils/caseConverter';
+import { keysToCamel } from '../utils/caseConverter';
 
 // Use same host as frontend but on port 5000 for API
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : `${window.location.protocol}//${window.location.hostname}:5000/api`);
@@ -22,10 +22,6 @@ api.interceptors.request.use(
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-    }
-    // Transform camelCase keys to snake_case for request body
-    if (config.data && typeof config.data === 'object') {
-      config.data = keysToSnake(config.data);
     }
     return config;
   },

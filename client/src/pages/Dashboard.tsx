@@ -55,8 +55,8 @@ const Dashboard: React.FC = () => {
     // Filter out expired and already completed surveys
     const pendingSurveys = (surveysData?.data || []).filter((survey: any) => {
         if (completedSurveyIds.includes(survey.id)) return false; // Already completed
-        if (!survey.endsAt && !survey.ends_at) return true; // No deadline
-        const deadline = new Date(survey.endsAt || survey.ends_at);
+        if (!survey.endsAt) return true; // No deadline
+        const deadline = new Date(survey.endsAt);
         return deadline > new Date();
     });
 
@@ -348,11 +348,11 @@ const Dashboard: React.FC = () => {
                                                     {survey.questions?.length && (
                                                         <span className="text-xs text-text-muted">{survey.questions.length} questions</span>
                                                     )}
-                                                    {survey.ends_at && (
-                                                        <span className={`text-xs ${new Date(survey.ends_at) < new Date() ? 'text-red-600 font-medium' : 'text-amber-600'}`}>
-                                                            ⏰ {new Date(survey.ends_at) < new Date()
+                                                    {survey.endsAt && (
+                                                        <span className={`text-xs ${new Date(survey.endsAt) < new Date() ? 'text-red-600 font-medium' : 'text-amber-600'}`}>
+                                                            ⏰ {new Date(survey.endsAt) < new Date()
                                                                 ? 'Expired'
-                                                                : `Due ${new Date(survey.ends_at).toLocaleDateString()}`}
+                                                                : `Due ${new Date(survey.endsAt).toLocaleDateString()}`}
                                                         </span>
                                                     )}
                                                 </div>

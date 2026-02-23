@@ -3,14 +3,14 @@ import api from './api';
 export interface User {
   id: string;
   email: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   role: 'super_admin' | 'company_admin' | 'site_admin' | 'department_admin' | 'user';
-  company_id: string | null;
-  site_id: string | null;
-  department_id: string | null;
-  is_active: boolean;
-  created_at: string;
+  companyId: string | null;
+  siteId: string | null;
+  departmentId: string | null;
+  isActive: boolean;
+  createdAt: string;
 }
 
 export interface PaginatedUsers {
@@ -35,6 +35,8 @@ export interface InviteUserData {
 }
 
 export interface UpdateUserData {
+  email?: string;
+  password?: string;
   firstName?: string;
   lastName?: string;
   role?: string;

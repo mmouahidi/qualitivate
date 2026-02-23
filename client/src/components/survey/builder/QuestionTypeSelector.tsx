@@ -3,6 +3,9 @@ import { QuestionType } from '../../../types';
 
 interface QuestionTypeSelectorProps {
     onSelect: (type: QuestionType) => void;
+    className?: string;
+    columns?: 1 | 2;
+    title?: string;
 }
 
 const questionTypes: { type: QuestionType; icon: string; label: string; description: string }[] = [
@@ -25,11 +28,11 @@ const questionTypes: { type: QuestionType; icon: string; label: string; descript
     { type: 'file_upload', icon: '📎', label: 'File Upload', description: 'Upload a file' },
 ];
 
-const QuestionTypeSelector: React.FC<QuestionTypeSelectorProps> = ({ onSelect }) => {
+const QuestionTypeSelector: React.FC<QuestionTypeSelectorProps> = ({ onSelect, className = '', columns = 2, title = 'Add Question' }) => {
     return (
-        <div className="bg-surface rounded-xl shadow-lg border border-border p-4 w-[420px]">
-            <h3 className="text-sm font-medium text-text-muted mb-3">Add Question</h3>
-            <div className="grid grid-cols-2 gap-2">
+        <div className={`bg-surface rounded-xl shadow-lg border border-border p-4 w-full ${className}`}>
+            <h3 className="text-sm font-medium text-text-muted mb-3">{title}</h3>
+            <div className={`grid gap-2 ${columns === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 {questionTypes.map((item) => (
                     <button
                         key={item.type}

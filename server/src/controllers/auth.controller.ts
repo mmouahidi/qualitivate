@@ -241,11 +241,13 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { first_name, last_name } = req.body;
+    const { firstName, lastName, first_name, last_name } = req.body;
+    const resolvedFirstName = firstName !== undefined ? firstName : first_name;
+    const resolvedLastName = lastName !== undefined ? lastName : last_name;
 
     const updateData: Record<string, any> = {};
-    if (first_name !== undefined) updateData.first_name = first_name;
-    if (last_name !== undefined) updateData.last_name = last_name;
+    if (resolvedFirstName !== undefined) updateData.first_name = resolvedFirstName;
+    if (resolvedLastName !== undefined) updateData.last_name = resolvedLastName;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
@@ -271,6 +273,81 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     logger.error('Update profile error:', { error });
     res.status(500).json({ error: 'Failed to update profile' });
+  }
+};
+
+export const updateCredentials = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { currentPassword, newPassword, email } = req.body;
+
+    if (!currentPassword) {
+      return res.status(400).json({ error: 'Current password is required' });
+    }
+
+    if (!newPassword && !email) {
+      return res.status(400).json({ error: 'At least one of email or newPassword must be provided' });
+    }
+
+    const user = await db('users').where({ id: req.user.id }).first();
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    const updateData: Record<string, any> = { updated_at: new Date() };
+
+    if (email && email !== user.email) {
+      const existing = await db('users')
+        .whereRaw('lower(email) = lower(?)', [email])
+        .first();
+      if (existing && existing.id !== user.id) {
+        return res.status(409).json({ error: 'Email already exists' });
+      }
+      updateData.email = email;
+    }
+
+    if (newPassword) {
+      if (typeof newPassword !== 'string' || newPassword.length < 8) {
+        return res.status(400).json({ error: 'New password must be at least 8 characters' });
+      }
+      updateData.password_hash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    }
+
+    if (Object.keys(updateData).length === 1) {
+      return res.status(400).json({ error: 'No valid credential changes provided' });
+    }
+
+    const [updated] = await db('users')
+      .where({ id: user.id })
+      .update(updateData)
+      .returning(['id', 'email', 'first_name', 'last_name', 'role', 'company_id', 'site_id', 'department_id']);
+
+    await db('refresh_tokens').where({ user_id: user.id }).delete();
+
+    res.json({
+      user: {
+        id: updated.id,
+        email: updated.email,
+        firstName: updated.first_name,
+        lastName: updated.last_name,
+        role: updated.role,
+        companyId: updated.company_id,
+        siteId: updated.site_id,
+        departmentId: updated.department_id
+      },
+      requiresReauth: true
+    });
+  } catch (error) {
+    logger.error('Update credentials error:', { error });
+    res.status(500).json({ error: 'Failed to update credentials' });
   }
 };
 

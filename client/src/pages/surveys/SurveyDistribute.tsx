@@ -162,31 +162,34 @@ const SurveyDistribute: React.FC = () => {
           </div>
         </div>
 
-        <div className="card-soft overflow-hidden p-0">
-          <div className="border-b border-border">
-            <nav className="flex -mb-px">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="card-soft lg:col-span-1 p-0">
+            <div className="p-4 border-b border-border">
+              <h3 className="text-sm font-semibold text-text-primary">Share Options</h3>
+            </div>
+            <nav className="p-2 space-y-1">
               {[
-                { key: 'link', label: 'Direct Link', icon: '🔗' },
+                { key: 'link', label: 'Share Link', icon: '🔗' },
                 { key: 'qr', label: 'QR Code', icon: '📱' },
-                { key: 'email', label: 'Email', icon: '📧' },
-                { key: 'embed', label: 'Embed', icon: '🖥️' }
+                { key: 'email', label: 'Email Invite', icon: '📧' },
+                { key: 'embed', label: 'Embed Survey', icon: '🖥️' }
               ].map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key as any)}
-                  className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.key
+                    ? 'bg-primary-50 text-primary-700'
+                    : 'text-text-secondary hover:bg-background hover:text-text-primary'
                     }`}
                 >
-                  <span className="mr-2">{tab.icon}</span>
+                  <span>{tab.icon}</span>
                   {tab.label}
                 </button>
               ))}
             </nav>
           </div>
 
-          <div className="p-6">
+          <div className="card-soft lg:col-span-3">
             {activeTab === 'link' && (
               <div className="space-y-4">
                 <p className="text-text-secondary">Share this link directly with respondents:</p>
