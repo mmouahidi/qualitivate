@@ -32,4 +32,5 @@ jobs:
             source server/.env
             set +a
             NODE_ENV=production npx knex migrate:latest --knexfile server/dist/config/knexfile.js --env production
-            pm2 restart qualitivate
+            pm2 restart qualitivate || pm2 start server/dist/index.js --name qualitivate
+            pm2 save
