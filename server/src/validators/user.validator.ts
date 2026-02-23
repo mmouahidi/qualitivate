@@ -63,6 +63,7 @@ export const bulkCreateUsersSchema: ValidationSchema = {
                 email: Joi.string().email().required(),
                 firstName: Joi.string().min(1).max(100).required(),
                 lastName: Joi.string().min(1).max(100).required(),
+                password: Joi.string().min(8).required(),
                 role: Joi.string().valid('user', 'department_admin', 'site_admin', 'company_admin').default('user'),
                 companyId: Joi.string().uuid().optional(),
                 siteId: Joi.string().uuid().optional(),
