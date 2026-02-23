@@ -29,7 +29,7 @@ const LandingPage: React.FC = () => {
             <header className="fixed w-full bg-white/90 backdrop-blur-md border-b border-border z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <img src="/src/assets/images/logo.png" alt="Qualitivate" className="h-10 w-auto object-contain" />
+                        <img src="/images/logo.png" alt="Qualitivate" className="h-10 w-auto object-contain" />
                     </div>
                     <nav className="hidden md:flex items-center gap-8">
                         <a href="#methodology" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors">{t('nav.methodology')}</a>
@@ -84,7 +84,7 @@ const LandingPage: React.FC = () => {
                         <div className="relative order-1 lg:order-2">
                             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-primary-100/50 to-secondary-100/50 rounded-full blur-[100px] -z-10"></div>
                             <img
-                                src="/src/assets/images/landing-hero.png"
+                                src="/images/landing-hero.png"
                                 alt="Analytics Dashboard"
                                 className="w-full h-auto drop-shadow-2xl rounded-2xl border border-white/20"
                             />
@@ -310,7 +310,7 @@ const LandingPage: React.FC = () => {
             <footer className="bg-white border-t border-border py-12">
                 <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
                     <div className="flex items-center gap-2">
-                        <img src="/src/assets/images/logo.png" alt="Qualitivate" className="h-8 w-auto object-contain" />
+                        <img src="/images/logo.png" alt="Qualitivate" className="h-8 w-auto object-contain" />
                     </div>
                     <p className="text-sm text-gray-500">{t('footer.copyright')}</p>
                     <div className={`flex gap-6 text-sm text-gray-600 ${isRTL ? 'flex-row-reverse' : ''}`}>
@@ -325,3 +325,4 @@ const LandingPage: React.FC = () => {
 };
 
 export default LandingPage;
+

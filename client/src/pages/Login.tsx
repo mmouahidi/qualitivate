@@ -35,7 +35,7 @@ const Login: React.FC = () => {
           {/* Branding */}
           <div className="mb-8 text-center sm:text-left">
             <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
-              <img src="/src/assets/images/logo.png" alt="Qualitivate" className="h-12 w-auto object-contain" />
+              <img src="/images/logo.png" alt="Qualitivate" className="h-12 w-auto object-contain" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900">{t('login.title')}</h2>
             <p className="mt-2 text-gray-600">
@@ -139,7 +139,7 @@ const Login: React.FC = () => {
       <div className="hidden lg:block relative w-0 flex-1 bg-primary-50">
         <div className="absolute inset-0 flex items-center justify-center p-20">
           <img
-            src="/src/assets/images/login-illustration.png"
+            src="/images/login-illustration.png"
             alt="Secure Login"
             className="max-w-full h-auto object-contain drop-shadow-2xl"
           />
@@ -150,4 +150,5 @@ const Login: React.FC = () => {
 };
 
 export default Login;
+
 

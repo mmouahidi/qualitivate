@@ -92,7 +92,7 @@ const SurveyDistribute: React.FC = () => {
             </p>
           </div>
           <img
-            src="/src/assets/images/survey-distribute-illustration.png"
+            src="/images/survey-distribute-illustration.png"
             alt="Distribute"
             className="hidden md:block w-48 h-auto object-contain"
           />
@@ -409,3 +409,4 @@ const SurveyDistribute: React.FC = () => {
 };
 
 export default SurveyDistribute;
+

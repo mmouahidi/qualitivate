@@ -15,7 +15,7 @@ const BookDemo: React.FC = () => {
             <header className="bg-white border-b border-border py-4">
                 <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
                     <Link to="/" className="flex items-center gap-2">
-                        <img src="/src/assets/images/logo.png" alt="Qualitivate" className="h-10 w-auto object-contain" />
+                        <img src="/images/logo.png" alt="Qualitivate" className="h-10 w-auto object-contain" />
                         <span className="font-bold text-xl text-text-primary">Qualitivate</span>
                     </Link>
                 </div>
@@ -81,3 +81,4 @@ const BookDemo: React.FC = () => {
 };
 
 export default BookDemo;
+

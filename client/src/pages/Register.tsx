@@ -146,7 +146,7 @@ const Register: React.FC = () => {
       <div className="hidden lg:block relative w-0 flex-1 bg-primary-50">
         <div className="absolute inset-0 flex items-center justify-center p-20">
           <img
-            src="/src/assets/images/register-illustration.png"
+            src="/images/register-illustration.png"
             alt="Join Community"
             className="max-w-full h-auto object-contain drop-shadow-2xl"
           />
@@ -157,4 +157,5 @@ const Register: React.FC = () => {
 };
 
 export default Register;
+
 

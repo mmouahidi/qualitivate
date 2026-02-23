@@ -324,7 +324,7 @@ const SurveyBuilder: React.FC = () => {
                         {(!survey?.questions || survey.questions.length === 0) && (
                             <div className="bg-surface rounded-xl border-2 border-dashed border-border p-12 text-center">
                                 <img
-                                    src="/src/assets/images/survey-builder-illustration.png"
+                                    src="/images/survey-builder-illustration.png"
                                     alt="Start Building"
                                     className="w-48 h-auto mx-auto mb-6 opacity-90"
                                 />
@@ -393,3 +393,4 @@ const SurveyBuilder: React.FC = () => {
 };
 
 export default SurveyBuilder;
+

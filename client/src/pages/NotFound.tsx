@@ -6,7 +6,7 @@ const NotFound: React.FC = () => {
         <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
             <div className="text-center">
                 <img
-                    src="/src/assets/images/404-illustration.png"
+                    src="/images/404-illustration.png"
                     alt="404 Page Not Found"
                     className="w-64 md:w-80 h-auto mx-auto mb-8 drop-shadow-lg"
                 />
@@ -28,3 +28,4 @@ const NotFound: React.FC = () => {
 };
 
 export default NotFound;
+
