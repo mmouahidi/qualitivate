@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '../../services/organization.service';
 import type { Company } from '../../types';
@@ -10,9 +11,9 @@ const Companies: React.FC = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ 
-    name: '', 
-    slug: '', 
+  const [formData, setFormData] = useState({
+    name: '',
+    slug: '',
     activity: '',
     address: '',
     city: '',
@@ -31,9 +32,9 @@ const Companies: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       setIsCreateModalOpen(false);
-      setFormData({ 
-        name: '', 
-        slug: '', 
+      setFormData({
+        name: '',
+        slug: '',
         activity: '',
         address: '',
         city: '',
@@ -107,7 +108,7 @@ const Companies: React.FC = () => {
       {error && (
         <div className="alert-error mb-6">
           <p>{error}</p>
-          <button 
+          <button
             onClick={() => setError(null)}
             className="ml-auto text-sm text-red-600 hover:text-red-800"
           >
@@ -138,7 +139,14 @@ const Companies: React.FC = () => {
               <tbody>
                 {data?.data?.map((company: Company) => (
                   <tr key={company.id}>
-                    <td className="font-medium">{company.name}</td>
+                    <td className="font-medium">
+                      <Link
+                        to={`/companies/${company.id}`}
+                        className="text-primary-600 hover:text-primary-700 hover:underline"
+                      >
+                        {company.name}
+                      </Link>
+                    </td>
                     <td className="text-text-secondary">{company.activity || '-'}</td>
                     <td className="text-text-secondary">{company.city || '-'}</td>
                     <td className="text-text-secondary">{company.sitesCount || 0}</td>

@@ -63,7 +63,7 @@ const Surveys: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['surveys'] });
       setIsCreateModalOpen(false);
       setFormData({ title: '', description: '', type: 'custom', isPublic: false, isAnonymous: false, startsAt: '', endsAt: '', companyId: '', siteId: '' });
-      navigate(`/surveys/${newSurvey.id}/edit`);
+      navigate(`/surveys/${newSurvey.id}/builder`);
     }
   });
 
@@ -123,11 +123,11 @@ const Surveys: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const badges: Record<string, string> = {
-      draft: 'bg-gray-100 text-gray-800',
-      active: 'bg-green-100 text-green-800',
-      closed: 'bg-red-100 text-red-800'
+      draft: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+      active: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+      closed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
     };
-    return badges[status] || 'bg-gray-100 text-gray-800';
+    return badges[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
   };
 
   // Filter expired surveys if toggle is enabled
@@ -303,36 +303,36 @@ const Surveys: React.FC = () => {
       {isCreateModalOpen && (
         <div className="modal-overlay" onClick={() => setIsCreateModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="modal-title">Create Survey</h2>
+            <h2 className="modal-title">{t('surveys.createSurvey', 'Create Survey')}</h2>
             <form onSubmit={handleCreate}>
               {isSuperAdmin && (
-                <div className="mb-4 p-4 bg-primary-50 rounded-lg border border-primary-200">
-                  <label className="label-soft text-primary-700">Survey Scope</label>
+                <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+                  <label className="label-soft text-primary-700 dark:text-primary-300">{t('surveys.surveyScope', 'Survey Scope')}</label>
                   <select
                     value={formData.companyId}
                     onChange={(e) => setFormData({ ...formData, companyId: e.target.value, siteId: '' })}
                     className="select-soft"
                   >
-                    <option value="">🌐 General (All Users)</option>
+                    <option value="">🌐 {t('surveys.generalAll', 'General (All Users)')}</option>
                     {companiesData?.data?.map((company: any) => (
                       <option key={company.id} value={company.id}>🏢 {company.name}</option>
                     ))}
                   </select>
-                  <p className="text-xs text-primary-600 mt-1">
+                  <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
                     {formData.companyId
-                      ? 'Survey belongs to selected company'
-                      : 'General survey accessible to all users'}
+                      ? t('surveys.companyScoped', 'Survey belongs to selected company')
+                      : t('surveys.generalScoped', 'General survey accessible to all users')}
                   </p>
 
                   {formData.companyId && sitesData?.data && sitesData.data.length > 0 && (
                     <div className="mt-3">
-                      <label className="label-soft text-primary-700">Site (optional)</label>
+                      <label className="label-soft text-primary-700 dark:text-primary-300">{t('surveys.siteOptional', 'Site (optional)')}</label>
                       <select
                         value={formData.siteId}
                         onChange={(e) => setFormData({ ...formData, siteId: e.target.value })}
                         className="select-soft"
                       >
-                        <option value="">All sites in company</option>
+                        <option value="">{t('surveys.allSitesInCompany', 'All sites in company')}</option>
                         {sitesData.data.map((site: any) => (
                           <option key={site.id} value={site.id}>{site.name}</option>
                         ))}
@@ -342,7 +342,7 @@ const Surveys: React.FC = () => {
                 </div>
               )}
               <div className="mb-4">
-                <label className="label-soft">Title</label>
+                <label className="label-soft">{t('surveys.titleLabel', 'Title')}</label>
                 <input
                   type="text"
                   required
@@ -352,7 +352,7 @@ const Surveys: React.FC = () => {
                 />
               </div>
               <div className="mb-4">
-                <label className="label-soft">Description</label>
+                <label className="label-soft">{t('surveys.descriptionLabel', 'Description')}</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -361,14 +361,14 @@ const Surveys: React.FC = () => {
                 />
               </div>
               <div className="mb-4">
-                <label className="label-soft">Type</label>
+                <label className="label-soft">{t('surveys.typeLabel', 'Type')}</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
                   className="select-soft"
                 >
-                  <option value="custom">Custom Survey</option>
-                  <option value="nps">NPS Survey</option>
+                  <option value="custom">{t('surveys.customSurvey', 'Custom Survey')}</option>
+                  <option value="nps">{t('surveys.npsSurvey', 'NPS Survey')}</option>
                 </select>
               </div>
               <div className="mb-4 space-y-2">
@@ -379,7 +379,7 @@ const Surveys: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
                     className="mr-2"
                   />
-                  <span className="text-sm text-text-secondary">Public survey</span>
+                  <span className="text-sm text-text-secondary">{t('surveys.publicSurvey', 'Public survey')}</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -388,12 +388,12 @@ const Surveys: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, isAnonymous: e.target.checked })}
                     className="mr-2"
                   />
-                  <span className="text-sm text-text-secondary">Anonymous responses</span>
+                  <span className="text-sm text-text-secondary">{t('surveys.anonymousResponses', 'Anonymous responses')}</span>
                 </label>
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="label-soft">Starts At (optional)</label>
+                  <label className="label-soft">{t('surveys.startsAt', 'Starts At (optional)')}</label>
                   <input
                     type="datetime-local"
                     value={formData.startsAt}
@@ -401,10 +401,10 @@ const Surveys: React.FC = () => {
                     className="input-soft"
                     min={new Date().toISOString().slice(0, 16)}
                   />
-                  <p className="text-xs text-text-muted mt-1">Schedule for later</p>
+                  <p className="text-xs text-text-muted mt-1">{t('surveys.scheduleForLater', 'Schedule for later')}</p>
                 </div>
                 <div>
-                  <label className="label-soft">Deadline (optional)</label>
+                  <label className="label-soft">{t('surveys.deadline', 'Deadline (optional)')}</label>
                   <input
                     type="datetime-local"
                     value={formData.endsAt}
@@ -412,7 +412,7 @@ const Surveys: React.FC = () => {
                     className="input-soft"
                     min={formData.startsAt || new Date().toISOString().slice(0, 16)}
                   />
-                  <p className="text-xs text-text-muted mt-1">Due date for responses</p>
+                  <p className="text-xs text-text-muted mt-1">{t('surveys.dueDate', 'Due date for responses')}</p>
                 </div>
               </div>
               <div className="flex justify-end gap-3">
@@ -421,14 +421,14 @@ const Surveys: React.FC = () => {
                   onClick={() => setIsCreateModalOpen(false)}
                   className="btn-secondary"
                 >
-                  Cancel
+                  {t('common.cancel', 'Cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending}
                   className="btn-primary"
                 >
-                  {createMutation.isPending ? 'Creating...' : 'Create & Edit'}
+                  {createMutation.isPending ? t('surveys.creating', 'Creating...') : t('surveys.createAndEdit', 'Create & Edit')}
                 </button>
               </div>
             </form>

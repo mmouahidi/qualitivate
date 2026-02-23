@@ -1,24 +1,25 @@
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  ClipboardList, 
-  BarChart3, 
-  Building2, 
-  Building, 
-  Users
+import { useTranslation } from 'react-i18next';
+import {
+  LayoutDashboard,
+  ClipboardList,
+  BarChart3,
+  Building
 } from 'lucide-react';
 import { SidebarProvider } from '../../contexts/SidebarContext';
 import { Sidebar, NavItem, MobileMenuButton } from './Sidebar';
 
-// Default navigation configuration with role-based visibility
-export const defaultNavigation: NavItem[] = [
-  { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { name: 'Surveys', path: '/surveys', icon: ClipboardList, roles: ['super_admin', 'company_admin', 'site_admin', 'department_admin'] },
-  { name: 'Analytics', path: '/analytics', icon: BarChart3, roles: ['super_admin', 'company_admin', 'site_admin', 'department_admin'] },
-  { name: 'Sites', path: '/sites', icon: Building2, roles: ['super_admin', 'company_admin'] },
-  { name: 'Companies', path: '/companies', icon: Building, roles: ['super_admin'] },
-  { name: 'Users', path: '/users', icon: Users, roles: ['super_admin', 'company_admin', 'site_admin', 'department_admin'] },
-];
+// Navigation is now built dynamically using translation keys
+function useNavigation(): NavItem[] {
+  const { t } = useTranslation();
+
+  return [
+    { name: t('sidebar.dashboard'), path: '/dashboard', icon: LayoutDashboard },
+    { name: t('sidebar.surveys'), path: '/surveys', icon: ClipboardList, roles: ['super_admin', 'company_admin', 'site_admin', 'department_admin'] },
+    { name: t('sidebar.analytics'), path: '/analytics', icon: BarChart3, roles: ['super_admin', 'company_admin', 'site_admin', 'department_admin'] },
+    { name: t('sidebar.companies'), path: '/companies', icon: Building, roles: ['super_admin'] },
+  ];
+}
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -30,15 +31,18 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children,
-  navigation = defaultNavigation,
+  navigation,
   title,
   subtitle,
   headerActions,
 }) => {
+  const defaultNav = useNavigation();
+  const nav = navigation || defaultNav;
+
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-background flex">
-        <Sidebar navigation={navigation} />
+        <Sidebar navigation={nav} />
 
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top header for mobile */}

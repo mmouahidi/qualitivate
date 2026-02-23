@@ -249,7 +249,47 @@ const SurveyEditor: React.FC = () => {
                 </svg>
                 Settings
               </button>
+              {survey?.status !== 'closed' && (
+                <button
+                  onClick={() => {
+                    const nextStatus = survey?.status === 'draft' ? 'active' : 'closed';
+                    const confirmMsg = survey?.status === 'draft'
+                      ? 'Activate this survey? It will become available for respondents.'
+                      : 'Close this survey? No more responses will be accepted.';
+                    if (confirm(confirmMsg)) {
+                      updateSurveyMutation.mutate({ status: nextStatus });
+                    }
+                  }}
+                  disabled={updateSurveyMutation.isPending}
+                  className={`text-sm font-semibold px-4 py-2 rounded-lg text-white transition-colors flex items-center gap-2 ${survey?.status === 'draft'
+                      ? 'bg-green-600 hover:bg-green-700'
+                      : 'bg-orange-600 hover:bg-orange-700'
+                    }`}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                  {updateSurveyMutation.isPending
+                    ? 'Updating...'
+                    : survey?.status === 'draft'
+                      ? 'Activate Survey'
+                      : 'Close Survey'}
+                </button>
+              )}
             </div>
+          </div>
+          {/* Status Badge */}
+          <div className="mt-2">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${survey?.status === 'draft'
+                ? 'bg-gray-100 text-gray-700'
+                : survey?.status === 'active'
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-red-100 text-red-700'
+              }`}>
+              {survey?.status === 'draft' && '📝 Draft'}
+              {survey?.status === 'active' && '🟢 Active'}
+              {survey?.status === 'closed' && '🔴 Closed'}
+            </span>
           </div>
         </div>
 

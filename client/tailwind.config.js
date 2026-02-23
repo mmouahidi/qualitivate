@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
@@ -50,13 +51,15 @@ export default {
           900: '#881337',
           950: '#4c0519',
         },
-        surface: '#ffffff',
-        background: '#f8fafc',  // Slate 50
-        border: '#e2e8f0',      // Slate 200
+        // Semantic colors using CSS variables for dark mode support
+        surface: 'var(--color-surface)',
+        'surface-hover': 'var(--color-surface-hover)',
+        background: 'var(--color-background)',
+        border: 'var(--color-border)',
         text: {
-          primary: '#1e293b',   // Slate 800
-          secondary: '#64748b', // Slate 500
-          muted: '#94a3b8',     // Slate 400
+          primary: 'var(--color-text-primary)',
+          secondary: 'var(--color-text-secondary)',
+          muted: 'var(--color-text-muted)',
         },
       },
       borderRadius: {
@@ -64,10 +67,10 @@ export default {
         'soft-lg': '16px',
       },
       boxShadow: {
-        'soft': '0 2px 4px rgba(0, 0, 0, 0.05), 0 10px 15px rgba(0, 0, 0, 0.1)',
-        'soft-sm': '0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 6px rgba(0, 0, 0, 0.06)',
-        'soft-lg': '0 4px 6px rgba(0, 0, 0, 0.05), 0 15px 25px rgba(0, 0, 0, 0.12)',
-        'soft-hover': '0 4px 8px rgba(0, 0, 0, 0.08), 0 15px 30px rgba(0, 0, 0, 0.15)',
+        'soft': '0 2px 4px var(--shadow-color, rgba(0, 0, 0, 0.05)), 0 10px 15px var(--shadow-color, rgba(0, 0, 0, 0.1))',
+        'soft-sm': '0 1px 2px var(--shadow-color, rgba(0, 0, 0, 0.04)), 0 4px 6px var(--shadow-color, rgba(0, 0, 0, 0.06))',
+        'soft-lg': '0 4px 6px var(--shadow-color, rgba(0, 0, 0, 0.05)), 0 15px 25px var(--shadow-color, rgba(0, 0, 0, 0.12))',
+        'soft-hover': '0 4px 8px var(--shadow-color, rgba(0, 0, 0, 0.08)), 0 15px 30px var(--shadow-color, rgba(0, 0, 0, 0.15))',
       },
       transitionDuration: {
         'smooth': '250ms',

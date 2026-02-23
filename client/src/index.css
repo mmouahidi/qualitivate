@@ -6,15 +6,68 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   Theme System — CSS Custom Properties
+   Light: warm off-whites (no pure white)
+   Dark: deep blue-grays (no pure black)
+   ============================================ */
+:root {
+  /* Surface & Background */
+  --color-surface: #fafafa;
+  --color-surface-hover: #f1f5f9;
+  --color-background: #f1f5f9;
+  --color-border: #e2e8f0;
+
+  /* Text */
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+
+  /* Shadows */
+  --shadow-color: rgba(0, 0, 0, 0.08);
+
+  /* Glass */
+  --glass-bg: rgba(250, 250, 250, 0.8);
+}
+
+.dark {
+  /* Surface & Background */
+  --color-surface: #1e2433;
+  --color-surface-hover: #262d3e;
+  --color-background: #151a26;
+  --color-border: #2e3650;
+
+  /* Text */
+  --color-text-primary: #e2e8f0;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+
+  /* Shadows */
+  --shadow-color: rgba(0, 0, 0, 0.3);
+
+  /* Glass */
+  --glass-bg: rgba(30, 36, 51, 0.8);
+}
+
 /* Custom Animations */
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slide-up {
@@ -22,6 +75,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -29,9 +83,12 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
   }
+
   50% {
     box-shadow: 0 0 20px 5px rgba(79, 70, 229, 0.2);
   }
@@ -42,6 +99,7 @@
     opacity: 0;
     transform: translateX(100%);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -62,128 +120,98 @@
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     scroll-behavior: smooth;
   }
-  
+
   body {
     @apply bg-background text-text-primary antialiased;
   }
-  
+
   /* Typography Scale */
-  h1 { @apply text-4xl font-bold tracking-tight; }
-  h2 { @apply text-3xl font-semibold tracking-tight; }
-  h3 { @apply text-2xl font-semibold; }
-  h4 { @apply text-xl font-medium; }
-  h5 { @apply text-lg font-medium; }
-  h6 { @apply text-base font-medium; }
+  h1 {
+    @apply text-4xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply text-2xl font-semibold;
+  }
+
+  h4 {
+    @apply text-xl font-medium;
+  }
+
+  h5 {
+    @apply text-lg font-medium;
+  }
+
+  h6 {
+    @apply text-base font-medium;
+  }
 }
 
 /* Component Styles - Soft UI Evolution */
 @layer components {
+
   /* Cards */
   .card-soft {
     @apply bg-surface rounded-soft shadow-soft p-6 transition-all duration-smooth;
   }
-  
+
   .card-soft:hover {
     @apply shadow-soft-hover;
   }
-  
+
   .card-soft-sm {
     @apply bg-surface rounded-soft shadow-soft-sm p-4 transition-all duration-smooth;
   }
 
   /* Buttons - Primary */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-5 py-2.5 
-           bg-primary-600 text-white font-medium 
-           rounded-soft shadow-soft-sm
-           transition-all duration-smooth
-           hover:bg-primary-700 hover:shadow-soft hover:-translate-y-0.5
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+    @apply inline-flex items-center justify-center px-5 py-2.5 bg-primary-600 text-white font-medium rounded-soft shadow-soft-sm transition-all duration-smooth hover:bg-primary-700 hover:shadow-soft hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
   }
-  
+
   /* Buttons - Accent/CTA */
   .btn-accent {
-    @apply inline-flex items-center justify-center px-5 py-2.5 
-           bg-accent-500 text-white font-medium 
-           rounded-soft shadow-soft-sm
-           transition-all duration-smooth
-           hover:bg-accent-600 hover:shadow-soft hover:-translate-y-0.5
-           focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2
-           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+    @apply inline-flex items-center justify-center px-5 py-2.5 bg-accent-500 text-white font-medium rounded-soft shadow-soft-sm transition-all duration-smooth hover:bg-accent-600 hover:shadow-soft hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
   }
-  
+
   /* Buttons - Secondary */
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-5 py-2.5 
-           bg-surface text-text-primary font-medium 
-           border border-border rounded-soft shadow-soft-sm
-           transition-all duration-smooth
-           hover:bg-background hover:shadow-soft hover:-translate-y-0.5
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+    @apply inline-flex items-center justify-center px-5 py-2.5 bg-surface text-text-primary font-medium border border-border rounded-soft shadow-soft-sm transition-all duration-smooth hover:bg-background hover:shadow-soft hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
   }
-  
+
   /* Buttons - Ghost */
   .btn-ghost {
-    @apply inline-flex items-center justify-center px-5 py-2.5 
-           bg-transparent text-text-secondary font-medium 
-           rounded-soft
-           transition-all duration-smooth
-           hover:bg-background hover:text-text-primary
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center px-5 py-2.5 bg-transparent text-text-secondary font-medium rounded-soft transition-all duration-smooth hover:bg-background hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
   }
-  
+
   /* Buttons - Danger */
   .btn-danger {
-    @apply inline-flex items-center justify-center px-5 py-2.5 
-           bg-red-600 text-white font-medium 
-           rounded-soft shadow-soft-sm
-           transition-all duration-smooth
-           hover:bg-red-700 hover:shadow-soft hover:-translate-y-0.5
-           focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
-           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+    @apply inline-flex items-center justify-center px-5 py-2.5 bg-red-600 text-white font-medium rounded-soft shadow-soft-sm transition-all duration-smooth hover:bg-red-700 hover:shadow-soft hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
   }
-  
+
   /* Icon Button */
   .btn-icon {
-    @apply inline-flex items-center justify-center p-2.5
-           rounded-soft transition-all duration-smooth
-           hover:bg-background
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center p-2.5 rounded-soft transition-all duration-smooth hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
   }
 
   /* Inputs */
   .input-soft {
-    @apply w-full px-4 py-2.5 
-           bg-surface border border-border rounded-soft 
-           text-text-primary placeholder:text-text-muted
-           transition-all duration-smooth
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
-           hover:border-primary-300;
+    @apply w-full px-4 py-2.5 bg-surface border border-border rounded-soft text-text-primary placeholder:text-text-muted transition-all duration-smooth focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 hover:border-primary-300;
   }
-  
+
   /* Select */
   .select-soft {
-    @apply w-full px-4 py-2.5 
-           bg-surface border border-border rounded-soft 
-           text-text-primary
-           transition-all duration-smooth
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
-           hover:border-primary-300
-           cursor-pointer;
+    @apply w-full px-4 py-2.5 bg-surface border border-border rounded-soft text-text-primary transition-all duration-smooth focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 hover:border-primary-300 cursor-pointer;
   }
-  
+
   /* Textarea */
   .textarea-soft {
-    @apply w-full px-4 py-3 
-           bg-surface border border-border rounded-soft 
-           text-text-primary placeholder:text-text-muted
-           transition-all duration-smooth resize-y min-h-[100px]
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
-           hover:border-primary-300;
+    @apply w-full px-4 py-3 bg-surface border border-border rounded-soft text-text-primary placeholder:text-text-muted transition-all duration-smooth resize-y min-h-[100px] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 hover:border-primary-300;
   }
-  
+
   /* Labels */
   .label-soft {
     @apply block text-sm font-medium text-text-primary mb-2;
@@ -193,27 +221,27 @@
   .table-soft {
     @apply w-full border-separate border-spacing-0;
   }
-  
+
   .table-soft thead {
     @apply bg-background;
   }
-  
+
   .table-soft th {
     @apply px-6 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider;
   }
-  
+
   .table-soft tbody {
     @apply bg-surface;
   }
-  
+
   .table-soft tbody tr {
     @apply transition-all duration-smooth border-b border-border;
   }
-  
+
   .table-soft tbody tr:hover {
     @apply bg-background;
   }
-  
+
   .table-soft td {
     @apply px-6 py-4 whitespace-nowrap text-sm text-text-primary;
   }
@@ -222,43 +250,40 @@
   .badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
-  
+
   .badge-primary {
-    @apply badge bg-primary-100 text-primary-700;
+    @apply badge bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300;
   }
-  
+
   .badge-success {
-    @apply badge bg-green-100 text-green-700;
+    @apply badge bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300;
   }
-  
+
   .badge-warning {
-    @apply badge bg-yellow-100 text-yellow-700;
+    @apply badge bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300;
   }
-  
+
   .badge-danger {
-    @apply badge bg-red-100 text-red-700;
+    @apply badge bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300;
   }
-  
+
   .badge-neutral {
-    @apply badge bg-gray-100 text-gray-700;
+    @apply badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300;
   }
 
   .badge-purple {
-    @apply badge bg-purple-100 text-purple-700;
+    @apply badge bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300;
   }
 
   /* Modal / Dialog */
   .modal-overlay {
-    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50 
-           flex items-center justify-center p-4 overflow-y-auto;
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto;
   }
-  
+
   .modal-content {
-    @apply bg-surface rounded-soft-lg shadow-soft-lg w-full max-w-md 
-           p-6 animate-in fade-in zoom-in-95 duration-200
-           max-h-[90vh] overflow-y-auto my-auto;
+    @apply bg-surface rounded-soft-lg shadow-soft-lg w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto my-auto;
   }
-  
+
   .modal-title {
     @apply text-xl font-semibold text-text-primary mb-4;
   }
@@ -267,95 +292,85 @@
   .sidebar {
     @apply w-64 bg-surface border-r border-border h-screen flex flex-col;
   }
-  
+
   .sidebar-brand {
     @apply p-6 border-b border-border;
   }
-  
+
   .sidebar-nav {
     @apply flex-1 p-4 space-y-1;
   }
-  
+
   .sidebar-link {
-    @apply flex items-center gap-3 px-4 py-2.5 
-           text-text-secondary rounded-soft
-           transition-all duration-smooth
-           hover:bg-primary-50 hover:text-primary-600;
+    @apply flex items-center gap-3 px-4 py-2.5 text-text-secondary rounded-soft transition-all duration-smooth hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600;
   }
-  
+
   .sidebar-link.active {
-    @apply bg-primary-50 text-primary-600 font-medium;
+    @apply bg-primary-50 dark:bg-primary-900/20 text-primary-600 font-medium;
   }
-  
+
   .sidebar-link-icon {
     @apply w-5 h-5 flex-shrink-0;
   }
 
   /* Smart Sidebar - Collapsible with slide animation */
   .sidebar-smart {
-    @apply h-screen bg-surface border-r border-border flex-shrink-0
-           flex flex-col
-           transition-all duration-300 ease-out relative;
+    @apply h-screen bg-surface border-r border-border flex-shrink-0 flex flex-col transition-all duration-300 ease-out relative;
   }
-  
+
   .sidebar-smart-expanded {
     @apply w-64;
   }
-  
+
   .sidebar-smart-collapsed {
     @apply w-[72px];
   }
-  
+
   .sidebar-smart-brand {
     @apply flex-shrink-0 p-4 border-b border-border relative;
   }
-  
+
   .sidebar-smart-brand-expanded {
     @apply px-6 py-5;
   }
-  
+
   .sidebar-smart-brand-collapsed {
     @apply px-4 py-5 flex justify-center;
   }
-  
+
   .sidebar-smart-nav {
     @apply flex-1 min-h-0 p-3 space-y-1 overflow-y-auto overflow-x-hidden;
   }
-  
+
   .sidebar-smart-link {
-    @apply flex items-center gap-3 px-3 py-2.5 
-           text-text-secondary rounded-soft
-           transition-all duration-200
-           hover:bg-primary-50 hover:text-primary-600
-           relative overflow-hidden;
+    @apply flex items-center gap-3 px-3 py-2.5 text-text-secondary rounded-soft transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 relative overflow-hidden;
   }
-  
+
   .sidebar-smart-link.active {
-    @apply bg-primary-50 text-primary-600 font-medium;
+    @apply bg-primary-50 dark:bg-primary-900/20 text-primary-600 font-medium;
   }
-  
+
   .sidebar-smart-link.active::before {
     content: '';
-    @apply absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 
-           bg-primary-500 rounded-r-full;
+    @apply absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary-500 rounded-r-full;
   }
-  
+
   .sidebar-smart-link-icon {
     @apply w-5 h-5 flex-shrink-0;
   }
-  
+
   .sidebar-smart-link-text {
     @apply whitespace-nowrap transition-all duration-300 ease-out;
   }
-  
+
   .sidebar-smart-link-text-visible {
     @apply opacity-100 translate-x-0;
   }
-  
+
   .sidebar-smart-link-text-hidden {
     @apply opacity-0 -translate-x-4 w-0 overflow-hidden;
   }
-  
+
   .sidebar-smart-footer {
     @apply flex-shrink-0 py-4 border-t border-border bg-surface transition-all duration-300;
   }
@@ -363,63 +378,68 @@
   /* Tooltip for collapsed sidebar */
   .sidebar-smart-collapsed .sidebar-smart-link:hover::after {
     content: attr(title);
-    @apply absolute left-full ml-3 px-3 py-1.5 
-           bg-gray-900 text-white text-sm rounded-md
-           whitespace-nowrap z-50 shadow-lg
-           animate-in fade-in duration-150;
+    @apply absolute left-full ml-3 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-md whitespace-nowrap z-50 shadow-lg animate-in fade-in duration-150;
   }
 
   /* Alert/Notification */
   .alert {
     @apply rounded-soft p-4 flex items-start gap-3;
   }
-  
+
   .alert-info {
-    @apply alert bg-primary-50 text-primary-800 border border-primary-200;
+    @apply alert bg-primary-50 text-primary-800 border border-primary-200 dark:bg-primary-900/20 dark:text-primary-300 dark:border-primary-800;
   }
-  
+
   .alert-success {
-    @apply alert bg-green-50 text-green-800 border border-green-200;
+    @apply alert bg-green-50 text-green-800 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800;
   }
-  
+
   .alert-warning {
-    @apply alert bg-yellow-50 text-yellow-800 border border-yellow-200;
+    @apply alert bg-yellow-50 text-yellow-800 border border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800;
   }
-  
+
   .alert-error {
-    @apply alert bg-red-50 text-red-800 border border-red-200;
+    @apply alert bg-red-50 text-red-800 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800;
   }
 
   /* Loading Spinner */
   .spinner {
     @apply animate-spin rounded-full border-2 border-current border-t-transparent;
   }
-  
-  .spinner-sm { @apply w-4 h-4; }
-  .spinner-md { @apply w-6 h-6; }
-  .spinner-lg { @apply w-8 h-8; }
+
+  .spinner-sm {
+    @apply w-4 h-4;
+  }
+
+  .spinner-md {
+    @apply w-6 h-6;
+  }
+
+  .spinner-lg {
+    @apply w-8 h-8;
+  }
 
   /* Stats Card */
   .stat-card {
     @apply card-soft flex flex-col;
   }
-  
+
   .stat-card-label {
     @apply text-sm font-medium text-text-secondary;
   }
-  
+
   .stat-card-value {
     @apply text-3xl font-bold text-text-primary mt-1;
   }
-  
+
   .stat-card-change {
     @apply text-sm mt-2 flex items-center gap-1;
   }
-  
+
   .stat-card-change.positive {
     @apply text-green-600;
   }
-  
+
   .stat-card-change.negative {
     @apply text-red-600;
   }
@@ -430,12 +450,13 @@
   .animate-in {
     animation: animateIn 0.25s ease-out;
   }
-  
+
   @keyframes animateIn {
     from {
       opacity: 0;
       transform: translateY(10px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -475,7 +496,7 @@
 
   /* Glassmorphism */
   .glass {
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--glass-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
@@ -484,29 +505,35 @@
   .hover-lift {
     @apply transition-all duration-200;
   }
-  
+
   .hover-lift:hover {
     @apply -translate-y-1 shadow-lg;
   }
-  
+
   .fade-in {
     animation: fadeIn 0.2s ease-out;
   }
-  
+
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
-  
+
   .zoom-in-95 {
     animation: zoomIn95 0.2s ease-out;
   }
-  
+
   @keyframes zoomIn95 {
     from {
       opacity: 0;
       transform: scale(0.95);
     }
+
     to {
       opacity: 1;
       transform: scale(1);

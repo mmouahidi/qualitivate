@@ -235,6 +235,45 @@ export const logout = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const updateProfile = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { first_name, last_name } = req.body;
+
+    const updateData: Record<string, any> = {};
+    if (first_name !== undefined) updateData.first_name = first_name;
+    if (last_name !== undefined) updateData.last_name = last_name;
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    updateData.updated_at = new Date();
+
+    const [updated] = await db('users')
+      .where({ id: req.user.id })
+      .update(updateData)
+      .returning(['id', 'email', 'first_name', 'last_name', 'role', 'company_id', 'site_id', 'department_id']);
+
+    res.json({
+      id: updated.id,
+      email: updated.email,
+      firstName: updated.first_name,
+      lastName: updated.last_name,
+      role: updated.role,
+      companyId: updated.company_id,
+      siteId: updated.site_id,
+      departmentId: updated.department_id
+    });
+  } catch (error) {
+    logger.error('Update profile error:', { error });
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+};
+
 export const me = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {

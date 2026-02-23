@@ -64,19 +64,19 @@ export interface Survey {
   updatedAt: string;
 }
 
-export type QuestionType = 'nps' | 'multiple_choice' | 'text_short' | 'text_long' | 'rating_scale' | 'matrix';
+export type QuestionType = 'nps' | 'multiple_choice' | 'text_short' | 'text_long' | 'rating_scale' | 'matrix' | 'yes_no' | 'dropdown' | 'date' | 'file_upload' | 'ranking' | 'slider' | 'image_choice';
 
 // Logic Rule types for question branching
-export type LogicOperator = 
-  | 'equals' 
-  | 'not_equals' 
-  | 'contains' 
+export type LogicOperator =
+  | 'equals'
+  | 'not_equals'
+  | 'contains'
   | 'not_contains'
-  | 'greater_than' 
-  | 'less_than' 
+  | 'greater_than'
+  | 'less_than'
   | 'greater_than_or_equal'
   | 'less_than_or_equal'
-  | 'is_answered' 
+  | 'is_answered'
   | 'is_not_answered'
   | 'is_any_of'
   | 'is_none_of';
@@ -165,7 +165,7 @@ export interface Answer {
 /**
  * Extended question types following SurveyJS patterns
  */
-export type ExtendedQuestionType = 
+export type ExtendedQuestionType =
   | QuestionType  // Original types
   | 'dropdown'
   | 'checkbox'
@@ -184,7 +184,7 @@ export type ExtendedQuestionType =
 /**
  * Validator types for client/server-side validation
  */
-export type ValidatorType = 
+export type ValidatorType =
   | 'required'
   | 'numeric'
   | 'text'
@@ -276,14 +276,14 @@ export interface SurveyElement extends BaseElement {
   defaultValue?: any;
   correctAnswer?: any;  // For quiz mode
   validators?: Validator[];
-  
+
   // Text input options
   inputType?: 'text' | 'number' | 'email' | 'tel' | 'url' | 'password' | 'date' | 'datetime-local' | 'time' | 'color';
   placeholder?: string;
   maxLength?: number;
   rows?: number;  // For text_long/comment
   autoGrow?: boolean;
-  
+
   // Choice-based options
   choices?: (string | ChoiceItem)[];
   choicesOrder?: 'none' | 'asc' | 'desc' | 'random';
@@ -297,7 +297,7 @@ export interface SurveyElement extends BaseElement {
   selectAllText?: string;
   otherPlaceholder?: string;
   colCount?: number;  // Number of columns for choices
-  
+
   // Rating scale options
   rateMin?: number;
   rateMax?: number;
@@ -305,7 +305,7 @@ export interface SurveyElement extends BaseElement {
   minRateDescription?: string;
   maxRateDescription?: string;
   rateType?: 'labels' | 'stars' | 'smileys';
-  
+
   // Matrix options
   columns?: (string | MatrixColumn)[];
   rowsOrder?: 'initial' | 'random';
@@ -313,49 +313,49 @@ export interface SurveyElement extends BaseElement {
   rowsVisibleIf?: string;
   isAllRowRequired?: boolean;
   eachRowUnique?: boolean;
-  
+
   // NPS specific
   npsMin?: number;
   npsMax?: number;
-  
+
   // Boolean options
   labelTrue?: string;
   labelFalse?: string;
   valueTrue?: any;
   valueFalse?: any;
-  
+
   // File upload options
   allowMultiple?: boolean;
   allowImagesPreview?: boolean;
   acceptedTypes?: string;  // e.g., "image/*,.pdf"
   maxSize?: number;  // in bytes
-  
+
   // Image picker options
   imageHeight?: string;
   imageWidth?: string;
   imageFit?: 'contain' | 'cover' | 'fill' | 'none';
   showLabel?: boolean;
   multiSelect?: boolean;
-  
+
   // Ranking options
   selectToRankEnabled?: boolean;
   selectToRankAreasLayout?: 'horizontal' | 'vertical';
-  
+
   // Signature pad options
   signatureWidth?: number;
   signatureHeight?: number;
   penColor?: string;
   backgroundColor?: string;
-  
+
   // HTML content (for html type)
   html?: string;
-  
+
   // Expression/Calculated value
   expression?: string;
   format?: string;
   displayStyle?: 'none' | 'decimal' | 'currency' | 'percent';
   currency?: string;
-  
+
   // Panel dynamic options
   templateElements?: SurveyElement[];
   panelCount?: number;
@@ -365,7 +365,7 @@ export interface SurveyElement extends BaseElement {
   panelRemoveText?: string;
   confirmDelete?: boolean;
   confirmDeleteText?: string;
-  
+
   // Legacy support - for migration
   content?: string;  // Maps to title
   options?: QuestionOptions;  // Legacy options
@@ -405,7 +405,7 @@ export interface SurveyPage {
 /**
  * Trigger definitions for survey automation
  */
-export type TriggerType = 
+export type TriggerType =
   | 'complete'      // Complete the survey
   | 'setvalue'      // Set a value
   | 'copyvalue'     // Copy value from one question to another
@@ -445,14 +445,14 @@ export interface SurveySchema {
   description?: string;
   logoPosition?: 'none' | 'left' | 'right' | 'top' | 'bottom';
   logo?: string;
-  
+
   // Pages and elements
   pages: SurveyPage[];
-  
+
   // Automation
   triggers?: SurveyTrigger[];
   calculatedValues?: CalculatedValue[];
-  
+
   // Navigation
   showNavigationButtons?: boolean | 'none' | 'top' | 'bottom' | 'both';
   showPrevButton?: boolean;
@@ -460,46 +460,46 @@ export interface SurveySchema {
   progressBarType?: 'pages' | 'questions' | 'requiredQuestions' | 'correctQuestions';
   goNextPageAutomatic?: boolean;
   allowCompleteSurveyAutomatic?: boolean;
-  
+
   // Question behavior
   questionsOnPageMode?: 'standard' | 'singlePage' | 'questionPerPage';
   showQuestionNumbers?: 'on' | 'off' | 'onPage';
   questionTitleLocation?: 'top' | 'bottom' | 'left';
   questionDescriptionLocation?: 'underTitle' | 'underInput';
   questionErrorLocation?: 'top' | 'bottom';
-  
+
   // Completion
   showCompletedPage?: boolean;
   completedHtml?: string;
   completedBeforeHtml?: string;
   completedHtmlOnCondition?: Array<{ expression: string; html: string }>;
   loadingHtml?: string;
-  
+
   // Timer/Quiz
   maxTimeToFinish?: number;
   maxTimeToFinishPage?: number;
   showTimerPanel?: 'none' | 'top' | 'bottom';
   showTimerPanelMode?: 'all' | 'page' | 'survey';
-  
+
   // Data
   sendResultOnPageNext?: boolean;
   storeOthersAsComment?: boolean;
   clearInvisibleValues?: 'none' | 'onHidden' | 'onHiddenContainer' | 'onComplete';
   textUpdateMode?: 'onBlur' | 'onTyping';
-  
+
   // Validation
   checkErrorsMode?: 'onNextPage' | 'onValueChanged' | 'onValueChanging' | 'onComplete';
   focusFirstQuestionAutomatic?: boolean;
   focusOnFirstError?: boolean;
-  
+
   // Localization
   locale?: string;
-  
+
   // Appearance
   widthMode?: 'static' | 'responsive' | 'auto';
   width?: string;
   fitToContainer?: boolean;
-  
+
   // Legacy/compatibility
   version?: string;
 }

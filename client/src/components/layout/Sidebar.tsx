@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Menu, X, LogOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Menu, X, LogOut, Sun, Moon, Monitor } from 'lucide-react';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 // User role type
 export type UserRole = 'super_admin' | 'company_admin' | 'site_admin' | 'department_admin' | 'user';
@@ -25,6 +26,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ navigation }) => {
   const { t } = useTranslation();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const {
     isCollapsed,
     isHovered,
@@ -158,7 +160,33 @@ export const Sidebar: React.FC<SidebarProps> = ({ navigation }) => {
             </div>
           )}
         </Link>
-        
+
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={() => {
+            const next = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light';
+            setTheme(next);
+          }}
+          aria-label={t('sidebar.toggleTheme', 'Toggle theme')}
+          className={`
+            w-full mb-2 p-2 rounded-lg
+            flex items-center text-sm text-text-secondary
+            hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-600
+            transition-colors
+            ${isExpanded ? 'justify-start gap-2' : 'justify-center'}
+          `}
+          title={!isExpanded ? (theme === 'light' ? 'Light' : theme === 'dark' ? 'Dark' : 'System') : undefined}
+        >
+          {theme === 'light' && <Sun className="w-4 h-4 flex-shrink-0" />}
+          {theme === 'dark' && <Moon className="w-4 h-4 flex-shrink-0" />}
+          {theme === 'system' && <Monitor className="w-4 h-4 flex-shrink-0" />}
+          {isExpanded && (
+            <span>
+              {theme === 'light' ? t('profile.themeLight', 'Light') : theme === 'dark' ? t('profile.themeDark', 'Dark') : t('profile.themeSystem', 'System')}
+            </span>
+          )}
+        </button>
+
         <button
           onClick={logout}
           aria-label={t('sidebar.signOut')}

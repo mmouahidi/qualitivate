@@ -13,7 +13,7 @@ interface LivePreviewProps {
 const LivePreview: React.FC<LivePreviewProps> = ({ survey, isMobile = false }) => {
     if (!survey) {
         return (
-            <div className="h-full flex items-center justify-center text-gray-400">
+            <div className="h-full flex items-center justify-center text-text-muted">
                 <p>Loading preview...</p>
             </div>
         );
@@ -21,7 +21,7 @@ const LivePreview: React.FC<LivePreviewProps> = ({ survey, isMobile = false }) =
 
     return (
         <div className={`h-full overflow-auto ${isMobile ? 'max-w-sm mx-auto' : ''}`}>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
                 {/* Survey Header */}
                 <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-6">
                     <h1 className="text-xl font-bold">{survey.title || 'Untitled Survey'}</h1>
@@ -34,11 +34,11 @@ const LivePreview: React.FC<LivePreviewProps> = ({ survey, isMobile = false }) =
                 <div className="p-6 space-y-6">
                     {survey.questions && survey.questions.length > 0 ? (
                         survey.questions.map((question, index) => (
-                            <div key={question.id} className="border-b border-gray-100 pb-6 last:border-0">
+                            <div key={question.id} className="border-b border-border pb-6 last:border-0">
                                 <div className="flex items-start gap-2 mb-3">
-                                    <span className="text-sm font-medium text-gray-400">{index + 1}.</span>
+                                    <span className="text-sm font-medium text-text-muted">{index + 1}.</span>
                                     <div className="flex-1">
-                                        <p className="font-medium text-gray-900">
+                                        <p className="font-medium text-text-primary">
                                             {question.content || 'Untitled question'}
                                             {question.is_required && <span className="text-red-500 ml-1">*</span>}
                                         </p>
@@ -55,7 +55,7 @@ const LivePreview: React.FC<LivePreviewProps> = ({ survey, isMobile = false }) =
                             </div>
                         ))
                     ) : (
-                        <div className="text-center py-8 text-gray-400">
+                        <div className="text-center py-8 text-text-muted">
                             <p>No questions yet</p>
                             <p className="text-sm mt-1">Add questions to see them here</p>
                         </div>

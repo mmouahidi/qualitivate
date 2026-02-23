@@ -82,7 +82,27 @@
     "questions": "questions",
     "created": "Created",
     "expires": "Expires",
-    "expired": "Expired"
+    "expired": "Expired",
+    "createSurvey": "Create Survey",
+    "surveyScope": "Survey Scope",
+    "generalAll": "General (All Users)",
+    "companyScoped": "Survey belongs to selected company",
+    "generalScoped": "General survey accessible to all users",
+    "siteOptional": "Site (optional)",
+    "allSitesInCompany": "All sites in company",
+    "titleLabel": "Title",
+    "descriptionLabel": "Description",
+    "typeLabel": "Type",
+    "customSurvey": "Custom Survey",
+    "npsSurvey": "NPS Survey",
+    "publicSurvey": "Public survey",
+    "anonymousResponses": "Anonymous responses",
+    "startsAt": "Starts At (optional)",
+    "scheduleForLater": "Schedule for later",
+    "deadline": "Deadline (optional)",
+    "dueDate": "Due date for responses",
+    "creating": "Creating...",
+    "createAndEdit": "Create & Edit"
   },
   "analytics": {
     "title": "Analytics",
@@ -157,7 +177,11 @@
       "password": "Password",
       "selectCompany": "Select Company",
       "selectSite": "Select Site",
-      "selectRole": "Select Role"
+      "selectRole": "Select Role",
+      "addingTo": "Adding to",
+      "bulkFormat": "Paste CSV: email, firstName, lastName, password, role (one per line)",
+      "import": "Import",
+      "deleteConfirm": "Delete this user? This action cannot be undone."
     },
     "sites": {
       "title": "Sites",
@@ -169,7 +193,9 @@
       "created": "Created",
       "actions": "Actions",
       "delete": "Delete",
-      "noSites": "No sites found"
+      "noSites": "No sites found",
+      "location": "Location",
+      "deleteConfirm": "Delete site \"{{name}}\"? This action cannot be undone."
     },
     "templates": {
       "title": "Templates",

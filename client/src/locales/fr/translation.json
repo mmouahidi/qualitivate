@@ -16,7 +16,8 @@
     "templates": "Modèles",
     "signOut": "Déconnexion",
     "expand": "Développer la barre latérale",
-    "collapse": "Réduire la barre latérale"
+    "collapse": "Réduire la barre latérale",
+    "closeMenu": "Fermer le menu"
   },
   "survey": {
     "loading": "Chargement de l'enquête...",
@@ -81,7 +82,27 @@
     "questions": "questions",
     "created": "Créé",
     "expires": "Expire",
-    "expired": "Expiré"
+    "expired": "Expiré",
+    "createSurvey": "Créer une enquête",
+    "surveyScope": "Portée de l'enquête",
+    "generalAll": "Général (Tous les utilisateurs)",
+    "companyScoped": "L'enquête appartient à l'entreprise sélectionnée",
+    "generalScoped": "Enquête générale accessible à tous les utilisateurs",
+    "siteOptional": "Site (optionnel)",
+    "allSitesInCompany": "Tous les sites de l'entreprise",
+    "titleLabel": "Titre",
+    "descriptionLabel": "Description",
+    "typeLabel": "Type",
+    "customSurvey": "Enquête personnalisée",
+    "npsSurvey": "Enquête NPS",
+    "publicSurvey": "Enquête publique",
+    "anonymousResponses": "Réponses anonymes",
+    "startsAt": "Début (optionnel)",
+    "scheduleForLater": "Programmer pour plus tard",
+    "deadline": "Date limite (optionnel)",
+    "dueDate": "Date limite pour les réponses",
+    "creating": "Création...",
+    "createAndEdit": "Créer et modifier"
   },
   "analytics": {
     "title": "Analyses",
@@ -131,7 +152,11 @@
       "actions": "Actions",
       "delete": "Supprimer",
       "noCompanies": "Aucune entreprise trouvée",
-      "accessDenied": "Accès refusé. Seuls les super admins peuvent voir les entreprises."
+      "accessDenied": "Accès refusé. Seuls les super admins peuvent voir les entreprises.",
+      "overview": "Aperçu",
+      "details": "Détails",
+      "backToList": "Retour aux entreprises",
+      "employeesCount": "Employés"
     },
     "users": {
       "title": "Utilisateurs",
@@ -156,7 +181,11 @@
       "password": "Mot de passe",
       "selectCompany": "Sélectionner une entreprise",
       "selectSite": "Sélectionner un site",
-      "selectRole": "Sélectionner un rôle"
+      "selectRole": "Sélectionner un rôle",
+      "addingTo": "Ajout à",
+      "bulkFormat": "Collez le CSV : email, prénom, nom, mot de passe, rôle (un par ligne)",
+      "import": "Importer",
+      "deleteConfirm": "Supprimer cet utilisateur ? Cette action est irréversible."
     },
     "sites": {
       "title": "Sites",
@@ -168,7 +197,9 @@
       "created": "Créé",
       "actions": "Actions",
       "delete": "Supprimer",
-      "noSites": "Aucun site trouvé"
+      "noSites": "Aucun site trouvé",
+      "location": "Emplacement",
+      "deleteConfirm": "Supprimer le site \"{{name}}\" ? Cette action est irréversible."
     },
     "templates": {
       "title": "Modèles",
@@ -342,6 +373,13 @@
     "surveyReminders": "Rappels de sondages",
     "surveyRemindersDesc": "Être notifié des sondages en attente",
     "memberSince": "Membre depuis l'inscription",
+    "appearance": "Apparence",
+    "theme": "Thème",
+    "themeLight": "Clair",
+    "themeDark": "Sombre",
+    "themeSystem": "Système",
+    "changeAvatar": "Changer l'avatar",
+    "pickStyle": "Choisir un style",
     "roles": {
       "superAdmin": "Super Admin",
       "companyAdmin": "Admin Entreprise",

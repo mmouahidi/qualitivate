@@ -22,9 +22,9 @@ export interface SurveyWithStats extends Survey {
 }
 
 export const surveyService = {
-  async list(params?: { 
-    page?: number; 
-    limit?: number; 
+  async list(params?: {
+    page?: number;
+    limit?: number;
     search?: string;
     type?: string;
     status?: string;
@@ -78,7 +78,7 @@ export const questionService = {
   },
 
   async create(surveyId: string, data: {
-    type: 'nps' | 'multiple_choice' | 'text_short' | 'text_long' | 'rating_scale' | 'matrix';
+    type: 'nps' | 'multiple_choice' | 'text_short' | 'text_long' | 'rating_scale' | 'matrix' | 'yes_no' | 'dropdown' | 'date' | 'file_upload' | 'ranking' | 'slider' | 'image_choice';
     content: string;
     options?: Record<string, any>;
     isRequired?: boolean;

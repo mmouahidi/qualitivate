@@ -84,11 +84,21 @@ const SurveyBuilder: React.FC = () => {
     };
 
     const handleAddQuestion = (type: QuestionType) => {
+        const defaultOptions: Record<string, any> = {
+            multiple_choice: { choices: ['Option 1', 'Option 2'] },
+            dropdown: { choices: ['Option 1', 'Option 2', 'Option 3'] },
+            yes_no: { choices: ['Yes', 'No'] },
+            ranking: { choices: ['Item 1', 'Item 2', 'Item 3'] },
+            slider: { min: 0, max: 100 },
+            image_choice: { choices: ['Image 1', 'Image 2'] },
+            date: {},
+            file_upload: {},
+        };
         createQuestionMutation.mutate({
             type,
             content: '',
             isRequired: false,
-            options: type === 'multiple_choice' ? { choices: ['Option 1', 'Option 2'] } : {},
+            options: defaultOptions[type] || {},
         });
     };
 
@@ -129,19 +139,19 @@ const SurveyBuilder: React.FC = () => {
     return (
         <div className="min-h-screen bg-background">
             {/* Top Navigation */}
-            <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+            <header className="bg-surface border-b border-border sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => navigate('/surveys')}
-                            className="text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                            className="text-text-secondary hover:text-text-primary flex items-center gap-1"
                         >
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
                             <span className="hidden sm:inline">Surveys</span>
                         </button>
-                        <div className="h-6 w-px bg-gray-200" />
+                        <div className="h-6 w-px bg-border" />
                         <div
                             className="cursor-pointer"
                             onClick={() => setIsEditingTitle(true)}
@@ -157,7 +167,7 @@ const SurveyBuilder: React.FC = () => {
                                     autoFocus
                                 />
                             ) : (
-                                <h1 className="text-lg font-semibold text-gray-900 hover:text-primary-600">
+                                <h1 className="text-lg font-semibold text-text-primary hover:text-primary-600">
                                     {survey?.title || 'Untitled Survey'}
                                 </h1>
                             )}
@@ -167,10 +177,10 @@ const SurveyBuilder: React.FC = () => {
                     <div className="flex items-center gap-3">
                         {/* Status Badge */}
                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${survey?.status === 'active'
-                                ? 'bg-green-100 text-green-700'
-                                : survey?.status === 'closed'
-                                    ? 'bg-red-100 text-red-700'
-                                    : 'bg-amber-100 text-amber-700'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            : survey?.status === 'closed'
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                             }`}>
                             {survey?.status === 'active' ? '🟢 Active' : survey?.status === 'closed' ? '🔴 Closed' : '📝 Draft'}
                         </span>
@@ -230,7 +240,7 @@ const SurveyBuilder: React.FC = () => {
                             className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors
                 ${showPreview
                                     ? 'bg-primary-100 text-primary-700'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    : 'bg-background text-text-secondary hover:bg-surface-hover'
                                 }
               `}
                         >
@@ -256,7 +266,7 @@ const SurveyBuilder: React.FC = () => {
                     {/* Builder Panel */}
                     <div className="space-y-4">
                         {/* Survey Header Card */}
-                        <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
+                        <div className="bg-surface rounded-xl border-2 border-border p-6">
                             <div className="border-l-4 border-primary-500 pl-4">
                                 {isEditingTitle ? (
                                     <div className="space-y-3">
@@ -264,24 +274,24 @@ const SurveyBuilder: React.FC = () => {
                                             type="text"
                                             value={localTitle}
                                             onChange={(e) => setLocalTitle(e.target.value)}
-                                            className="w-full text-2xl font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:border-primary-500 focus:outline-none pb-1"
+                                            className="w-full text-2xl font-bold text-text-primary bg-transparent border-b border-border focus:border-primary-500 focus:outline-none pb-1"
                                             placeholder="Survey Title"
                                         />
                                         <textarea
                                             value={localDescription}
                                             onChange={(e) => setLocalDescription(e.target.value)}
                                             onBlur={handleTitleBlur}
-                                            className="w-full text-gray-600 bg-transparent border-b border-gray-300 focus:border-primary-500 focus:outline-none resize-none"
+                                            className="w-full text-text-secondary bg-transparent border-b border-border focus:border-primary-500 focus:outline-none resize-none"
                                             placeholder="Survey description (optional)"
                                             rows={2}
                                         />
                                     </div>
                                 ) : (
                                     <div onClick={() => setIsEditingTitle(true)} className="cursor-pointer">
-                                        <h2 className="text-2xl font-bold text-gray-900 hover:text-primary-600">
+                                        <h2 className="text-2xl font-bold text-text-primary hover:text-primary-600">
                                             {survey?.title || 'Untitled Survey'}
                                         </h2>
-                                        <p className="text-gray-500 mt-1">
+                                        <p className="text-text-muted mt-1">
                                             {survey?.description || 'Click to add a description...'}
                                         </p>
                                     </div>
@@ -312,7 +322,7 @@ const SurveyBuilder: React.FC = () => {
 
                         {/* Empty State */}
                         {(!survey?.questions || survey.questions.length === 0) && (
-                            <div className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-12 text-center">
+                            <div className="bg-surface rounded-xl border-2 border-dashed border-border p-12 text-center">
                                 <img
                                     src="/src/assets/images/survey-builder-illustration.png"
                                     alt="Start Building"
@@ -335,7 +345,7 @@ const SurveyBuilder: React.FC = () => {
                                 <div className="relative">
                                     <button
                                         onClick={() => setShowTypeSelector(!showTypeSelector)}
-                                        className="px-6 py-3 bg-white border-2 border-dashed border-gray-300 rounded-xl text-gray-600 font-medium hover:border-primary-400 hover:text-primary-600 transition-colors flex items-center gap-2"
+                                        className="px-6 py-3 bg-surface border-2 border-dashed border-border rounded-xl text-text-secondary font-medium hover:border-primary-400 hover:text-primary-600 transition-colors flex items-center gap-2"
                                     >
                                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -364,12 +374,12 @@ const SurveyBuilder: React.FC = () => {
                     {/* Preview Panel */}
                     {showPreview && (
                         <div className="hidden lg:block sticky top-24 h-[calc(100vh-8rem)]">
-                            <div className="bg-gray-50 rounded-xl border border-gray-200 h-full p-4 overflow-auto">
+                            <div className="bg-background rounded-xl border border-border h-full p-4 overflow-auto">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-sm font-medium text-gray-500">Live Preview</h3>
+                                    <h3 className="text-sm font-medium text-text-muted">Live Preview</h3>
                                     <div className="flex gap-1">
-                                        <button className="px-2 py-1 text-xs bg-gray-200 rounded">Desktop</button>
-                                        <button className="px-2 py-1 text-xs text-gray-500 hover:bg-gray-100 rounded">Mobile</button>
+                                        <button className="px-2 py-1 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded">Desktop</button>
+                                        <button className="px-2 py-1 text-xs text-text-muted hover:bg-surface-hover rounded">Mobile</button>
                                     </div>
                                 </div>
                                 <LivePreview survey={survey || null} />

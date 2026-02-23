@@ -5,7 +5,8 @@
     "pricing": "الأسعار",
     "signIn": "تسجيل الدخول",
     "bookDemo": "احجز عرضاً"
-  },  "sidebar": {
+  },
+  "sidebar": {
     "dashboard": "لوحة التحكم",
     "surveys": "الاستبيانات",
     "analytics": "التحليلات",
@@ -15,7 +16,8 @@
     "templates": "القوالب",
     "signOut": "تسجيل الخروج",
     "expand": "توسيع الشريط الجانبي",
-    "collapse": "طي الشريط الجانبي"
+    "collapse": "طي الشريط الجانبي",
+    "closeMenu": "إغلاق القائمة"
   },
   "survey": {
     "loading": "جارٍ تحميل الاستبيان...",
@@ -80,7 +82,27 @@
     "questions": "أسئلة",
     "created": "تم الإنشاء",
     "expires": "ينتهي",
-    "expired": "منتهي"
+    "expired": "منتهي",
+    "createSurvey": "إنشاء استبيان",
+    "surveyScope": "نطاق الاستبيان",
+    "generalAll": "عام (جميع المستخدمين)",
+    "companyScoped": "الاستبيان ينتمي للشركة المختارة",
+    "generalScoped": "استبيان عام متاح لجميع المستخدمين",
+    "siteOptional": "الموقع (اختياري)",
+    "allSitesInCompany": "جميع المواقع في الشركة",
+    "titleLabel": "العنوان",
+    "descriptionLabel": "الوصف",
+    "typeLabel": "النوع",
+    "customSurvey": "استبيان مخصص",
+    "npsSurvey": "استبيان NPS",
+    "publicSurvey": "استبيان عام",
+    "anonymousResponses": "ردود مجهولة",
+    "startsAt": "يبدأ في (اختياري)",
+    "scheduleForLater": "جدولة لوقت لاحق",
+    "deadline": "الموعد النهائي (اختياري)",
+    "dueDate": "الموعد النهائي للردود",
+    "creating": "جاري الإنشاء...",
+    "createAndEdit": "إنشاء وتعديل"
   },
   "analytics": {
     "title": "التحليلات",
@@ -130,7 +152,11 @@
       "actions": "الإجراءات",
       "delete": "حذف",
       "noCompanies": "لم يتم العثور على شركات",
-      "accessDenied": "تم رفض الوصول. فقط المسؤولون الفائقون يمكنهم عرض الشركات."
+      "accessDenied": "تم رفض الوصول. فقط المسؤولون الفائقون يمكنهم عرض الشركات.",
+      "overview": "نظرة عامة",
+      "details": "التفاصيل",
+      "backToList": "العودة إلى الشركات",
+      "employeesCount": "الموظفون"
     },
     "users": {
       "title": "المستخدمون",
@@ -155,7 +181,11 @@
       "password": "كلمة المرور",
       "selectCompany": "اختر الشركة",
       "selectSite": "اختر الموقع",
-      "selectRole": "اختر الدور"
+      "selectRole": "اختر الدور",
+      "addingTo": "إضافة إلى",
+      "bulkFormat": "الصق CSV: البريد الإلكتروني، الاسم الأول، اسم العائلة، كلمة المرور، الدور (واحد لكل سطر)",
+      "import": "استيراد",
+      "deleteConfirm": "حذف هذا المستخدم؟ لا يمكن التراجع عن هذا الإجراء."
     },
     "sites": {
       "title": "المواقع",
@@ -167,7 +197,9 @@
       "created": "تم الإنشاء",
       "actions": "الإجراءات",
       "delete": "حذف",
-      "noSites": "لم يتم العثور على مواقع"
+      "noSites": "لم يتم العثور على مواقع",
+      "location": "الموقع",
+      "deleteConfirm": "حذف الموقع \"{{name}}\"? لا يمكن التراجع عن هذا الإجراء."
     },
     "templates": {
       "title": "القوالب",
@@ -216,7 +248,8 @@
     "type": "النوع",
     "noResults": "لم يتم العثور على نتائج",
     "tryAgain": "حاول مرة أخرى"
-  },  "hero": {
+  },
+  "hero": {
     "badge": "المعيار الجديد في تجربة الموظفين",
     "title": "اجعل الإصغاء",
     "titleHighlight": "ميزتك التنافسية",
@@ -340,6 +373,13 @@
     "surveyReminders": "تذكيرات الاستبيانات",
     "surveyRemindersDesc": "الحصول على إشعارات حول الاستبيانات المعلقة",
     "memberSince": "عضو منذ الانضمام",
+    "appearance": "المظهر",
+    "theme": "السمة",
+    "themeLight": "فاتح",
+    "themeDark": "داكن",
+    "themeSystem": "النظام",
+    "changeAvatar": "تغيير الصورة الرمزية",
+    "pickStyle": "اختر نمطاً",
     "roles": {
       "superAdmin": "مدير عام",
       "companyAdmin": "مدير الشركة",

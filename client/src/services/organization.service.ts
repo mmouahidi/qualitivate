@@ -51,15 +51,15 @@ export const companyService = {
     return response.data;
   },
 
-  async create(data: { 
-    name: string; 
-    slug: string; 
+  async create(data: {
+    name: string;
+    slug: string;
     activity?: string;
     address?: string;
     city?: string;
     sitesCount?: number;
     employeesCount?: number;
-    settings?: Record<string, any> 
+    settings?: Record<string, any>
   }): Promise<Company> {
     const response = await api.post('/companies', data);
     return response.data;
@@ -136,9 +136,9 @@ export const departmentService = {
 };
 
 export const userService = {
-  async list(params?: { 
-    page?: number; 
-    limit?: number; 
+  async list(params?: {
+    page?: number;
+    limit?: number;
     search?: string;
     role?: string;
     companyId?: string;
@@ -175,6 +175,22 @@ export const userService = {
 
   async delete(id: string): Promise<{ message: string }> {
     const response = await api.delete(`/users/${id}`);
+    return response.data;
+  },
+
+  async bulkCreate(data: {
+    users: Array<{
+      email: string;
+      firstName: string;
+      lastName: string;
+      password: string;
+      role: string;
+      companyId?: string;
+      siteId?: string;
+      departmentId?: string;
+    }>;
+  }): Promise<{ created: number; errors: any[] }> {
+    const response = await api.post('/users/bulk', data);
     return response.data;
   }
 };
