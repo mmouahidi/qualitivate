@@ -18,7 +18,6 @@ interface SurveyData {
   title: string;
   description?: string;
   isAnonymous?: boolean;
-  isAnonymous?: boolean;
   questions?: SurveyQuestion[];
 }
 

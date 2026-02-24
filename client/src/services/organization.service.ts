@@ -189,7 +189,7 @@ export const userService = {
       siteId?: string;
       departmentId?: string;
     }>;
-  }): Promise<{ created: number; errors: any[] }> {
+  }): Promise<{ created: number; failed: { email: string; error: string }[] }> {
     const response = await api.post('/users/bulk', data);
     return response.data;
   }
