@@ -29,6 +29,7 @@ interface ProfileUpdateData {
     firstName: string;
     lastName: string;
     language?: string;
+    avatarStyle?: string;
 }
 
 const Profile: React.FC = () => {
@@ -46,10 +47,9 @@ const Profile: React.FC = () => {
     const [selectedLanguage, setSelectedLanguage] = useState(i18n.language || 'en');
     const [successMessage, setSuccessMessage] = useState('');
     const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-    const [avatarSeed, setAvatarSeed] = useState(() => {
-        try {
-            return localStorage.getItem('avatarSeed') || user?.email || 'default';
-        } catch { return user?.email || 'default'; }
+    const [selectedAvatarStyle, setSelectedAvatarStyle] = useState(() => {
+        // Server-side value takes priority, fall back to localStorage
+        return (user as any)?.avatarStyle || localStorage.getItem('avatarStyle') || 'initials';
     });
     const [avatarRefreshKey, setAvatarRefreshKey] = useState(0);
     const [credentialsError, setCredentialsError] = useState('');
@@ -78,7 +78,7 @@ const Profile: React.FC = () => {
         }));
     }, [user?.email, avatarRefreshKey]);
 
-    const currentAvatarUrl = getAvatarUrl(avatarSeed, 'initials', 96);
+    const currentAvatarUrl = getAvatarUrl(user?.email || 'default', selectedAvatarStyle, 96);
 
     React.useEffect(() => {
         setEmailForm((prev) => ({ ...prev, email: user?.email || '' }));
@@ -246,11 +246,15 @@ const Profile: React.FC = () => {
                                         {avatarOptions.map((opt) => (
                                             <button
                                                 key={opt.style}
-                                                onClick={() => {
-                                                    setAvatarSeed(user?.email || 'user');
-                                                    try { localStorage.setItem('avatarSeed', user?.email || 'user'); } catch { }
+                                                onClick={async () => {
+                                                    setSelectedAvatarStyle(opt.style);
                                                     try { localStorage.setItem('avatarStyle', opt.style); } catch { }
                                                     setShowAvatarPicker(false);
+                                                    // Persist to server
+                                                    try {
+                                                        await api.put('/auth/profile', { avatarStyle: opt.style });
+                                                        refreshUser();
+                                                    } catch (e) { /* silent fallback to localStorage */ }
                                                 }}
                                                 className="p-1 rounded-lg border border-border hover:border-primary-400 transition-all"
                                             >

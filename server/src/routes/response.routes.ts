@@ -19,8 +19,8 @@ const router = Router();
 router.get('/user/status', authenticate, getUserSurveyStatus);
 router.get('/user/completed', authenticate, getUserCompletedSurveys);
 
-// Public routes (no auth required) - for survey respondents
-router.get('/survey/:surveyId/public', getPublicSurvey);
+// Public routes - optionalAuthenticate parses JWT when present (needed for private survey checks)
+router.get('/survey/:surveyId/public', optionalAuthenticate, getPublicSurvey);
 router.get('/survey/:surveyId/languages', getSurveyLanguages);
 router.get('/survey/:surveyId/settings', getSurveySettings);
 // Use optional auth to capture respondent_id if user is logged in

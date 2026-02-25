@@ -241,13 +241,15 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { firstName, lastName, first_name, last_name } = req.body;
+    const { firstName, lastName, first_name, last_name, avatarStyle, avatar_style } = req.body;
     const resolvedFirstName = firstName !== undefined ? firstName : first_name;
     const resolvedLastName = lastName !== undefined ? lastName : last_name;
+    const resolvedAvatarStyle = avatarStyle !== undefined ? avatarStyle : avatar_style;
 
     const updateData: Record<string, any> = {};
     if (resolvedFirstName !== undefined) updateData.first_name = resolvedFirstName;
     if (resolvedLastName !== undefined) updateData.last_name = resolvedLastName;
+    if (resolvedAvatarStyle !== undefined) updateData.avatar_style = resolvedAvatarStyle;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
@@ -258,7 +260,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     const [updated] = await db('users')
       .where({ id: req.user.id })
       .update(updateData)
-      .returning(['id', 'email', 'first_name', 'last_name', 'role', 'company_id', 'site_id', 'department_id']);
+      .returning(['id', 'email', 'first_name', 'last_name', 'role', 'company_id', 'site_id', 'department_id', 'avatar_style']);
 
     res.json({
       id: updated.id,
@@ -268,7 +270,8 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       role: updated.role,
       companyId: updated.company_id,
       siteId: updated.site_id,
-      departmentId: updated.department_id
+      departmentId: updated.department_id,
+      avatarStyle: updated.avatar_style
     });
   } catch (error) {
     logger.error('Update profile error:', { error });
@@ -359,7 +362,7 @@ export const me = async (req: AuthRequest, res: Response) => {
 
     const user = await db('users')
       .where({ id: req.user.id })
-      .select('id', 'email', 'first_name', 'last_name', 'role', 'company_id', 'site_id', 'department_id')
+      .select('id', 'email', 'first_name', 'last_name', 'role', 'company_id', 'site_id', 'department_id', 'avatar_style')
       .first();
 
     if (!user) {
@@ -374,7 +377,8 @@ export const me = async (req: AuthRequest, res: Response) => {
       role: user.role,
       companyId: user.company_id,
       siteId: user.site_id,
-      departmentId: user.department_id
+      departmentId: user.department_id,
+      avatarStyle: user.avatar_style
     });
   } catch (error) {
     logger.error('Me error:', { error });

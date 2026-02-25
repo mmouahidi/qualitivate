@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { userService, User, InviteUserData } from '../../services/user.service';
+import { userService, User, InviteUserData, UpdateUserData } from '../../services/user.service';
 import { companyService, siteService } from '../../services/organization.service';
 import { DashboardLayout } from '../../components/layout';
 import { ConfirmModal } from '../../components/ui';
@@ -13,13 +13,23 @@ const Users: React.FC = () => {
     const queryClient = useQueryClient();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const toast = useToast();
-    
+
     const [search, setSearch] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
     const [credentialsTarget, setCredentialsTarget] = useState<{ id: string | null; email: string }>({ id: null, email: '' });
     const [deleteModalState, setDeleteModalState] = useState<{ isOpen: boolean; userId: string | null }>({ isOpen: false, userId: null });
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editTarget, setEditTarget] = useState<User | null>(null);
+    const [editForm, setEditForm] = useState<UpdateUserData>({
+        firstName: '',
+        lastName: '',
+        role: 'user',
+        isActive: true,
+        siteId: null,
+        departmentId: null
+    });
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -107,6 +117,21 @@ const Users: React.FC = () => {
         }
     });
 
+    const updateUserMutation = useMutation({
+        mutationFn: ({ id, data }: { id: string; data: UpdateUserData }) =>
+            userService.updateUser(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            setIsEditModalOpen(false);
+            setEditTarget(null);
+            toast.success('User updated', 'User information updated successfully.');
+        },
+        onError: (err: any) => {
+            setError(err.response?.data?.error || 'Failed to update user');
+            toast.error('Failed to update user', err.response?.data?.error || 'An error occurred.');
+        }
+    });
+
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
         const payload: InviteUserData = {
@@ -131,6 +156,26 @@ const Users: React.FC = () => {
         setIsCredentialsModalOpen(true);
     };
 
+    const handleEditUser = (user: User) => {
+        setEditTarget(user);
+        setEditForm({
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            role: user.role,
+            isActive: user.isActive,
+            siteId: user.siteId,
+            departmentId: user.departmentId
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const handleUpdateUser = (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        if (!editTarget) return;
+        updateUserMutation.mutate({ id: editTarget.id, data: editForm });
+    };
+
     const confirmDelete = () => {
         if (deleteModalState.userId) {
             deleteMutation.mutate(deleteModalState.userId);
@@ -145,7 +190,7 @@ const Users: React.FC = () => {
         reader.onload = (event) => {
             const text = event.target?.result as string;
             const lines = text.split('\n').filter(line => line.trim());
-            
+
             if (lines.length < 2) {
                 setError('CSV file must have at least a header row and one data row');
                 return;
@@ -366,10 +411,16 @@ const Users: React.FC = () => {
                                             {(currentUser?.role === 'super_admin' || currentUser?.role === 'company_admin') && user.id !== currentUser.id && (
                                                 <div className="flex gap-2 justify-end">
                                                     <button
+                                                        onClick={() => handleEditUser(user)}
+                                                        className="btn-ghost text-text-secondary hover:text-text-primary text-sm"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
                                                         onClick={() => handleEditCredentials(user.id, user.email)}
                                                         className="btn-ghost text-text-secondary hover:text-text-primary text-sm"
                                                     >
-                                                        Edit Credentials
+                                                        Credentials
                                                     </button>
                                                     {currentUser?.role === 'super_admin' && (
                                                         <button
@@ -544,7 +595,7 @@ const Users: React.FC = () => {
                 <div className="modal-overlay" onClick={() => setIsBulkModalOpen(false)}>
                     <div className="modal-content max-w-2xl" onClick={(e) => e.stopPropagation()}>
                         <h2 className="modal-title">Bulk Upload Users</h2>
-                        
+
                         <div className="space-y-4">
                             {/* Instructions */}
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -625,7 +676,7 @@ const Users: React.FC = () => {
                                             ✓ {bulkResult.created} users created successfully
                                         </p>
                                     </div>
-                                    
+
                                     {bulkResult.failed.length > 0 && (
                                         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                                             <p className="text-red-800 font-medium mb-2">
@@ -714,6 +765,94 @@ const Users: React.FC = () => {
                                     className="btn-primary"
                                 >
                                     {updateCredentialsMutation.isPending ? 'Updating...' : 'Update Credentials'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit User Modal */}
+            {isEditModalOpen && editTarget && (
+                <div className="modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+                    <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="modal-title">Edit User</h2>
+                        <p className="text-sm text-text-secondary mb-4">{editTarget.email}</p>
+                        <form onSubmit={handleUpdateUser} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="label-soft">First Name</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.firstName || ''}
+                                        onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+                                        className="input-soft"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="label-soft">Last Name</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.lastName || ''}
+                                        onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+                                        className="input-soft"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="label-soft">Role</label>
+                                <select
+                                    value={editForm.role || 'user'}
+                                    onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                                    className="select-soft"
+                                >
+                                    <option value="user">User</option>
+                                    <option value="department_admin">Department Admin</option>
+                                    <option value="site_admin">Site Admin</option>
+                                    <option value="company_admin">Company Admin</option>
+                                    {currentUser?.role === 'super_admin' && (
+                                        <option value="super_admin">Super Admin</option>
+                                    )}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="label-soft">Site</label>
+                                <select
+                                    value={editForm.siteId || ''}
+                                    onChange={(e) => setEditForm({ ...editForm, siteId: e.target.value || null })}
+                                    className="select-soft"
+                                >
+                                    <option value="">— No Site —</option>
+                                    {sites.map((site) => (
+                                        <option key={site.id} value={site.id}>{site.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={editForm.isActive !== false}
+                                        onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
+                                        className="toggle-primary"
+                                    />
+                                    <span className="text-sm font-medium text-text-primary">Active</span>
+                                </label>
+                            </div>
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="btn-secondary"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={updateUserMutation.isPending}
+                                    className="btn-primary"
+                                >
+                                    {updateUserMutation.isPending ? 'Saving...' : 'Save Changes'}
                                 </button>
                             </div>
                         </form>

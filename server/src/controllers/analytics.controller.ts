@@ -893,7 +893,7 @@ export const exportResponses = async (req: AuthRequest, res: Response) => {
     const responseIds = responses.map((r: any) => r.id);
     const allAnswers = await db('answers')
       .whereIn('response_id', responseIds)
-      .select('response_id', 'question_id', 'answer');
+      .select('response_id', 'question_id', 'value');
 
     // Build answer map
     const answerMap: Record<string, Record<string, any>> = {};

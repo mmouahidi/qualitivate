@@ -4,8 +4,10 @@ import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import logger from '../config/logger';
 
-// Get public survey for responding (no auth required)
-export const getPublicSurvey = async (req: Request, res: Response) => {
+// Get public survey for responding
+// Public surveys: no auth required
+// Private surveys: require authentication
+export const getPublicSurvey = async (req: AuthRequest, res: Response) => {
   try {
     const { surveyId } = req.params;
     const { dist, lang } = req.query;
@@ -16,6 +18,11 @@ export const getPublicSurvey = async (req: Request, res: Response) => {
 
     if (!survey) {
       return res.status(404).json({ error: 'Survey not found or not active' });
+    }
+
+    // Enforce access control: private surveys require authentication
+    if (!survey.is_public && !req.user) {
+      return res.status(401).json({ error: 'Authentication required for this survey' });
     }
 
     // Check if survey has date restrictions
@@ -115,6 +122,11 @@ export const startResponse = async (req: AuthRequest, res: Response) => {
 
     if (!survey) {
       return res.status(404).json({ error: 'Survey not found or not active' });
+    }
+
+    // Enforce access control: private surveys require authentication
+    if (!survey.is_public && !req.user) {
+      return res.status(401).json({ error: 'Authentication required for this survey' });
     }
 
     // Generate anonymous token
