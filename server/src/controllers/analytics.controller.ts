@@ -695,18 +695,18 @@ export const getResponses = async (req: AuthRequest, res: Response) => {
 
     // Build query
     let query = db('responses')
-      .where({ survey_id: surveyId });
+      .where('responses.survey_id', surveyId);
 
     if (status) {
-      query = query.where({ status });
+      query = query.where('responses.status', status);
     }
 
     if (startDate) {
-      query = query.where('started_at', '>=', startDate);
+      query = query.where('responses.started_at', '>=', startDate);
     }
 
     if (endDate) {
-      query = query.where('started_at', '<=', endDate);
+      query = query.where('responses.started_at', '<=', endDate);
     }
 
     // Get total count
@@ -899,7 +899,8 @@ export const exportResponses = async (req: AuthRequest, res: Response) => {
 
     // Get all completed responses with answers
     const responses = await db('responses')
-      .where({ survey_id: surveyId, status: 'completed' })
+      .where('responses.survey_id', surveyId)
+      .andWhere('responses.status', 'completed')
       .leftJoin('survey_distributions', 'responses.invitation_id', 'survey_distributions.id')
       .select(
         'responses.id',
