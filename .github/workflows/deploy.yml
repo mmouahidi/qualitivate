@@ -23,27 +23,28 @@ jobs:
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
             set -e
-            cd "${{ secrets.APP_DIR }}"
-            git config --global --add safe.directory "${{ secrets.APP_DIR }}"
+            APP_DIR="${{ secrets.APP_DIR }}"
+            cd "$APP_DIR"
+            git config --global --add safe.directory "$APP_DIR"
             git pull
 
             # Install all workspace dependencies
             npm ci
 
             # Build client (React/Vite)
-            cd client && npm run build && cd ..
+            cd "$APP_DIR/client" && npm run build
 
             # Build server (TypeScript)
-            cd server && npm run build && cd ..
+            cd "$APP_DIR/server" && npm run build
 
             # Load environment variables for migration
             set -a
-            source server/.env
+            source "$APP_DIR/server/.env"
             set +a
 
             # Run database migrations
-            cd server && NODE_ENV=production npx knex migrate:latest --knexfile dist/config/knexfile.js --env production && cd ..
+            cd "$APP_DIR/server" && NODE_ENV=production npx knex migrate:latest --knexfile dist/config/knexfile.js --env production
 
             # Restart or start the application (--cwd ensures dotenv finds .env)
-            pm2 restart qualitivate || pm2 start server/dist/index.js --name qualitivate --cwd "${{ secrets.APP_DIR }}/server"
+            pm2 restart qualitivate || pm2 start "$APP_DIR/server/dist/index.js" --name qualitivate --cwd "$APP_DIR/server"
             pm2 save

@@ -136,6 +136,13 @@ const SurveyBuilder: React.FC = () => {
             nps: 'How likely are you to recommend us to a friend?',
             rating_scale: 'Please rate your experience',
             matrix: 'Please rate each item',
+            yes_no: 'Yes or No question',
+            dropdown: 'Select from the dropdown',
+            date: 'Select a date',
+            file_upload: 'Upload a file',
+            ranking: 'Rank the following items',
+            slider: 'Slide to select a value',
+            image_choice: 'Select an image',
         };
         createQuestionMutation.mutate({
             type,
