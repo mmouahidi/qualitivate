@@ -30,6 +30,14 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => {
+    // Skip transformation for binary downloads
+    const responseType = response.config?.responseType;
+    const isBlob = typeof Blob !== 'undefined' && response.data instanceof Blob;
+    const isArrayBuffer = typeof ArrayBuffer !== 'undefined' && response.data instanceof ArrayBuffer;
+    if (responseType === 'blob' || isBlob || isArrayBuffer) {
+      return response;
+    }
+
     // Transform snake_case keys to camelCase
     if (response.data) {
       response.data = keysToCamel(response.data);
