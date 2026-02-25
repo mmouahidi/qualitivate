@@ -88,7 +88,7 @@ export const createQuestion = async (req: AuthRequest, res: Response) => {
         survey_id: surveyId,
         type,
         content,
-        options: JSON.stringify(options),
+        options,
         is_required: isRequired,
         order_index: orderIndex
       })

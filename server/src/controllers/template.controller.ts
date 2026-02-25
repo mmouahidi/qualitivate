@@ -12,6 +12,22 @@ import {
   isValidQuestionType,
 } from '../types/domain';
 
+const normalizeJson = <T>(value: T | string | null | undefined, fallback: T): T => {
+  if (value === undefined || value === null) {
+    return fallback;
+  }
+
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return fallback;
+    }
+  }
+
+  return value as T;
+};
+
 
 // List templates (global + company-specific)
 export const listTemplates = async (req: AuthRequest, res: Response) => {
@@ -139,7 +155,7 @@ export const createTemplate = async (req: AuthRequest, res: Response) => {
         type,
         is_global: isGlobal,
         is_anonymous: isAnonymous,
-        default_settings: JSON.stringify({}),
+        default_settings: {},
       });
 
       // Insert questions
@@ -153,7 +169,7 @@ export const createTemplate = async (req: AuthRequest, res: Response) => {
             template_id: templateId,
             type: q.type,
             content: q.content,
-            options: JSON.stringify(q.options || {}),
+            options: normalizeJson(q.options ?? {}, {}),
             is_required: q.isRequired || false,
             order_index: index,
           };
@@ -288,17 +304,7 @@ export const createSurveyFromTemplate = async (req: AuthRequest, res: Response) 
       // Create survey
       const surveyId = uuidv4();
 
-      // Parse default_settings if it's a string
-      let parsedSettings = {};
-      if (template.default_settings) {
-        try {
-          parsedSettings = typeof template.default_settings === 'string'
-            ? JSON.parse(template.default_settings)
-            : template.default_settings;
-        } catch (e) {
-          parsedSettings = {};
-        }
-      }
+      const parsedSettings = normalizeJson(template.default_settings, {});
 
       await trx('surveys').insert({
         id: surveyId,
@@ -311,7 +317,7 @@ export const createSurveyFromTemplate = async (req: AuthRequest, res: Response) 
         is_public: true,
         is_anonymous: template.is_anonymous,
         default_language: 'en',
-        settings: JSON.stringify(parsedSettings),
+        settings: parsedSettings,
       });
 
       // Copy questions
@@ -321,7 +327,7 @@ export const createSurveyFromTemplate = async (req: AuthRequest, res: Response) 
           survey_id: surveyId,
           type: q.type,
           content: q.content,
-          options: JSON.stringify(q.options || {}),
+          options: normalizeJson(q.options ?? {}, {}),
           is_required: q.is_required,
           order_index: q.order_index,
         }));
@@ -392,7 +398,7 @@ export const saveAsTemplate = async (req: AuthRequest, res: Response) => {
         type: survey.type,
         is_global: isGlobal,
         is_anonymous: survey.is_anonymous,
-        default_settings: JSON.stringify(survey.settings || {}),
+        default_settings: normalizeJson(survey.settings, {}),
       });
 
       // Copy questions
@@ -402,7 +408,7 @@ export const saveAsTemplate = async (req: AuthRequest, res: Response) => {
           template_id: templateId,
           type: q.type,
           content: q.content,
-          options: JSON.stringify(q.options || {}),
+          options: normalizeJson(q.options ?? {}, {}),
           is_required: q.is_required,
           order_index: index,
         }));

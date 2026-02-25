@@ -24,4 +24,5 @@ coverage/
 temp_*/
 test_output*.txt
 server.log
+tmp_migrate.js
 

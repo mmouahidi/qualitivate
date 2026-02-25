@@ -127,7 +127,7 @@ export const createNotification = async (
             type,
             title,
             message,
-            data: JSON.stringify(data || {}),
+            data: data || {},
             is_read: false,
             created_at: new Date()
         });

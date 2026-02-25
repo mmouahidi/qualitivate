@@ -122,7 +122,7 @@ export const createEmbedDistribution = async (req: AuthRequest, res: Response) =
         survey_id: surveyId,
         channel: 'embed',
         target_url: targetUrl,
-        email_list: JSON.stringify({ embedCode, width, height })
+        email_list: { embedCode, width, height }
       })
       .returning('*');
 
@@ -185,7 +185,7 @@ export const createEmailDistribution = async (req: AuthRequest, res: Response) =
         survey_id: surveyId,
         channel: 'email',
         target_url: baseUrl,
-        email_list: JSON.stringify(results),
+        email_list: results,
         sent_at: new Date()
       })
       .returning('*');

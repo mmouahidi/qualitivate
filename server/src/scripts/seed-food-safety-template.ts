@@ -28,7 +28,7 @@ async function seedFoodSafetyTemplate() {
             type: 'custom',
             is_global: true,
             is_anonymous: true,
-            default_settings: JSON.stringify({}),
+            default_settings: {},
             created_at: new Date(),
             updated_at: new Date()
         });
@@ -176,7 +176,7 @@ async function seedFoodSafetyTemplate() {
                     template_id: templateId,
                     type: 'multiple_choice',
                     content: `${cat.name} - ${q.title}\n${q.text}`,
-                    options: JSON.stringify(q.options),
+                    options: q.options,
                     is_required: true,
                     order_index: orderIndex++
                 });
