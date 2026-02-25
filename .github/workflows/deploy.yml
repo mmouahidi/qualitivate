@@ -31,6 +31,9 @@ jobs:
             # Install all workspace dependencies
             npm ci
 
+            # Build database migrations/seeds
+            npm run build:db
+
             # Build client (React/Vite)
             cd "$APP_DIR/client" && npm run build
 
