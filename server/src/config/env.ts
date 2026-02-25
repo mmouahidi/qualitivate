@@ -82,6 +82,19 @@ const envSchema = Joi.object({
             ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
             : 'http://localhost:5173'
     ),
+    // Rate limiting (optional overrides)
+    RATE_LIMIT_WINDOW_MS: Joi.number().integer().min(1000).default(15 * 60 * 1000),
+    RATE_LIMIT_MAX: Joi.number().integer().min(1).default(2000),
+    AUTH_RATE_LIMIT_MAX: Joi.number().integer().min(1).default(200),
+    // Proxy trust (set to number of proxies, e.g. 1 for nginx)
+    TRUST_PROXY: Joi.alternatives().try(
+        Joi.number().integer().min(0),
+        Joi.boolean()
+    ).optional(),
+    // CORS origins (comma-separated, optional override)
+    CORS_ORIGINS: Joi.string().optional(),
+    // Database SSL toggle (set to 'true' for hosted DB like Railway)
+    DB_SSL: Joi.string().valid('true', 'false').optional().default('false'),
     // Railway-specific variables (auto-injected)
     RAILWAY_PUBLIC_DOMAIN: Joi.string().optional(),
     RAILWAY_ENVIRONMENT: Joi.string().optional(),
@@ -122,6 +135,13 @@ export const env = {
     SMTP_FROM: validatedEnv.SMTP_FROM as string | undefined,
 
     FRONTEND_URL: validatedEnv.FRONTEND_URL as string,
+
+    RATE_LIMIT_WINDOW_MS: validatedEnv.RATE_LIMIT_WINDOW_MS as number,
+    RATE_LIMIT_MAX: validatedEnv.RATE_LIMIT_MAX as number,
+    AUTH_RATE_LIMIT_MAX: validatedEnv.AUTH_RATE_LIMIT_MAX as number,
+    TRUST_PROXY: validatedEnv.TRUST_PROXY as number | boolean | undefined,
+    CORS_ORIGINS: validatedEnv.CORS_ORIGINS as string | undefined,
+    DB_SSL: validatedEnv.DB_SSL as string,
 };
 
 // Log success in development (can't use logger here as it depends on env)

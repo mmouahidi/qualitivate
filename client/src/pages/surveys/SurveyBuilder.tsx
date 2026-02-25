@@ -4,15 +4,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { surveyService, questionService } from '../../services/survey.service';
+import templateService from '../../services/template.service';
 import QuestionCard from '../../components/survey/builder/QuestionCard';
 import QuestionTypeSelector from '../../components/survey/builder/QuestionTypeSelector';
 import LivePreview from '../../components/survey/builder/LivePreview';
 import { QuestionType } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 
 const SurveyBuilder: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { user } = useAuth();
+    const isSuperAdmin = user?.role === 'super_admin';
+    const canSaveTemplate = user?.role === 'super_admin' || user?.role === 'company_admin';
 
     const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
     const [showPreview, setShowPreview] = useState(true);
@@ -20,6 +25,19 @@ const SurveyBuilder: React.FC = () => {
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [localTitle, setLocalTitle] = useState('');
     const [localDescription, setLocalDescription] = useState('');
+    const [isSaveAsTemplateOpen, setIsSaveAsTemplateOpen] = useState(false);
+    const [templateFormData, setTemplateFormData] = useState({
+        name: '',
+        description: '',
+        category: '',
+        isGlobal: false
+    });
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [surveySettings, setSurveySettings] = useState({
+        welcomeMessage: '',
+        thankYouTitle: '',
+        thankYouMessage: ''
+    });
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -41,17 +59,39 @@ const SurveyBuilder: React.FC = () => {
         }
     }, [survey]);
 
+    React.useEffect(() => {
+        if (survey?.settings) {
+            setSurveySettings({
+                welcomeMessage: survey.settings.welcomeMessage || '',
+                thankYouTitle: survey.settings.thankYouTitle || '',
+                thankYouMessage: survey.settings.thankYouMessage || ''
+            });
+        }
+    }, [survey?.settings]);
+
     // Mutations
     const updateSurveyMutation = useMutation({
         mutationFn: (data: any) => surveyService.update(id!, data),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['survey', id] }),
     });
 
+    const saveAsTemplateMutation = useMutation({
+        mutationFn: (data: any) => templateService.saveAsTemplate(id!, data),
+        onSuccess: () => {
+            setIsSaveAsTemplateOpen(false);
+            setTemplateFormData({ name: '', description: '', category: '', isGlobal: false });
+            alert('Survey saved as template successfully!');
+        }
+    });
+
     const createQuestionMutation = useMutation({
         mutationFn: (data: any) => questionService.create(id!, data),
-        onSuccess: () => {
+        onSuccess: (question) => {
             queryClient.invalidateQueries({ queryKey: ['survey', id] });
             setShowTypeSelector(false);
+            if (question?.id) {
+                setActiveQuestionId(question.id);
+            }
         },
     });
 
@@ -86,17 +126,20 @@ const SurveyBuilder: React.FC = () => {
     const handleAddQuestion = (type: QuestionType) => {
         const defaultOptions: Record<string, any> = {
             multiple_choice: { choices: ['Option 1', 'Option 2'] },
-            dropdown: { choices: ['Option 1', 'Option 2', 'Option 3'] },
-            yes_no: { choices: ['Yes', 'No'] },
-            ranking: { choices: ['Item 1', 'Item 2', 'Item 3'] },
-            slider: { min: 0, max: 100 },
-            image_choice: { choices: ['Image 1', 'Image 2'] },
-            date: {},
-            file_upload: {},
+            rating_scale: { min: 1, max: 5 },
+            matrix: { rows: ['Row 1', 'Row 2'], columns: ['Column 1', 'Column 2'] },
+        };
+        const defaultContentMap: Record<QuestionType, string> = {
+            text_short: 'Short answer question',
+            text_long: 'Long answer question',
+            multiple_choice: 'Multiple choice question',
+            nps: 'How likely are you to recommend us to a friend?',
+            rating_scale: 'Please rate your experience',
+            matrix: 'Please rate each item',
         };
         createQuestionMutation.mutate({
             type,
-            content: '',
+            content: defaultContentMap[type] || 'New question',
             isRequired: false,
             options: defaultOptions[type] || {},
         });
@@ -128,6 +171,24 @@ const SurveyBuilder: React.FC = () => {
         }
     };
 
+    const handleSaveSettings = (e: React.FormEvent) => {
+        e.preventDefault();
+        updateSurveyMutation.mutate(
+            { settings: surveySettings },
+            {
+                onSuccess: () => {
+                    setIsSettingsOpen(false);
+                    alert('Survey settings saved!');
+                }
+            }
+        );
+    };
+
+    const handleSaveAsTemplate = (e: React.FormEvent) => {
+        e.preventDefault();
+        saveAsTemplateMutation.mutate(templateFormData);
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
@@ -135,6 +196,12 @@ const SurveyBuilder: React.FC = () => {
             </div>
         );
     }
+
+    const availableTargets = (survey?.questions || []).map((q: any, index: number) => ({
+        id: q.id,
+        content: q.content || `Question ${index + 1}`,
+        orderIndex: q.order_index ?? q.orderIndex ?? index
+    }));
 
     return (
         <div className="min-h-screen bg-background">
@@ -184,6 +251,30 @@ const SurveyBuilder: React.FC = () => {
                             }`}>
                             {survey?.status === 'active' ? '🟢 Active' : survey?.status === 'closed' ? '🔴 Closed' : '📝 Draft'}
                         </span>
+
+                        {canSaveTemplate && (
+                            <button
+                                onClick={() => {
+                                    setTemplateFormData({
+                                        name: `${survey?.title || ''} Template`,
+                                        description: survey?.description || '',
+                                        category: '',
+                                        isGlobal: false
+                                    });
+                                    setIsSaveAsTemplateOpen(true);
+                                }}
+                                className="px-3 py-1.5 bg-background border border-border rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover"
+                            >
+                                Save as Template
+                            </button>
+                        )}
+
+                        <button
+                            onClick={() => setIsSettingsOpen(true)}
+                            className="px-3 py-1.5 bg-background border border-border rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover"
+                        >
+                            Settings
+                        </button>
 
                         {/* Activate/Deactivate Button */}
                         {survey?.status === 'draft' && (
@@ -260,6 +351,27 @@ const SurveyBuilder: React.FC = () => {
                 </div>
             </header>
 
+            {/* Step Header */}
+            <div className="bg-surface border-b border-border">
+                <div className="max-w-7xl mx-auto px-4 py-2 flex items-center gap-3 text-sm">
+                    <span className="font-semibold text-primary-600">Builder</span>
+                    <span className="text-text-muted">→</span>
+                    <button
+                        onClick={() => navigate(`/surveys/${id}/distribute`)}
+                        className="text-text-secondary hover:text-primary-600"
+                    >
+                        Distribute
+                    </button>
+                    <span className="text-text-muted">→</span>
+                    <button
+                        onClick={() => navigate(`/analytics/surveys/${id}`)}
+                        className="text-text-secondary hover:text-primary-600"
+                    >
+                        Responses
+                    </button>
+                </div>
+            </div>
+
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 py-6">
                 <div className="grid grid-cols-12 gap-6">
@@ -327,6 +439,7 @@ const SurveyBuilder: React.FC = () => {
                                         onUpdate={(data) => handleUpdateQuestion(question.id, data)}
                                         onDelete={() => handleDeleteQuestion(question.id)}
                                         onDuplicate={() => handleDuplicateQuestion(question)}
+                                        availableTargets={availableTargets}
                                     />
                                 ))}
                             </SortableContext>
@@ -402,6 +515,143 @@ const SurveyBuilder: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            {/* Save as Template Modal */}
+            {isSaveAsTemplateOpen && (
+                <div className="modal-overlay" onClick={() => setIsSaveAsTemplateOpen(false)}>
+                    <div className="modal-content max-w-md" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="modal-title">Save as Template</h2>
+                        <form onSubmit={handleSaveAsTemplate}>
+                            <div className="mb-4">
+                                <label className="label-soft">Template Name</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={templateFormData.name}
+                                    onChange={(e) => setTemplateFormData({ ...templateFormData, name: e.target.value })}
+                                    className="input-soft"
+                                    placeholder="My Survey Template"
+                                />
+                            </div>
+                            <div className="mb-4">
+                                <label className="label-soft">Description</label>
+                                <textarea
+                                    value={templateFormData.description}
+                                    onChange={(e) => setTemplateFormData({ ...templateFormData, description: e.target.value })}
+                                    rows={3}
+                                    className="textarea-soft"
+                                    placeholder="Describe this template..."
+                                />
+                            </div>
+                            <div className="mb-4">
+                                <label className="label-soft">Category</label>
+                                <select
+                                    value={templateFormData.category}
+                                    onChange={(e) => setTemplateFormData({ ...templateFormData, category: e.target.value })}
+                                    className="select-soft"
+                                >
+                                    <option value="">Select a category</option>
+                                    <option value="NPS">NPS</option>
+                                    <option value="Customer Satisfaction">Customer Satisfaction</option>
+                                    <option value="Employee Feedback">Employee Feedback</option>
+                                    <option value="Product Feedback">Product Feedback</option>
+                                    <option value="Event Feedback">Event Feedback</option>
+                                    <option value="Market Research">Market Research</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            {isSuperAdmin && (
+                                <label className="flex items-center gap-2 cursor-pointer mb-4">
+                                    <input
+                                        type="checkbox"
+                                        checked={templateFormData.isGlobal}
+                                        onChange={(e) => setTemplateFormData({ ...templateFormData, isGlobal: e.target.checked })}
+                                        className="checkbox-soft"
+                                    />
+                                    <span className="text-sm text-text-secondary">Global template</span>
+                                </label>
+                            )}
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsSaveAsTemplateOpen(false)}
+                                    className="btn-secondary"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={saveAsTemplateMutation.isPending}
+                                    className="btn-primary"
+                                >
+                                    {saveAsTemplateMutation.isPending ? 'Saving...' : 'Save Template'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Survey Settings Modal */}
+            {isSettingsOpen && (
+                <div className="modal-overlay" onClick={() => setIsSettingsOpen(false)}>
+                    <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="modal-title">Survey Settings</h2>
+                        <p className="text-sm text-text-secondary mb-4">
+                            Customize the welcome and thank you messages respondents will see.
+                        </p>
+                        <form onSubmit={handleSaveSettings}>
+                            <div className="mb-4">
+                                <label className="label-soft">Welcome Message (Optional)</label>
+                                <textarea
+                                    value={surveySettings.welcomeMessage}
+                                    onChange={(e) => setSurveySettings({ ...surveySettings, welcomeMessage: e.target.value })}
+                                    rows={3}
+                                    className="textarea-soft"
+                                    placeholder="Custom message shown on the welcome screen before respondents start the survey..."
+                                />
+                                <p className="text-xs text-text-muted mt-1">Leave blank to show the survey description</p>
+                            </div>
+                            <div className="mb-4">
+                                <label className="label-soft">Thank You Title</label>
+                                <input
+                                    type="text"
+                                    value={surveySettings.thankYouTitle}
+                                    onChange={(e) => setSurveySettings({ ...surveySettings, thankYouTitle: e.target.value })}
+                                    className="input-soft"
+                                    placeholder="Thank You!"
+                                />
+                            </div>
+                            <div className="mb-4">
+                                <label className="label-soft">Thank You Message</label>
+                                <textarea
+                                    value={surveySettings.thankYouMessage}
+                                    onChange={(e) => setSurveySettings({ ...surveySettings, thankYouMessage: e.target.value })}
+                                    rows={3}
+                                    className="textarea-soft"
+                                    placeholder="Your response has been submitted successfully."
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsSettingsOpen(false)}
+                                    className="btn-secondary"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={updateSurveyMutation.isPending}
+                                    className="btn-primary"
+                                >
+                                    {updateSurveyMutation.isPending ? 'Saving...' : 'Save Settings'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

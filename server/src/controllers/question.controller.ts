@@ -156,7 +156,7 @@ export const updateQuestion = async (req: AuthRequest, res: Response) => {
       if (!optionsValidation.valid) {
         return res.status(400).json({ error: optionsValidation.error });
       }
-      updateData.options = options;
+      updateData.options = JSON.stringify(options);
     }
 
     const [updatedQuestion] = await db('questions')
@@ -343,7 +343,7 @@ export const createTranslation = async (req: AuthRequest, res: Response) => {
         .where({ id: existing.id })
         .update({
           content,
-          options,
+          options: JSON.stringify(options),
           updated_at: new Date()
         })
         .returning('*');
@@ -356,7 +356,7 @@ export const createTranslation = async (req: AuthRequest, res: Response) => {
         question_id: id,
         language_code: languageCode,
         content,
-        options
+        options: JSON.stringify(options)
       })
       .returning('*');
 

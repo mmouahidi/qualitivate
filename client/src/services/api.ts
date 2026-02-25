@@ -39,6 +39,14 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Rate limit retry with exponential backoff (max 3 retries)
+    if (error.response?.status === 429 && (!originalRequest._retryCount || originalRequest._retryCount < 3)) {
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+      const delay = Math.pow(2, originalRequest._retryCount - 1) * 1000; // 1s, 2s, 4s
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return api(originalRequest);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 

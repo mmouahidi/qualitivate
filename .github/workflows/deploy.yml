@@ -26,11 +26,24 @@ jobs:
             cd "${{ secrets.APP_DIR }}"
             git config --global --add safe.directory "${{ secrets.APP_DIR }}"
             git pull
+
+            # Install all workspace dependencies
             npm ci
-            npm run build
+
+            # Build client (React/Vite)
+            cd client && npm run build && cd ..
+
+            # Build server (TypeScript)
+            cd server && npm run build && cd ..
+
+            # Load environment variables for migration
             set -a
             source server/.env
             set +a
-            NODE_ENV=production npx knex migrate:latest --knexfile server/dist/config/knexfile.js --env production
-            pm2 restart qualitivate || pm2 start server/dist/index.js --name qualitivate
+
+            # Run database migrations
+            cd server && NODE_ENV=production npx knex migrate:latest --knexfile dist/config/knexfile.js --env production && cd ..
+
+            # Restart or start the application (--cwd ensures dotenv finds .env)
+            pm2 restart qualitivate || pm2 start server/dist/index.js --name qualitivate --cwd "${{ secrets.APP_DIR }}/server"
             pm2 save

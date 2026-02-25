@@ -30,6 +30,9 @@ const app: Application = express();
 const PORT = env.PORT;
 const isDevelopment = env.NODE_ENV !== 'production';
 
+// Trust proxy in production (or explicit override)
+app.set('trust proxy', env.TRUST_PROXY ?? (isDevelopment ? false : 1));
+
 // Request correlation ID - must be first for traceability
 app.use(correlationId);
 
@@ -53,8 +56,20 @@ app.use(morgan(isDevelopment ? 'dev' : 'combined', {
   skip: (req) => req.path === '/api/health', // Skip logging health checks
 }));
 
+// CORS — support multiple origins via CORS_ORIGINS env var
+const allowedOrigins = env.CORS_ORIGINS
+  ? env.CORS_ORIGINS.split(',').map(o => o.trim())
+  : [env.FRONTEND_URL];
+
 app.use(cors({
-  origin: env.FRONTEND_URL,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. curl, mobile apps, server-to-server)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
+  },
   credentials: true
 }));
 
@@ -68,8 +83,8 @@ app.use(camelCaseResponse());
 // Rate limiting (disabled in development mode)
 
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDevelopment ? 1000 : 100, // Higher limit in development
+  windowMs: env.RATE_LIMIT_WINDOW_MS, // 15 minutes default
+  max: isDevelopment ? 1000 : env.RATE_LIMIT_MAX,
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -77,8 +92,8 @@ const globalLimiter = rateLimit({
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDevelopment ? 500 : 50, // Higher limit in development
+  windowMs: env.RATE_LIMIT_WINDOW_MS, // 15 minutes default
+  max: isDevelopment ? 500 : env.AUTH_RATE_LIMIT_MAX,
   message: { error: 'Too many authentication attempts, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -93,8 +108,8 @@ const surveyStartLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Apply global rate limiter to all requests
-app.use(globalLimiter);
+// Apply global rate limiter to API routes only (avoid limiting static assets)
+app.use('/api', globalLimiter);
 
 // Apply stricter limits to auth routes
 app.use('/api/auth/login', authLimiter);
@@ -111,6 +126,26 @@ app.use('/api/responses', responseRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/distributions', distributionRoutes);
 app.use('/api/templates', templateRoutes);
+
+// Health check with database connectivity (must be before catch-all)
+app.get('/api/health', async (req, res) => {
+  try {
+    await db.raw('SELECT 1');
+    res.json({
+      status: 'ok',
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+      environment: env.NODE_ENV,
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      database: 'disconnected',
+      timestamp: new Date().toISOString(),
+      environment: env.NODE_ENV,
+    });
+  }
+});
 
 // Calculate client build path correctly whether running from src or dist
 const clientBuildPath = path.join(__dirname, '../../client/dist');
@@ -134,25 +169,7 @@ app.get('*', (req, res, next) => {
   });
 });
 
-// Health check with database connectivity
-app.get('/api/health', async (req, res) => {
-  try {
-    await db.raw('SELECT 1');
-    res.json({
-      status: 'ok',
-      database: 'connected',
-      timestamp: new Date().toISOString(),
-      environment: env.NODE_ENV,
-    });
-  } catch (error) {
-    res.status(503).json({
-      status: 'error',
-      database: 'disconnected',
-      timestamp: new Date().toISOString(),
-      environment: env.NODE_ENV,
-    });
-  }
-});
+
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   // Add request context and capture error in Sentry

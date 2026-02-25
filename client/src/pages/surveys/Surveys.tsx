@@ -94,7 +94,7 @@ const Surveys: React.FC = () => {
     onSuccess: (newSurvey) => {
       queryClient.invalidateQueries({ queryKey: ['surveys'] });
       setIsTemplatePickerOpen(false);
-      navigate(`/surveys/${newSurvey.id}/edit`);
+      navigate(`/surveys/${newSurvey.id}/builder`);
     }
   });
 

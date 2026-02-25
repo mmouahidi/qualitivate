@@ -91,7 +91,8 @@ export const listSurveysSchema: ValidationSchema = {
         limit: Joi.number().integer().min(1).max(100).default(20),
         type: Joi.string().valid('nps', 'custom').optional(),
         status: Joi.string().valid('draft', 'active', 'closed').allow('').optional(),
-        companyId: Joi.string().uuid().allow('').optional(),
+        // Allow "general" to target surveys without a company for super_admin
+        companyId: Joi.string().uuid().allow('', 'general').optional(),
         siteId: Joi.string().uuid().optional(),
         departmentId: Joi.string().uuid().optional(),
         search: Joi.string().max(100).allow('').optional(),

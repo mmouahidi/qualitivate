@@ -14,18 +14,11 @@ const questionTypes: { type: QuestionType; icon: string; label: string; descript
     { type: 'text_long', icon: '📄', label: 'Long Text', description: 'Multi-line paragraph answer' },
     // Choice
     { type: 'multiple_choice', icon: '☑️', label: 'Multiple Choice', description: 'Select from options' },
-    { type: 'dropdown', icon: '📋', label: 'Dropdown', description: 'Select from a dropdown list' },
-    { type: 'yes_no', icon: '✅', label: 'Yes / No', description: 'Simple binary choice' },
-    { type: 'image_choice', icon: '🖼️', label: 'Image Choice', description: 'Pick from images' },
     // Scale
     { type: 'nps', icon: '📊', label: 'NPS (0-10)', description: 'Net Promoter Score scale' },
     { type: 'rating_scale', icon: '⭐', label: 'Rating Scale', description: 'Star or number rating' },
-    { type: 'slider', icon: '🎚️', label: 'Slider', description: 'Drag to select a value' },
     // Advanced
     { type: 'matrix', icon: '🔢', label: 'Matrix', description: 'Grid of questions' },
-    { type: 'ranking', icon: '🏆', label: 'Ranking', description: 'Drag to rank choices' },
-    { type: 'date', icon: '📅', label: 'Date', description: 'Pick a date' },
-    { type: 'file_upload', icon: '📎', label: 'File Upload', description: 'Upload a file' },
 ];
 
 const QuestionTypeSelector: React.FC<QuestionTypeSelectorProps> = ({ onSelect, className = '', columns = 2, title = 'Add Question' }) => {

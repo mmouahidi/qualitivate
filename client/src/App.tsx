@@ -13,7 +13,6 @@ import CompanyDetail from './pages/admin/CompanyDetail';
 import Users from './pages/admin/Users';
 import Sites from './pages/organizations/Sites';
 import Surveys from './pages/surveys/Surveys';
-import SurveyEditor from './pages/surveys/SurveyEditor';
 import SurveyBuilder from './pages/surveys/SurveyBuilder';
 import SurveyDistribute from './pages/surveys/SurveyDistribute';
 import SurveyRespond from './pages/surveys/SurveyRespond';
@@ -109,7 +108,7 @@ function App() {
                     path="/surveys/:id/edit"
                     element={
                       <ProtectedRoute>
-                        <SurveyEditor />
+                        <SurveyBuilder />
                       </ProtectedRoute>
                     }
                   />

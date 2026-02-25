@@ -28,10 +28,18 @@ const config: { [key: string]: Knex.Config } = {
 
   production: {
     client: 'postgresql',
-    connection: {
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
-    },
+    connection: process.env.DATABASE_URL
+      ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      }
+      : {
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432'),
+        database: process.env.DB_NAME || 'qualitivate',
+        user: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+      },
     pool: {
       min: 2,
       max: 10

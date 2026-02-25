@@ -82,7 +82,7 @@ const Templates: React.FC = () => {
     const handleCreateSurvey = async (templateId: string) => {
         try {
             const survey = await templateService.createSurveyFromTemplate(templateId, {});
-            navigate(`/surveys/${survey.id}/edit`);
+            navigate(`/surveys/${survey.id}/builder`);
         } catch (err: any) {
             setError(err.response?.data?.error || 'Failed to create survey from template');
         }

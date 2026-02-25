@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { QuestionType } from '../../../types';
+import { QuestionType, LogicRule } from '../../../types';
+import LogicRuleEditor from '../LogicRuleEditor';
 
 interface QuestionCardProps {
     question: {
@@ -13,6 +14,7 @@ interface QuestionCardProps {
             choices?: string[];
             min?: number;
             max?: number;
+            logicRules?: LogicRule[];
         };
     };
     isActive: boolean;
@@ -21,6 +23,7 @@ interface QuestionCardProps {
     onUpdate: (data: any) => void;
     onDelete: () => void;
     onDuplicate: () => void;
+    availableTargets?: Array<{ id: string; content: string; orderIndex: number }>;
 }
 
 const QuestionTypeIcons: Record<QuestionType, { icon: string; label: string; color: string }> = {
@@ -42,6 +45,9 @@ const QuestionTypeIcons: Record<QuestionType, { icon: string; label: string; col
 const hasChoices = (type: QuestionType) =>
     ['multiple_choice', 'dropdown', 'yes_no', 'ranking', 'image_choice'].includes(type);
 
+const supportsLogicRules = (type: QuestionType) =>
+    ['nps', 'multiple_choice', 'rating_scale', 'text_short', 'text_long', 'matrix'].includes(type);
+
 const QuestionCard: React.FC<QuestionCardProps> = ({
     question,
     isActive,
@@ -50,10 +56,12 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     onUpdate,
     onDelete,
     onDuplicate,
+    availableTargets = [],
 }) => {
     const [localContent, setLocalContent] = useState(question.content || '');
     const [localRequired, setLocalRequired] = useState(question.is_required);
     const [localChoices, setLocalChoices] = useState<string[]>(question.options?.choices || []);
+    const [localLogicRules, setLocalLogicRules] = useState<LogicRule[]>(question.options?.logicRules || []);
     const cardRef = useRef<HTMLDivElement>(null);
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -68,6 +76,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
     const typeInfo = QuestionTypeIcons[question.type] || QuestionTypeIcons.text_short;
 
+    useEffect(() => {
+        setLocalContent(question.content || '');
+        setLocalRequired(question.is_required);
+        setLocalChoices(question.options?.choices || []);
+        setLocalLogicRules(question.options?.logicRules || []);
+    }, [question.id]);
+
     // Handle click outside to save and deactivate
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -79,13 +94,26 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [isActive, localContent, localRequired, localChoices]);
+    }, [isActive, localContent, localRequired, localChoices, localLogicRules]);
 
     const handleSave = () => {
+        const sanitizedContent = (localContent || '').trim() || 'Untitled question';
+        if (sanitizedContent !== localContent) {
+            setLocalContent(sanitizedContent);
+        }
+        const nextOptions: Record<string, any> = { ...(question.options || {}) };
+        if (hasChoices(question.type)) {
+            nextOptions.choices = localChoices;
+        }
+        if (localLogicRules.length > 0) {
+            nextOptions.logicRules = localLogicRules;
+        } else if ('logicRules' in nextOptions) {
+            delete nextOptions.logicRules;
+        }
         onUpdate({
-            content: localContent,
+            content: sanitizedContent,
             isRequired: localRequired,
-            options: { ...question.options, choices: localChoices },
+            options: nextOptions,
         });
     };
 
@@ -136,6 +164,9 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 </span>
                 {question.is_required && (
                     <span className="text-xs font-medium text-red-500">* Required</span>
+                )}
+                {question.options?.logicRules && question.options.logicRules.length > 0 && (
+                    <span className="text-xs font-medium text-purple-600">🔀 Has Logic</span>
                 )}
                 <div className="flex-1" />
                 {isActive && (
@@ -268,6 +299,23 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         {question.type === 'file_upload' && (
                             <div className="bg-background rounded-lg p-4 text-center border-2 border-dashed border-border">
                                 <p className="text-text-muted text-sm">📎 Drag & drop or click to upload</p>
+                            </div>
+                        )}
+
+                        {/* Skip Logic Section */}
+                        {supportsLogicRules(question.type) && (
+                            <div className="border-t border-border pt-4 mt-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-medium text-text-primary">Skip Logic (Optional)</h3>
+                                    <span className="text-xs text-text-muted">Control survey flow based on answers</span>
+                                </div>
+                                <LogicRuleEditor
+                                    questionType={question.type}
+                                    questionOptions={{ choices: localChoices }}
+                                    availableTargets={availableTargets.filter((t) => t.id !== question.id)}
+                                    rules={localLogicRules}
+                                    onRulesChange={setLocalLogicRules}
+                                />
                             </div>
                         )}
 

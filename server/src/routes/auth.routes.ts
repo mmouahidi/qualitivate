@@ -10,6 +10,8 @@ router.post('/login', validate(loginSchema), authController.login);
 router.post('/refresh', authController.refreshAccessToken);
 router.post('/logout', authController.logout);
 router.get('/me', authenticate, authController.me);
+// Backward-compat for older clients expecting /auth/profile (GET)
+router.get('/profile', authenticate, authController.me);
 router.put('/profile', authenticate, authController.updateProfile);
 router.put('/credentials', authenticate, validate(credentialsSchema), authController.updateCredentials);
 
