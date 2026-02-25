@@ -25,6 +25,30 @@ const buildAccessFilter = (user: any, tableAlias: string = 'surveys') => {
   }
 };
 
+const parseJsonSafe = (value: any) => {
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+};
+
+const getAnswerValue = (value: any) => {
+  const parsed = parseJsonSafe(value);
+  if (parsed && typeof parsed === 'object' && 'value' in parsed) {
+    return (parsed as any).value;
+  }
+  return parsed;
+};
+
+const getNumericAnswer = (value: any): number | null => {
+  const answerValue = getAnswerValue(value);
+  if (answerValue === null || answerValue === undefined || answerValue === '') return null;
+  const num = typeof answerValue === 'number' ? answerValue : parseInt(String(answerValue), 10);
+  return Number.isNaN(num) ? null : num;
+};
+
 /**
  * Get role-specific dashboard analytics
  * Returns different metrics based on user role
@@ -379,10 +403,9 @@ const calculateCompanyNPS = async (companyId: string): Promise<number | null> =>
 
   if (npsAnswers.length === 0) return null;
 
-  const scores = npsAnswers.map((a: any) => {
-    const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
-    return parseInt(answer.value || answer, 10);
-  }).filter((s: number) => !isNaN(s));
+  const scores = npsAnswers
+    .map((a: any) => getNumericAnswer(a.value))
+    .filter((s): s is number => s !== null);
 
   if (scores.length === 0) return null;
 
@@ -452,10 +475,9 @@ export const getSurveyAnalytics = async (req: AuthRequest, res: Response) => {
         .where('responses.status', 'completed')
         .select('answers.value');
 
-      const scores = npsAnswers.map((a: any) => {
-        const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
-        return parseInt(answer.value || answer, 10);
-      }).filter((s: number) => !isNaN(s));
+      const scores = npsAnswers
+        .map((a: any) => getNumericAnswer(a.value))
+        .filter((s): s is number => s !== null);
 
       if (scores.length > 0) {
         const promoters = scores.filter((s: number) => s >= 9).length;
@@ -564,10 +586,9 @@ export const getQuestionAnalytics = async (req: AuthRequest, res: Response) => {
         case 'nps':
         case 'rating_scale':
           // Numeric distribution
-          const numericValues = answers.map((a: any) => {
-            const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
-            return parseInt(answer.value || answer, 10);
-          }).filter((v: number) => !isNaN(v));
+          const numericValues = answers
+            .map((a: any) => getNumericAnswer(a.value))
+            .filter((v): v is number => v !== null);
 
           if (numericValues.length > 0) {
             const sum = numericValues.reduce((a: number, b: number) => a + b, 0);
@@ -588,10 +609,10 @@ export const getQuestionAnalytics = async (req: AuthRequest, res: Response) => {
         case 'multiple_choice':
           // Choice distribution
           answers.forEach((a: any) => {
-            const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
-            const values = Array.isArray(answer.value) ? answer.value : [answer.value || answer];
-            values.forEach((v: string) => {
-              if (v) {
+            const answerValue = getAnswerValue(a.value);
+            const values = Array.isArray(answerValue) ? answerValue : [answerValue];
+            values.forEach((v: any) => {
+              if (v !== null && v !== undefined && v !== '') {
                 distribution[v] = (distribution[v] || 0) + 1;
               }
             });
@@ -605,9 +626,8 @@ export const getQuestionAnalytics = async (req: AuthRequest, res: Response) => {
             count: totalAnswers,
             avgLength: Math.round(
               answers.reduce((sum: number, a: any) => {
-                const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
-                const text = answer.value || answer || '';
-                return sum + text.length;
+                const text = getAnswerValue(a.value);
+                return sum + (typeof text === 'string' ? text.length : 0);
               }, 0) / (totalAnswers || 1)
             )
           };
@@ -616,7 +636,7 @@ export const getQuestionAnalytics = async (req: AuthRequest, res: Response) => {
         case 'matrix':
           // Matrix distribution by row
           answers.forEach((a: any) => {
-            const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
+            const answer = parseJsonSafe(a.value);
             if (answer && typeof answer === 'object') {
               Object.entries(answer).forEach(([row, value]) => {
                 if (!distribution[row]) distribution[row] = {};
@@ -840,7 +860,7 @@ export const getResponseDetails = async (req: AuthRequest, res: Response) => {
         questionText: a.question_text,
         questionType: a.question_type,
         questionOptions: a.question_options,
-        answer: typeof a.value === 'string' ? JSON.parse(a.value) : a.value,
+        answer: parseJsonSafe(a.value),
         answeredAt: a.answered_at
       }))
     });
@@ -899,8 +919,8 @@ export const exportResponses = async (req: AuthRequest, res: Response) => {
     const answerMap: Record<string, Record<string, any>> = {};
     allAnswers.forEach((a: any) => {
       if (!answerMap[a.response_id]) answerMap[a.response_id] = {};
-      const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
-      answerMap[a.response_id][a.question_id] = answer.value || answer;
+      const answerValue = getAnswerValue(a.value);
+      answerMap[a.response_id][a.question_id] = answerValue;
     });
 
     if (format === 'json') {
@@ -1071,10 +1091,9 @@ export const getCompanyAnalytics = async (req: AuthRequest, res: Response) => {
 
     let overallNps = null;
     if (npsAnswers.length > 0) {
-      const scores = npsAnswers.map((a: any) => {
-        const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
-        return parseInt(answer.value || answer, 10);
-      }).filter((s: number) => !isNaN(s));
+    const scores = npsAnswers
+      .map((a: any) => getNumericAnswer(a.value))
+      .filter((s): s is number => s !== null);
 
       if (scores.length > 0) {
         const promoters = scores.filter((s: number) => s >= 9).length;
@@ -1182,10 +1201,9 @@ export const exportPDFReport = async (req: AuthRequest, res: Response) => {
         .where('responses.status', 'completed')
         .select('answers.value');
 
-      const scores = npsAnswers.map((a: any) => {
-        const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
-        return parseInt(answer.value || answer, 10);
-      }).filter((s: number) => !isNaN(s));
+      const scores = npsAnswers
+        .map((a: any) => getNumericAnswer(a.value))
+        .filter((s): s is number => s !== null);
 
       if (scores.length > 0) {
         const promoters = scores.filter((s: number) => s >= 9).length;
@@ -1263,10 +1281,9 @@ export const exportPDFReport = async (req: AuthRequest, res: Response) => {
       switch (question.type) {
         case 'nps':
         case 'rating_scale':
-          const numericValues = answers.map((a: any) => {
-            const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
-            return parseInt(answer.value || answer, 10);
-          }).filter((v: number) => !isNaN(v));
+          const numericValues = answers
+            .map((a: any) => getNumericAnswer(a.value))
+            .filter((v): v is number => v !== null);
 
           if (numericValues.length > 0) {
             const sum = numericValues.reduce((a: number, b: number) => a + b, 0);
@@ -1285,10 +1302,10 @@ export const exportPDFReport = async (req: AuthRequest, res: Response) => {
 
         case 'multiple_choice':
           answers.forEach((a: any) => {
-            const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
-            const values = Array.isArray(answer.value) ? answer.value : [answer.value || answer];
-            values.forEach((v: string) => {
-              if (v) {
+            const answerValue = getAnswerValue(a.value);
+            const values = Array.isArray(answerValue) ? answerValue : [answerValue];
+            values.forEach((v: any) => {
+              if (v !== null && v !== undefined && v !== '') {
                 distribution[v] = (distribution[v] || 0) + 1;
               }
             });
@@ -1301,8 +1318,7 @@ export const exportPDFReport = async (req: AuthRequest, res: Response) => {
             count: totalAnswers,
             avgLength: Math.round(
               answers.reduce((sum: number, a: any) => {
-                const answer = typeof a.value === 'string' ? JSON.parse(a.value) : a.value;
-                const text = answer.value || answer || '';
+                const text = getAnswerValue(a.value);
                 return sum + (typeof text === 'string' ? text.length : 0);
               }, 0) / (totalAnswers || 1)
             )
@@ -1318,7 +1334,7 @@ export const exportPDFReport = async (req: AuthRequest, res: Response) => {
         totalAnswers,
         distribution,
         stats,
-        options: typeof question.options === 'string' ? JSON.parse(question.options) : question.options
+        options: parseJsonSafe(question.options)
       };
     }));
 
