@@ -273,7 +273,7 @@ const SurveyDistribute: React.FC = () => {
                     <img src={qrDistribution.qrCodeUrl} alt="QR Code" className="w-64 h-64 border border-border rounded-soft" />
                     <div className="flex gap-3 mt-4">
                       <button
-                        onClick={() => handleDownloadPdf(qrDistribution.qrCodeUrl)}
+                        onClick={() => handleDownloadPdf(qrDistribution.qrCodeUrl!)}
                         disabled={isGeneratingPdf}
                         className="btn-primary"
                       >
