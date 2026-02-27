@@ -3,11 +3,15 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { distributionService } from '../../services/distribution.service';
 import { surveyService } from '../../services/survey.service';
+import { companyService } from '../../services/organization.service';
+import { useAuth } from '../../contexts/AuthContext';
 import { DashboardLayout } from '../../components/layout';
+import { generateQrPdf } from '../../utils/qrPdfExport';
 
 const SurveyDistribute: React.FC = () => {
   const { id: surveyId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState<'link' | 'qr' | 'email' | 'embed'>('link');
   const [copied, setCopied] = useState(false);
   const [emailList, setEmailList] = useState('');
@@ -28,6 +32,31 @@ const SurveyDistribute: React.FC = () => {
     queryFn: () => distributionService.list(surveyId!),
     enabled: !!surveyId
   });
+
+  const { data: companyData } = useQuery({
+    queryKey: ['company', survey?.companyId],
+    queryFn: () => companyService.get(survey!.companyId),
+    enabled: !!survey?.companyId
+  });
+
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  const handleDownloadPdf = async (qrUrl: string) => {
+    setIsGeneratingPdf(true);
+    try {
+      await generateQrPdf({
+        surveyTitle: survey?.title || 'Survey',
+        qrCodeUrl: qrUrl,
+        companyName: companyData?.name,
+        companyActivity: companyData?.activity,
+        surveyUrl: surveyUrl,
+      });
+    } catch (err) {
+      console.error('Failed to generate PDF:', err);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
   const toggleVisibilityMutation = useMutation({
     mutationFn: (isPublic: boolean) => surveyService.update(surveyId!, { isPublic }),
@@ -242,12 +271,33 @@ const SurveyDistribute: React.FC = () => {
                 {qrDistribution?.qrCodeUrl ? (
                   <div className="flex flex-col items-center">
                     <img src={qrDistribution.qrCodeUrl} alt="QR Code" className="w-64 h-64 border border-border rounded-soft" />
-                    <button
-                      onClick={() => window.open(qrDistribution.qrCodeUrl, '_blank')}
-                      className="mt-4 btn-ghost text-primary-600"
-                    >
-                      Download QR Code
-                    </button>
+                    <div className="flex gap-3 mt-4">
+                      <button
+                        onClick={() => handleDownloadPdf(qrDistribution.qrCodeUrl)}
+                        disabled={isGeneratingPdf}
+                        className="btn-primary"
+                      >
+                        {isGeneratingPdf ? (
+                          <>
+                            <span className="spinner spinner-sm mr-2"></span>
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Download PDF
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => window.open(qrDistribution.qrCodeUrl, '_blank')}
+                        className="btn-ghost text-text-secondary"
+                      >
+                        QR Image Only
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <button
