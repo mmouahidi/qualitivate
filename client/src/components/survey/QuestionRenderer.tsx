@@ -11,6 +11,9 @@ import {
   ExpressionRenderer,
   CommentRenderer,
   MatrixDropdownRenderer,
+  SliderRenderer,
+  MultiselectDropdownRenderer,
+  ImageRenderer,
   type BaseRendererProps,
 } from './ExtendedQuestionRenderers';
 
@@ -455,6 +458,54 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       return (
         <MatrixDropdownRenderer
           element={element}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          readOnly={readOnly}
+          errors={errors}
+        />
+      );
+
+    case 'slider':
+      return (
+        <SliderRenderer
+          element={element}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          readOnly={readOnly}
+          errors={errors}
+        />
+      );
+
+    case 'multiselect_dropdown':
+      return (
+        <MultiselectDropdownRenderer
+          element={element}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          readOnly={readOnly}
+          errors={errors}
+        />
+      );
+
+    case 'image':
+      return (
+        <ImageRenderer
+          element={element}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          readOnly={readOnly}
+          errors={errors}
+        />
+      );
+
+    case 'yes_no':
+      return (
+        <BooleanRenderer
+          element={{ ...element, labelTrue: 'Yes', labelFalse: 'No' }}
           value={value}
           onChange={onChange}
           disabled={disabled}

@@ -179,7 +179,11 @@ export type ExtendedQuestionType =
   | 'comment'
   | 'panel_dynamic'
   | 'matrix_dropdown'
-  | 'matrix_dynamic';
+  | 'matrix_dynamic'
+  | 'multiselect_dropdown'
+  | 'multiple_textboxes'
+  | 'panel'
+  | 'image';
 
 /**
  * Validator types for client/server-side validation
