@@ -11,6 +11,8 @@ const Sites: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', location: '', companyId: '' });
   const [error, setError] = useState<string | null>(null);
+  const [editingSite, setEditingSite] = useState<any | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Fetch all companies for dropdown (use listAll for super_admin to get more than 20)
   const { data: companiesData } = useQuery({
@@ -59,6 +61,33 @@ const Sites: React.FC = () => {
     }
   };
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => siteService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sites'] });
+      setIsEditModalOpen(false);
+      setEditingSite(null);
+      setError(null);
+    },
+    onError: (err: any) => {
+      setError(err.response?.data?.error || 'Failed to update site');
+    }
+  });
+
+  const handleEdit = (site: any) => {
+    setEditingSite({ ...site });
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSite) return;
+    updateMutation.mutate({
+      id: editingSite.id,
+      data: { name: editingSite.name, location: editingSite.location }
+    });
+  };
+
   return (
     <DashboardLayout
       title="Sites"
@@ -87,7 +116,7 @@ const Sites: React.FC = () => {
       {error && (
         <div className="alert-error mb-6">
           <p>{error}</p>
-          <button 
+          <button
             onClick={() => setError(null)}
             className="ml-auto text-sm text-red-600 hover:text-red-800"
           >
@@ -119,14 +148,22 @@ const Sites: React.FC = () => {
                     <td className="text-text-secondary">{site.location || '-'}</td>
                     <td className="text-text-secondary">{site.companyName}</td>
                     <td className="text-right">
-                      {(user?.role === 'super_admin' || user?.role === 'company_admin') && (
+                      <div className="flex gap-2 justify-end">
                         <button
-                          onClick={() => handleDelete(site.id, site.name)}
-                          className="btn-ghost text-red-600 hover:text-red-700 hover:bg-red-50 text-sm"
+                          onClick={() => handleEdit(site)}
+                          className="btn-ghost text-primary-600 hover:text-primary-700 hover:bg-primary-50 text-sm"
                         >
-                          Delete
+                          Edit
                         </button>
-                      )}
+                        {(user?.role === 'super_admin' || user?.role === 'company_admin') && (
+                          <button
+                            onClick={() => handleDelete(site.id, site.name)}
+                            className="btn-ghost text-red-600 hover:text-red-700 hover:bg-red-50 text-sm"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -196,6 +233,52 @@ const Sites: React.FC = () => {
                   className="btn-primary"
                 >
                   Create
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Site Modal */}
+      {isEditModalOpen && editingSite && (
+        <div className="modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2 className="modal-title">Edit Site</h2>
+            <form onSubmit={handleUpdate}>
+              <div className="mb-4">
+                <label className="label-soft">Site Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editingSite.name}
+                  onChange={(e) => setEditingSite({ ...editingSite, name: e.target.value })}
+                  className="input-soft"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="label-soft">Location</label>
+                <input
+                  type="text"
+                  value={editingSite.location || ''}
+                  onChange={(e) => setEditingSite({ ...editingSite, location: e.target.value })}
+                  className="input-soft"
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateMutation.isPending}
+                  className="btn-primary"
+                >
+                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>

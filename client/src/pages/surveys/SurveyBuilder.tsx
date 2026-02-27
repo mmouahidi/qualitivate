@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { surveyService, questionService } from '../../services/survey.service';
+import { companyService } from '../../services/organization.service';
 import templateService from '../../services/template.service';
 import QuestionCard from '../../components/survey/builder/QuestionCard';
 import SurveyBuilderLayout from '../../components/survey/builder/SurveyBuilderLayout';
@@ -39,6 +40,16 @@ const SurveyBuilder: React.FC = () => {
         thankYouTitle: '',
         thankYouMessage: ''
     });
+    const [localIsAnonymous, setLocalIsAnonymous] = useState(false);
+    const [localIsPublic, setLocalIsPublic] = useState(false);
+    const [localCompanyId, setLocalCompanyId] = useState('');
+
+    // Fetch companies for targeting (super_admin only)
+    const { data: companiesData } = useQuery({
+        queryKey: ['companies-list'],
+        queryFn: () => companyService.listAll(),
+        enabled: isSuperAdmin,
+    });
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -68,7 +79,12 @@ const SurveyBuilder: React.FC = () => {
                 thankYouMessage: survey.settings.thankYouMessage || ''
             });
         }
-    }, [survey?.settings]);
+        if (survey) {
+            setLocalIsAnonymous(survey.isAnonymous ?? false);
+            setLocalIsPublic(survey.isPublic ?? false);
+            setLocalCompanyId(survey.companyId || '');
+        }
+    }, [survey?.settings, survey?.isAnonymous, survey?.isPublic, survey?.companyId]);
 
     // Mutations
     const updateSurveyMutation = useMutation({
@@ -187,7 +203,7 @@ const SurveyBuilder: React.FC = () => {
         createQuestionMutation.mutate({
             type: question.type,
             content: question.content + ' (copy)',
-            isRequired: question.is_required,
+            isRequired: question.isRequired ?? question.is_required ?? false,
             options: question.options,
         });
     };
@@ -201,8 +217,16 @@ const SurveyBuilder: React.FC = () => {
 
     const handleSaveSettings = (e: React.FormEvent) => {
         e.preventDefault();
+        const payload: any = {
+            settings: surveySettings,
+            isAnonymous: localIsAnonymous,
+            isPublic: localIsPublic,
+        };
+        if (isSuperAdmin) {
+            payload.companyId = localCompanyId || null;
+        }
         updateSurveyMutation.mutate(
-            { settings: surveySettings },
+            payload,
             {
                 onSuccess: () => {
                     setIsSettingsOpen(false);
@@ -549,9 +573,61 @@ const SurveyBuilder: React.FC = () => {
                     <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
                         <h2 className="modal-title">Survey Settings</h2>
                         <p className="text-sm text-text-secondary mb-4">
-                            Customize the welcome and thank you messages respondents will see.
+                            Configure survey behavior, targeting, and messages.
                         </p>
                         <form onSubmit={handleSaveSettings}>
+                            {/* Survey Behavior */}
+                            <div className="mb-6 p-4 bg-surface rounded-lg border border-border">
+                                <h3 className="text-sm font-semibold text-text-primary mb-3">Survey Behavior</h3>
+                                <div className="space-y-3">
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={localIsAnonymous}
+                                            onChange={(e) => setLocalIsAnonymous(e.target.checked)}
+                                            className="checkbox-soft"
+                                        />
+                                        <div>
+                                            <span className="text-sm font-medium text-text-primary">Anonymous responses</span>
+                                            <p className="text-xs text-text-muted">Respondent identity will not be recorded</p>
+                                        </div>
+                                    </label>
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={localIsPublic}
+                                            onChange={(e) => setLocalIsPublic(e.target.checked)}
+                                            className="checkbox-soft"
+                                        />
+                                        <div>
+                                            <span className="text-sm font-medium text-text-primary">Public survey</span>
+                                            <p className="text-xs text-text-muted">Anyone with the link can respond (no login required)</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Targeting (super_admin only) */}
+                            {isSuperAdmin && (
+                                <div className="mb-6 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+                                    <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300 mb-3">Target Audience</h3>
+                                    <select
+                                        value={localCompanyId}
+                                        onChange={(e) => setLocalCompanyId(e.target.value)}
+                                        className="select-soft"
+                                    >
+                                        <option value="">🌐 General (All Users)</option>
+                                        {companiesData?.data?.map((company: any) => (
+                                            <option key={company.id} value={company.id}>🏢 {company.name}</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
+                                        {localCompanyId ? 'Only users in this company can see the survey' : 'All users can see this survey'}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Messages */}
                             <div className="mb-4">
                                 <label className="label-soft">Welcome Message (Optional)</label>
                                 <textarea
@@ -559,9 +635,8 @@ const SurveyBuilder: React.FC = () => {
                                     onChange={(e) => setSurveySettings({ ...surveySettings, welcomeMessage: e.target.value })}
                                     rows={3}
                                     className="textarea-soft"
-                                    placeholder="Custom message shown on the welcome screen before respondents start the survey..."
+                                    placeholder="Custom message shown before respondents start..."
                                 />
-                                <p className="text-xs text-text-muted mt-1">Leave blank to show the survey description</p>
                             </div>
                             <div className="mb-4">
                                 <label className="label-soft">Thank You Title</label>
@@ -600,7 +675,7 @@ const SurveyBuilder: React.FC = () => {
                                 </button>
                             </div>
                         </form>
-            </div>
+                    </div>
                 </div>
             )}
         </>

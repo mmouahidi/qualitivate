@@ -388,9 +388,18 @@ const Users: React.FC = () => {
                                     <tr key={user.id}>
                                         <td className="font-medium">{user.email}</td>
                                         <td className="text-text-secondary">
-                                            {user.firstName && user.lastName
-                                                ? `${user.firstName} ${user.lastName}`
-                                                : '—'}
+                                            <div className="flex items-center gap-2">
+                                                <img
+                                                    src={`https://api.dicebear.com/7.x/${(user as any).avatarStyle || 'initials'}/svg?seed=${encodeURIComponent(user.email)}&size=32`}
+                                                    alt=""
+                                                    className="w-7 h-7 rounded-full bg-surface flex-shrink-0"
+                                                />
+                                                <span>
+                                                    {user.firstName && user.lastName
+                                                        ? `${user.firstName} ${user.lastName}`
+                                                        : '—'}
+                                                </span>
+                                            </div>
                                         </td>
                                         <td>
                                             <span className={getRoleBadgeClass(user.role)}>

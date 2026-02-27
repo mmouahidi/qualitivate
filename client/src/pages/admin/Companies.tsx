@@ -21,6 +21,8 @@ const Companies: React.FC = () => {
     employeesCount: 0
   });
   const [error, setError] = useState<string | null>(null);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['companies', search],
@@ -59,6 +61,19 @@ const Companies: React.FC = () => {
     }
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Company> }) => companyService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      setIsEditModalOpen(false);
+      setEditingCompany(null);
+      setError(null);
+    },
+    onError: (err: any) => {
+      setError(err.response?.data?.error || 'Failed to update company');
+    }
+  });
+
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     createMutation.mutate(formData);
@@ -68,6 +83,27 @@ const Companies: React.FC = () => {
     if (confirm('Are you sure you want to delete this company?')) {
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleEdit = (company: Company) => {
+    setEditingCompany(company);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCompany) return;
+    updateMutation.mutate({
+      id: editingCompany.id,
+      data: {
+        name: editingCompany.name,
+        activity: editingCompany.activity,
+        address: editingCompany.address,
+        city: editingCompany.city,
+        sitesCount: editingCompany.sitesCount,
+        employeesCount: editingCompany.employeesCount,
+      }
+    });
   };
 
   if (user?.role !== 'super_admin' && user?.role !== 'company_admin') {
@@ -155,14 +191,22 @@ const Companies: React.FC = () => {
                       {new Date(company.createdAt).toLocaleDateString()}
                     </td>
                     <td className="text-right">
-                      {user?.role === 'super_admin' && (
+                      <div className="flex gap-2 justify-end">
                         <button
-                          onClick={() => handleDelete(company.id)}
-                          className="btn-ghost text-red-600 hover:text-red-700 hover:bg-red-50 text-sm"
+                          onClick={() => handleEdit(company)}
+                          className="btn-ghost text-primary-600 hover:text-primary-700 hover:bg-primary-50 text-sm"
                         >
-                          Delete
+                          Edit
                         </button>
-                      )}
+                        {user?.role === 'super_admin' && (
+                          <button
+                            onClick={() => handleDelete(company.id)}
+                            className="btn-ghost text-red-600 hover:text-red-700 hover:bg-red-50 text-sm"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -271,6 +315,93 @@ const Companies: React.FC = () => {
                   className="btn-primary"
                 >
                   {createMutation.isPending ? 'Creating...' : 'Create'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Company Modal */}
+      {isEditModalOpen && editingCompany && (
+        <div className="modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+          <div className="modal-content max-w-xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="modal-title">Edit Company</h2>
+            <form onSubmit={handleUpdate}>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="mb-4">
+                  <label className="label-soft">Company Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingCompany.name}
+                    onChange={(e) => setEditingCompany({ ...editingCompany, name: e.target.value })}
+                    className="input-soft"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="label-soft">Slug</label>
+                  <input
+                    type="text"
+                    value={editingCompany.slug || ''}
+                    disabled
+                    className="input-soft opacity-50"
+                  />
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="label-soft">Activity</label>
+                <input
+                  type="text"
+                  value={editingCompany.activity || ''}
+                  onChange={(e) => setEditingCompany({ ...editingCompany, activity: e.target.value })}
+                  className="input-soft"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="label-soft">Address</label>
+                <input
+                  type="text"
+                  value={editingCompany.address || ''}
+                  onChange={(e) => setEditingCompany({ ...editingCompany, address: e.target.value })}
+                  className="input-soft"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="mb-4">
+                  <label className="label-soft">City</label>
+                  <input
+                    type="text"
+                    value={editingCompany.city || ''}
+                    onChange={(e) => setEditingCompany({ ...editingCompany, city: e.target.value })}
+                    className="input-soft"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="label-soft">Number of Employees</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editingCompany.employeesCount || 0}
+                    onChange={(e) => setEditingCompany({ ...editingCompany, employeesCount: parseInt(e.target.value) || 0 })}
+                    className="input-soft"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateMutation.isPending}
+                  className="btn-primary"
+                >
+                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>
