@@ -70,9 +70,26 @@ const SurveyDistribute: React.FC = () => {
   const embedCode = `<iframe src="${window.location.origin}/survey/${surveyId}/embed" width="100%" height="600" frameborder="0"></iframe>`;
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {
+        fallbackCopy(text);
+      });
+    } else {
+      fallbackCopy(text);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const fallbackCopy = (text: string) => {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
   };
 
   const linkDistribution = distributions?.find((d: any) => d.channel === 'link');

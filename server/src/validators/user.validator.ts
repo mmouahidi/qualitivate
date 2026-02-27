@@ -11,6 +11,10 @@ export const inviteUserSchema: ValidationSchema = {
             'string.email': 'Invalid email format',
             'any.required': 'Email is required'
         }),
+        password: Joi.string().min(8).required().messages({
+            'string.min': 'Password must be at least 8 characters',
+            'any.required': 'Password is required'
+        }),
         firstName: Joi.string().min(1).max(100).required().messages({
             'string.min': 'First name cannot be empty',
             'any.required': 'First name is required'
@@ -20,7 +24,7 @@ export const inviteUserSchema: ValidationSchema = {
             'any.required': 'Last name is required'
         }),
         role: Joi.string()
-            .valid('user', 'department_admin', 'site_admin', 'company_admin')
+            .valid('user', 'department_admin', 'site_admin', 'company_admin', 'super_admin')
             .required()
             .messages({
                 'any.only': 'Invalid role',
@@ -62,10 +66,10 @@ export const bulkCreateUsersSchema: ValidationSchema = {
         users: Joi.array().items(
             Joi.object({
                 email: Joi.string().email().required(),
-                firstName: Joi.string().min(1).max(100).required(),
-                lastName: Joi.string().min(1).max(100).required(),
+                firstName: Joi.string().allow('').max(100).optional().default(''),
+                lastName: Joi.string().allow('').max(100).optional().default(''),
                 password: Joi.string().min(8).required(),
-                role: Joi.string().valid('user', 'department_admin', 'site_admin', 'company_admin').default('user'),
+                role: Joi.string().valid('user', 'department_admin', 'site_admin', 'company_admin', 'super_admin').default('user'),
                 companyId: Joi.string().uuid().optional(),
                 siteId: Joi.string().uuid().optional(),
                 departmentId: Joi.string().uuid().optional(),

@@ -329,7 +329,18 @@ const TakeSurvey: React.FC = () => {
   };
 
   const copyResumeLink = () => {
-    navigator.clipboard.writeText(getResumeLink());
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(getResumeLink());
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = getResumeLink();
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
     alert(t('survey.resumeLinkCopied'));
   };
 
