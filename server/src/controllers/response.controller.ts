@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import logger from '../config/logger';
+import { UAParser } from 'ua-parser-js';
 
 // Get public survey for responding
 // Public surveys: no auth required
@@ -132,6 +133,21 @@ export const startResponse = async (req: AuthRequest, res: Response) => {
     // Generate anonymous token
     const anonymousToken = `${distributionId || 'direct'}_${uuidv4()}`;
 
+    // Parse User-Agent
+    const userAgent = req.headers['user-agent'] || '';
+    const parser = new UAParser(userAgent);
+    const parsedUA = parser.getResult();
+
+    // Prepare metadata
+    const metadata = {
+      ip: req.ip,
+      userAgent: userAgent,
+      browser: parsedUA.browser,
+      os: parsedUA.os,
+      device: parsedUA.device,
+      engine: parsedUA.engine,
+    };
+
     // Build response record with optional respondent_id if user is authenticated
     const responseData: Record<string, any> = {
       id: uuidv4(),
@@ -140,7 +156,8 @@ export const startResponse = async (req: AuthRequest, res: Response) => {
       ip_address: req.ip,
       language_used: req.body.language || survey.default_language,
       status: 'started',
-      started_at: new Date()
+      started_at: new Date(),
+      metadata: metadata,
     };
 
     // If user is authenticated, track the respondent
