@@ -10,6 +10,7 @@ import QuestionCard from '../../components/survey/builder/QuestionCard';
 import SurveyBuilderLayout from '../../components/survey/builder/SurveyBuilderLayout';
 import LivePreview from '../../components/survey/builder/LivePreview';
 import LogicRuleEditor from '../../components/survey/LogicRuleEditor';
+import ConfirmModal from '../../components/ui/ConfirmModal';
 import { QuestionType, ExtendedQuestionType } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -43,6 +44,7 @@ const SurveyBuilder: React.FC = () => {
     const [localIsAnonymous, setLocalIsAnonymous] = useState(false);
     const [localIsPublic, setLocalIsPublic] = useState(false);
     const [localCompanyId, setLocalCompanyId] = useState('');
+    const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
 
     // Fetch companies for targeting (super_admin only)
     const { data: companiesData } = useQuery({
@@ -120,7 +122,10 @@ const SurveyBuilder: React.FC = () => {
 
     const deleteQuestionMutation = useMutation({
         mutationFn: (questionId: string) => questionService.delete(questionId),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['survey', id] }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['survey', id] });
+            setQuestionToDelete(null);
+        },
     });
 
     const reorderMutation = useMutation({
@@ -194,9 +199,7 @@ const SurveyBuilder: React.FC = () => {
     };
 
     const handleDeleteQuestion = (questionId: string) => {
-        if (confirm('Delete this question?')) {
-            deleteQuestionMutation.mutate(questionId);
-        }
+        setQuestionToDelete(questionId);
     };
 
     const handleDuplicateQuestion = (question: any) => {
@@ -679,6 +682,24 @@ const SurveyBuilder: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Question Confirmation Modal */}
+            <ConfirmModal
+                isOpen={!!questionToDelete}
+                onClose={() => setQuestionToDelete(null)}
+                onConfirm={() => {
+                    if (questionToDelete) {
+                        deleteQuestionMutation.mutate(questionToDelete);
+                    }
+                }}
+                title="Delete Question"
+                message="Are you sure you want to delete this question? This action cannot be undone."
+                confirmLabel="Delete Question"
+                cancelLabel="Cancel"
+                variant="danger"
+                icon="delete"
+                isLoading={deleteQuestionMutation.isPending}
+            />
         </>
     );
 };
