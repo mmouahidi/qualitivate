@@ -18,8 +18,29 @@ export const isValidSurveyStatus = (status: string): status is SurveyStatus =>
 // ── Question Types ────────────────────────────────────────────
 export const VALID_QUESTION_TYPES = ['nps', 'multiple_choice', 'text_short', 'text_long', 'rating_scale', 'matrix'] as const;
 export type QuestionType = typeof VALID_QUESTION_TYPES[number];
-export const isValidQuestionType = (type: string): type is QuestionType =>
-    VALID_QUESTION_TYPES.includes(type as QuestionType);
+
+// Frontend extended types mapping to avoid breaking Postgres ENUM constraint
+export const EXTENDED_QUESTION_TYPES = [
+    'nps', 'multiple_choice', 'text_short', 'text_long', 'rating_scale', 'matrix',
+    'dropdown', 'checkbox', 'boolean', 'file_upload', 'ranking', 'image_picker',
+    'signature_pad', 'html', 'expression', 'comment', 'panel_dynamic',
+    'matrix_dropdown', 'matrix_dynamic', 'multiselect_dropdown', 'multiple_textboxes',
+    'panel', 'image', 'slider', 'image_choice'
+] as const;
+
+export type ExtendedQuestionType = typeof EXTENDED_QUESTION_TYPES[number];
+
+export const isValidQuestionType = (type: string): boolean =>
+    EXTENDED_QUESTION_TYPES.includes(type as any);
+
+export const mapExtendedTypeToBase = (type: string): QuestionType => {
+    if (VALID_QUESTION_TYPES.includes(type as QuestionType)) return type as QuestionType;
+    if (['dropdown', 'checkbox', 'multiselect_dropdown', 'image_choice', 'boolean', 'ranking', 'image_picker'].includes(type)) return 'multiple_choice';
+    if (['slider'].includes(type)) return 'rating_scale';
+    if (['matrix_dropdown', 'matrix_dynamic'].includes(type)) return 'matrix';
+    if (['html', 'expression', 'comment', 'multiple_textboxes'].includes(type)) return 'text_long';
+    return 'text_short'; // Default fallback for file_upload, signature_pad, panel, image
+};
 
 // ── Template Types ────────────────────────────────────────────
 export const VALID_TEMPLATE_TYPES = ['nps', 'custom'] as const;

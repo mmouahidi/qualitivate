@@ -18,23 +18,24 @@ import type { ExtendedQuestionType } from '../../../types';
 interface SurveyBuilderLayoutProps {
   // Survey data
   survey: any;
-  
+
   // Selected question
   selectedQuestion: any | null;
-  
+
   // Handlers
   onAddQuestion: (type: ExtendedQuestionType, defaultOptions?: Record<string, any>) => void;
   onUpdateQuestion: (updates: Record<string, any>) => void;
   onUpdateSurvey: (updates: any) => void;
-  
+  onOpenSettings?: () => void;
+
   // Content for each tab
   designerContent: ReactNode;
   previewContent: ReactNode;
   logicContent: ReactNode;
-  
+
   // Header actions
   headerActions?: ReactNode;
-  
+
   className?: string;
 }
 
@@ -44,6 +45,7 @@ const SurveyBuilderLayout: React.FC<SurveyBuilderLayoutProps> = ({
   onAddQuestion,
   onUpdateQuestion,
   onUpdateSurvey,
+  onOpenSettings,
   designerContent,
   previewContent,
   logicContent,
@@ -132,30 +134,11 @@ const SurveyBuilderLayout: React.FC<SurveyBuilderLayoutProps> = ({
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            {/* Undo/Redo buttons */}
-            <button
-              className="p-2 text-text-muted hover:text-text-primary hover:bg-surface-hover rounded transition-colors"
-              title="Undo"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 7v6h6" />
-                <path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13" />
-              </svg>
-            </button>
-            <button
-              className="p-2 text-text-muted hover:text-text-primary hover:bg-surface-hover rounded transition-colors"
-              title="Redo"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 7v6h-6" />
-                <path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7" />
-              </svg>
-            </button>
 
-            <div className="w-px h-6 bg-border mx-2" />
 
             {/* Settings button */}
             <button
+              onClick={onOpenSettings}
               className="p-2 text-text-muted hover:text-text-primary hover:bg-surface-hover rounded transition-colors"
               title="Survey Settings"
             >

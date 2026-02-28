@@ -5,8 +5,10 @@ import { AuthRequest } from '../middlewares/auth.middleware';
 import logger from '../config/logger';
 import {
   VALID_QUESTION_TYPES,
+  EXTENDED_QUESTION_TYPES,
   QuestionType,
   isValidQuestionType,
+  mapExtendedTypeToBase,
   VALID_LANGUAGE_CODES,
   isValidLanguageCode,
   validateQuestionOptions,
@@ -50,10 +52,14 @@ export const createQuestion = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Question content is required' });
     }
 
-    // Validate type enum
+    // Validate type enum (now allows extended types)
     if (!type || !isValidQuestionType(type)) {
-      return res.status(400).json({ error: `Invalid question type. Must be one of: ${VALID_QUESTION_TYPES.join(', ')}` });
+      return res.status(400).json({ error: `Invalid question type. Must be one of: ${EXTENDED_QUESTION_TYPES.join(', ')}` });
     }
+
+    // Determine the base postgres ENUM type
+    const baseType = mapExtendedTypeToBase(type);
+    const extendedType = type !== baseType ? type : null;
 
     // Validate isRequired is boolean
     if (typeof isRequired !== 'boolean') {
@@ -86,7 +92,8 @@ export const createQuestion = async (req: AuthRequest, res: Response) => {
       .insert({
         id: uuidv4(),
         survey_id: surveyId,
-        type,
+        type: baseType,
+        extended_type: extendedType,
         content,
         options,
         is_required: isRequired,
@@ -94,7 +101,10 @@ export const createQuestion = async (req: AuthRequest, res: Response) => {
       })
       .returning('*');
 
-    res.status(201).json(question);
+    res.status(201).json({
+      ...question,
+      type: question.extended_type || question.type
+    });
   } catch (error) {
     logger.error('Create question error:', { error });
     res.status(500).json({ error: 'Failed to create question' });
@@ -128,9 +138,11 @@ export const updateQuestion = async (req: AuthRequest, res: Response) => {
     // Validate type if provided
     if (type !== undefined) {
       if (!isValidQuestionType(type)) {
-        return res.status(400).json({ error: `Invalid question type. Must be one of: ${VALID_QUESTION_TYPES.join(', ')}` });
+        return res.status(400).json({ error: `Invalid question type. Must be one of: ${EXTENDED_QUESTION_TYPES.join(', ')}` });
       }
-      updateData.type = type;
+      const baseType = mapExtendedTypeToBase(type);
+      updateData.type = baseType;
+      updateData.extended_type = type !== baseType ? type : null;
     }
 
     // Validate content if provided
@@ -151,7 +163,7 @@ export const updateQuestion = async (req: AuthRequest, res: Response) => {
 
     // Validate options based on final type
     if (options !== undefined) {
-      const finalType = (type || question.type) as QuestionType;
+      const finalType = (type || question.extended_type || question.type) as QuestionType;
       const optionsValidation = validateQuestionOptions(finalType, options);
       if (!optionsValidation.valid) {
         return res.status(400).json({ error: optionsValidation.error });
@@ -164,7 +176,10 @@ export const updateQuestion = async (req: AuthRequest, res: Response) => {
       .update(updateData)
       .returning('*');
 
-    res.json(updatedQuestion);
+    res.json({
+      ...updatedQuestion,
+      type: updatedQuestion.extended_type || updatedQuestion.type
+    });
   } catch (error) {
     logger.error('Update question error:', { error });
     res.status(500).json({ error: 'Failed to update question' });

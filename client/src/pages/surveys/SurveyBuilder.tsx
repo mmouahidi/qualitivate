@@ -485,6 +485,7 @@ const SurveyBuilder: React.FC = () => {
                 onAddQuestion={handleAddQuestion}
                 onUpdateQuestion={handleConfigPanelUpdate}
                 onUpdateSurvey={(updates) => updateSurveyMutation.mutate(updates)}
+                onOpenSettings={() => setIsSettingsOpen(true)}
                 designerContent={designerContent}
                 previewContent={previewContent}
                 logicContent={logicContent}
