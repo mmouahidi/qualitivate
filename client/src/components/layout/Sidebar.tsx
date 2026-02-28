@@ -62,9 +62,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ navigation }) => {
       `}>
         <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden">
           {isExpanded ? (
-            <img src="/logo.png" alt="Qualitivate" className="h-10 w-auto object-contain" />
+            <img src="/branding/logo1.webp" alt="Qualitivate" className="h-10 w-auto object-contain" />
           ) : (
-            <img src="/icon.png" alt="Qualitivate" className="h-8 w-8 object-contain" />
+            <img src="/branding/icon1.webp" alt="Qualitivate" className="h-8 w-8 object-contain" />
           )}
         </Link>
 

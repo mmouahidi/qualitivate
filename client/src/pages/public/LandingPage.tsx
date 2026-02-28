@@ -1,16 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { 
-    Activity, 
-    BarChart3, 
-    Ear, 
-    LineChart, 
+import {
+    Activity,
+    BarChart3,
+    Ear,
+    LineChart,
     Zap,
     ArrowRight,
     TrendingUp,
     Globe,
-    Check
+    Check,
+    Users,
+    MessageSquare,
+    Target,
+    PieChart
 } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
@@ -26,7 +30,7 @@ const LandingPage: React.FC = () => {
             <header className="fixed w-full bg-white/90 backdrop-blur-md border-b border-border z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <img src="/images/logo.png" alt="Qualitivate" className="h-10 w-auto object-contain" />
+                        <img src="/branding/logo1.webp" alt="Qualitivate" className="h-10 w-auto object-contain" />
                     </div>
                     <nav className="hidden md:flex items-center gap-8">
                         <a href="#methodology" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors">{t('nav.methodology')}</a>
@@ -88,11 +92,65 @@ const LandingPage: React.FC = () => {
                         </div>
                         <div className="relative order-1 lg:order-2">
                             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-primary-100/50 to-secondary-100/50 rounded-full blur-[100px] -z-10"></div>
-                            <img
-                                src="/images/landing-hero.png"
-                                alt="Analytics Dashboard"
-                                className="w-full h-auto drop-shadow-2xl rounded-2xl border border-white/40"
-                            />
+                            <div className="w-full h-auto rounded-2xl border border-white/40 bg-white/60 backdrop-blur-3xl shadow-2xl overflow-hidden relative group">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-primary-100/20 to-transparent pointer-events-none"></div>
+                                <div className="p-6 border-b border-gray-100/50 flex justify-between items-center bg-white/40">
+                                    <div className="flex gap-2 items-center">
+                                        <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                                        <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                                        <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                                    </div>
+                                    <div className="text-xs font-medium text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm">Qualitivate Analytics</div>
+                                </div>
+                                <div className="p-6 grid grid-cols-2 gap-4">
+                                    <div className="col-span-2 bg-white rounded-xl p-5 shadow-sm border border-gray-50 transform transition-transform group-hover:scale-[1.01] hover:shadow-md">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Overall Sentiment</p>
+                                                <p className="text-3xl font-bold text-gray-800">84<span className="text-lg text-green-500 ml-1">▲ +5%</span></p>
+                                            </div>
+                                            <div className="w-10 h-10 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center">
+                                                <Activity className="w-5 h-5" />
+                                            </div>
+                                        </div>
+                                        <div className="h-16 w-full flex items-end gap-2">
+                                            {[40, 55, 45, 70, 65, 80, 84, 90, 85].map((val, i) => (
+                                                <div key={i} className="flex-1 bg-primary-100 rounded-t-sm hover:bg-primary-300 transition-colors relative group/bar cursor-pointer" style={{ height: `${val}%` }}>
+                                                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/bar:opacity-100 transition-opacity pointer-events-none">
+                                                        {val}%
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-50 flex flex-col justify-between hover:border-secondary-200 transition-colors cursor-pointer hover:shadow-md">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="p-2 bg-secondary-50 text-secondary-600 rounded-lg">
+                                                <Users className="w-4 h-4" />
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-600">Response Rate</span>
+                                        </div>
+                                        <p className="text-2xl font-bold text-gray-800">92%</p>
+                                        <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2 overflow-hidden">
+                                            <div className="bg-secondary-500 h-1.5 rounded-full w-[92%] relative">
+                                                <div className="absolute inset-0 bg-white/20 w-full animate-pulse"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-50 flex flex-col justify-between hover:border-accent-200 transition-colors cursor-pointer hover:shadow-md">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="p-2 bg-accent-50 text-accent-600 rounded-lg">
+                                                <MessageSquare className="w-4 h-4" />
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-600">Total Feedback</span>
+                                        </div>
+                                        <p className="text-2xl font-bold text-gray-800">1,204</p>
+                                        <p className="text-xs text-green-600 mt-2 font-medium flex items-center gap-1">
+                                            <TrendingUp className="w-3 h-3" /> 24% vs last month
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                             <div className={`absolute -bottom-8 ${isRTL ? '-right-6' : '-left-6'} bg-white p-4 rounded-xl shadow-xl border border-gray-100 hidden md:block`}>
                                 <div className="flex items-center gap-3 mb-2">
                                     <div className="p-2 bg-green-100 rounded-lg text-green-600">
@@ -153,8 +211,40 @@ const LandingPage: React.FC = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                             <div className="relative">
-                                <div className="rounded-2xl bg-gradient-to-br from-primary-100 via-white to-secondary-100 p-6 border border-white/70 shadow-soft">
-                                    <img src="/images/landing-illustration.png" alt="Insights" className="rounded-xl w-full h-auto" />
+                                <div className="rounded-2xl bg-gradient-to-br from-primary-50 via-white to-secondary-50 p-6 border border-white shadow-soft relative overflow-hidden group">
+                                    <div className="absolute -right-10 -top-10 w-40 h-40 bg-secondary-100 rounded-full blur-3xl opacity-50 transition-opacity group-hover:opacity-80"></div>
+                                    <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-primary-100 rounded-full blur-3xl opacity-50 transition-opacity group-hover:opacity-80"></div>
+
+                                    <div className="relative z-10 grid grid-cols-2 gap-4">
+                                        <div className="bg-white/80 backdrop-blur border border-white p-4 rounded-xl shadow-sm transform hover:-translate-y-1 transition-transform">
+                                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-3">
+                                                <Target className="w-5 h-5" />
+                                            </div>
+                                            <h4 className="text-sm font-bold text-gray-800 mb-1">Targeting</h4>
+                                            <p className="text-xs text-gray-500">Reach the right audience instantly</p>
+                                        </div>
+                                        <div className="bg-white/80 backdrop-blur border border-white p-4 rounded-xl shadow-sm transform hover:-translate-y-1 transition-transform translate-y-3">
+                                            <div className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-3">
+                                                <LineChart className="w-5 h-5" />
+                                            </div>
+                                            <h4 className="text-sm font-bold text-gray-800 mb-1">Live Tracking</h4>
+                                            <p className="text-xs text-gray-500">Real-time metrics & KPIs</p>
+                                        </div>
+                                        <div className="bg-white/80 backdrop-blur border border-white p-4 rounded-xl shadow-sm transform hover:-translate-y-1 transition-transform -translate-y-2">
+                                            <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mb-3">
+                                                <PieChart className="w-5 h-5" />
+                                            </div>
+                                            <h4 className="text-sm font-bold text-gray-800 mb-1">Sentiment</h4>
+                                            <p className="text-xs text-gray-500">AI-driven language analysis</p>
+                                        </div>
+                                        <div className="bg-white/80 backdrop-blur border border-white p-4 rounded-xl shadow-sm transform hover:-translate-y-1 transition-transform">
+                                            <div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mb-3">
+                                                <Zap className="w-5 h-5" />
+                                            </div>
+                                            <h4 className="text-sm font-bold text-gray-800 mb-1">Automated</h4>
+                                            <p className="text-xs text-gray-500">Triggers on key milestones</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div className={isRTL ? 'text-right' : ''}>
@@ -214,7 +304,7 @@ const LandingPage: React.FC = () => {
             <footer className="bg-white border-t border-border py-12">
                 <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
                     <div className="flex items-center gap-2">
-                        <img src="/images/logo.png" alt="Qualitivate" className="h-8 w-auto object-contain" />
+                        <img src="/branding/logo1.webp" alt="Qualitivate" className="h-8 w-auto object-contain" />
                     </div>
                     <p className="text-sm text-gray-500">{t('footer.copyright')}</p>
                     <div className={`flex gap-6 text-sm text-gray-600 ${isRTL ? 'flex-row-reverse' : ''}`}>

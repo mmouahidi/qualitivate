@@ -35,7 +35,7 @@ const Login: React.FC = () => {
           {/* Branding */}
           <div className="mb-8 text-center sm:text-left">
             <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
-              <img src="/images/logo.png" alt="Qualitivate" className="h-12 w-auto object-contain" />
+              <img src="/branding/logo1.webp" alt="Qualitivate" className="h-12 w-auto object-contain" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900">{t('login.title')}</h2>
             <p className="mt-2 text-gray-600">
@@ -138,11 +138,43 @@ const Login: React.FC = () => {
       {/* Right Side - Illustration */}
       <div className="hidden lg:block relative w-0 flex-1 bg-primary-50">
         <div className="absolute inset-0 flex items-center justify-center p-20">
-          <img
-            src="/images/login-illustration.png"
-            alt="Secure Login"
-            className="max-w-full h-auto object-contain drop-shadow-2xl"
-          />
+          <div className="w-full max-w-lg aspect-square relative flex items-center justify-center">
+            {/* Background elements */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-primary-200/40 to-secondary-200/40 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }}></div>
+
+            {/* Interactive Grid UI */}
+            <div className="relative z-10 w-full h-[80%] bg-white/60 backdrop-blur-xl rounded-2xl border border-white p-8 shadow-2xl space-y-8 transform hover:scale-[1.02] transition-transform duration-500 flex flex-col items-center justify-center">
+
+              <div className="relative w-32 h-32 flex items-center justify-center">
+                <div className="absolute inset-0 border-4 border-primary-100 rounded-full animate-[spin_10s_linear_infinite]"></div>
+                <div className="absolute inset-4 border-4 border-secondary-100 border-dashed rounded-full animate-[spin_15s_linear_infinite_reverse]"></div>
+                <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl shadow-lg shadow-primary-500/30 flex items-center justify-center text-white z-10 transform -rotate-12 transition-transform hover:rotate-0">
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+              </div>
+
+              <div className="text-center space-y-2">
+                <div className="h-4 w-32 bg-gray-200 rounded-full mx-auto mb-3"></div>
+                <div className="h-2 w-48 bg-gray-100 rounded-full mx-auto"></div>
+                <div className="h-2 w-40 bg-gray-100 rounded-full mx-auto"></div>
+              </div>
+
+              <div className="w-full bg-green-50/50 border border-green-100 p-4 rounded-xl flex items-center gap-4 group cursor-pointer transition-colors hover:bg-green-50">
+                <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="space-y-1.5 flex-1">
+                  <div className="h-3 w-3/4 bg-green-200/50 rounded-full"></div>
+                  <div className="h-2 w-1/2 bg-green-100/50 rounded-full"></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
       </div>
     </div>
