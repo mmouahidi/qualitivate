@@ -159,6 +159,11 @@ const Icons = {
       <text x="7" y="16" fontSize="10" fill="currentColor" stroke="none">fx</text>
     </svg>
   ),
+  TitleSettings: () => (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 7V4h16v3M9 20h6M12 4v16" />
+    </svg>
+  ),
   Image: () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -296,6 +301,13 @@ export const TOOLBOX_ITEMS: ToolboxItem[] = [
   },
   // Layout
   {
+    type: 'html',
+    title: 'Title / Text Block',
+    icon: <Icons.TitleSettings />,
+    category: 'layout',
+    defaultOptions: { html: '<h2>Section Title</h2><p>Describe this section here...</p>' },
+  },
+  {
     type: 'panel',
     title: 'Panel',
     icon: <Icons.Panel />,
@@ -343,10 +355,10 @@ export const TOOLBOX_ITEMS: ToolboxItem[] = [
   // Content/Display
   {
     type: 'html',
-    title: 'HTML',
+    title: 'Custom HTML',
     icon: <Icons.Html />,
     category: 'layout',
-    defaultOptions: { html: '<p>Enter your content here...</p>' },
+    defaultOptions: { html: '<p>Enter your custom HTML content here...</p>' },
   },
   {
     type: 'expression',

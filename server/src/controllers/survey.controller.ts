@@ -128,23 +128,20 @@ export const getSurvey = async (req: AuthRequest, res: Response) => {
       .where({ survey_id: id })
       .orderBy('order_index', 'asc');
 
-    const [responsesCount] = await db('responses')
-      .where({ survey_id: id })
-      .count('* as count');
-
-    res.json({
+    return res.status(200).json({
       ...survey,
-      questions,
-      stats: {
-        responses: Number(responsesCount.count)
-      }
+      questions: questions.map(q => ({
+        ...q,
+        type: q.extended_type || q.type, // Map extended_type back to type for frontend
+        options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+        is_required: Boolean(q.is_required)
+      }))
     });
   } catch (error) {
-    logger.error('', { error });
-    res.status(500).json({ error: 'Failed to get survey' });
+    console.error('Error fetching survey:', error);
+    return res.status(500).json({ error: 'Failed to fetch survey' });
   }
 };
-
 export const createSurvey = async (req: AuthRequest, res: Response) => {
   try {
     const {

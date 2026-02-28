@@ -40,13 +40,27 @@ const QuestionTypeIcons: Record<QuestionType, { icon: string; label: string; col
     ranking: { icon: '🏆', label: 'Ranking', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' },
     slider: { icon: '🎚️', label: 'Slider', color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300' },
     image_choice: { icon: '🖼️', label: 'Image Choice', color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300' },
+    checkbox: { icon: '☑️', label: 'Checkboxes', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
+    boolean: { icon: '👍', label: 'Boolean', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
+    image_picker: { icon: '🖼️', label: 'Image Picker', color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300' },
+    signature_pad: { icon: '✍️', label: 'Signature', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
+    html: { icon: '🌐', label: 'HTML', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' },
+    expression: { icon: '🧮', label: 'Expression', color: 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300' },
+    comment: { icon: '💬', label: 'Comment', color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' },
+    panel_dynamic: { icon: '🔁', label: 'Dynamic Panel', color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300' },
+    matrix_dropdown: { icon: '🔠', label: 'Matrix Dropdown', color: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300' },
+    matrix_dynamic: { icon: '🔀', label: 'Matrix Dynamic', color: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300' },
+    multiselect_dropdown: { icon: '🗂️', label: 'Multi-Select', color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300' },
+    multiple_textboxes: { icon: '📑', label: 'Multiple Textboxes', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' },
+    panel: { icon: '🗃️', label: 'Panel', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
+    image: { icon: '🖼️', label: 'Image', color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300' }
 };
 
 const hasChoices = (type: QuestionType) =>
-    ['multiple_choice', 'dropdown', 'yes_no', 'ranking', 'image_choice'].includes(type);
+    ['multiple_choice', 'dropdown', 'yes_no', 'ranking', 'image_choice', 'checkbox', 'image_picker', 'multiselect_dropdown'].includes(type);
 
 const supportsLogicRules = (type: QuestionType) =>
-    ['nps', 'multiple_choice', 'rating_scale', 'text_short', 'text_long', 'matrix'].includes(type);
+    ['nps', 'multiple_choice', 'rating_scale', 'text_short', 'text_long', 'matrix', 'checkbox', 'dropdown', 'slider'].includes(type);
 
 const QuestionCard: React.FC<QuestionCardProps> = ({
     question,
@@ -170,7 +184,20 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 )}
                 <div className="flex-1" />
                 {isActive && (
-                    <div className="flex gap-1">
+                    <div className="flex items-center gap-2">
+                        <select
+                            value={question.type}
+                            onChange={(e) => { e.stopPropagation(); onUpdate({ type: e.target.value as QuestionType }); }}
+                            className="bg-background border border-border text-xs rounded-md px-2 py-1 text-text-secondary focus:outline-none focus:ring-1 focus:ring-primary-500 max-w-[120px]"
+                            title="Switch Question Type"
+                        >
+                            {Object.entries(QuestionTypeIcons).map(([type, info]) => (
+                                <option key={type} value={type}>
+                                    {info.label}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="w-px h-4 bg-border mx-1" />
                         <button
                             onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
                             className="p-1.5 text-text-muted hover:text-text-primary hover:bg-background rounded"
@@ -197,17 +224,30 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             <div className="px-4 py-4">
                 {isActive ? (
                     <div className="space-y-4">
-                        {/* Question Text */}
+                        {/* Question Text / HTML Content */}
                         <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1">Question</label>
-                            <textarea
-                                value={localContent}
-                                onChange={(e) => setLocalContent(e.target.value)}
-                                className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-text-primary"
-                                rows={2}
-                                placeholder="Enter your question..."
-                                autoFocus
-                            />
+                            <label className="block text-sm font-medium text-text-secondary mb-1">
+                                {question.type === 'html' ? 'HTML Editor (Raw)' : 'Question'}
+                            </label>
+                            {question.type === 'html' ? (
+                                <textarea
+                                    value={question.options?.html || localContent}
+                                    onChange={(e) => onUpdate({ options: { ...question.options, html: e.target.value } })}
+                                    className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none font-mono text-sm text-text-primary"
+                                    rows={4}
+                                    placeholder="<h2>Your HTML here...</h2>"
+                                    autoFocus
+                                />
+                            ) : (
+                                <textarea
+                                    value={localContent}
+                                    onChange={(e) => setLocalContent(e.target.value)}
+                                    className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-text-primary"
+                                    rows={2}
+                                    placeholder="Enter your question..."
+                                    autoFocus
+                                />
+                            )}
                         </div>
 
                         {/* Choice-based Options (multiple_choice, dropdown, yes_no, ranking, image_choice) */}
@@ -218,7 +258,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                                     {localChoices.map((choice, index) => (
                                         <div key={index} className="flex items-center gap-2">
                                             <span className="text-text-muted">
-                                                {question.type === 'ranking' ? `${index + 1}.` : '○'}
+                                                {question.type === 'ranking' ? `${index + 1}.` : question.type === 'checkbox' ? '☐' : '○'}
                                             </span>
                                             <input
                                                 type="text"
@@ -339,9 +379,16 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         </div>
                     </div>
                 ) : (
-                    <p className="text-text-primary font-medium">
-                        {question.content || <span className="text-text-muted italic">Untitled question</span>}
-                    </p>
+                    question.type === 'html' ? (
+                        <div
+                            className="prose prose-sm dark:prose-invert max-w-none pointer-events-none"
+                            dangerouslySetInnerHTML={{ __html: question.options?.html || question.content || '<em class="text-text-muted">Empty HTML Block</em>' }}
+                        />
+                    ) : (
+                        <p className="text-text-primary font-medium">
+                            {question.content || <span className="text-text-muted italic">Untitled question</span>}
+                        </p>
+                    )
                 )}
             </div>
         </div>

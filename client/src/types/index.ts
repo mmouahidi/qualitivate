@@ -64,7 +64,13 @@ export interface Survey {
   updatedAt: string;
 }
 
-export type QuestionType = 'nps' | 'multiple_choice' | 'text_short' | 'text_long' | 'rating_scale' | 'matrix' | 'yes_no' | 'dropdown' | 'date' | 'file_upload' | 'ranking' | 'slider' | 'image_choice';
+export type QuestionType =
+  | 'nps' | 'multiple_choice' | 'text_short' | 'text_long' | 'rating_scale'
+  | 'matrix' | 'yes_no' | 'dropdown' | 'date' | 'file_upload' | 'ranking'
+  | 'slider' | 'image_choice' | 'checkbox' | 'boolean' | 'image_picker'
+  | 'signature_pad' | 'html' | 'expression' | 'comment' | 'panel_dynamic'
+  | 'matrix_dropdown' | 'matrix_dynamic' | 'multiselect_dropdown'
+  | 'multiple_textboxes' | 'panel' | 'image';
 
 // Logic Rule types for question branching
 export type LogicOperator =
@@ -106,6 +112,8 @@ export interface QuestionOptions {
   rows?: string[];
   columns?: string[];
   logicRules?: LogicRule[];
+  html?: string;
+  [key: string]: any;
 }
 
 export interface Question {
