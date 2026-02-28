@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { QuestionType, LogicRule } from '../../../types';
+import { QuestionType, LogicRule, QuestionOptions } from '../../../types';
 import LogicRuleEditor from '../LogicRuleEditor';
 
 interface QuestionCardProps {
@@ -10,12 +10,7 @@ interface QuestionCardProps {
         type: QuestionType;
         content: string;
         is_required: boolean;
-        options?: {
-            choices?: string[];
-            min?: number;
-            max?: number;
-            logicRules?: LogicRule[];
-        };
+        options?: QuestionOptions;
     };
     isActive: boolean;
     onActivate: () => void;
