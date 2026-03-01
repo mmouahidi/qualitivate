@@ -22,7 +22,17 @@ cat <<EOF | sudo tee /etc/nginx/sites-available/$DOMAIN
 server {
     server_name $DOMAIN www.$DOMAIN;
 
+    # The absolute path to your React app build directory
+    root /path/to/qualitivate.io/client/dist;
+    index index.html;
+
+    # Serve static files directly
     location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+
+    # Proxy API requests to Node backend
+    location /api/ {
         proxy_pass http://localhost:$PORT;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
@@ -34,6 +44,8 @@ server {
     }
 }
 EOF
+
+echo "⚠️ IMPORTANT: Edit /etc/nginx/sites-available/$DOMAIN and replace /path/to/qualitivate.io with the actual path to your project directory!"
 
 # 3. Enable the site
 echo "🔗 Enabling the site..."

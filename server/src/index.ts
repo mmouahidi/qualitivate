@@ -148,7 +148,12 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Calculate client build path correctly whether running from src or dist
-const clientBuildPath = path.join(__dirname, '../../client/dist');
+// In production, the app runs from server/dist/index.js (one level deep)
+// In development, it runs from server/src/index.ts (one level deep)
+const isDistFolder = __dirname.endsWith('dist');
+const clientBuildPath = isDistFolder
+  ? path.join(__dirname, '../../client/dist')
+  : path.join(__dirname, '../../client/dist');
 
 // Serve static files from the client build directory
 app.use(express.static(clientBuildPath));
