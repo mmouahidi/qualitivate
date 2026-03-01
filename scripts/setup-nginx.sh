@@ -22,17 +22,7 @@ cat <<EOF | sudo tee /etc/nginx/sites-available/$DOMAIN
 server {
     server_name $DOMAIN www.$DOMAIN;
 
-    # The absolute path to your React app build directory
-    root /path/to/qualitivate.io/client/dist;
-    index index.html;
-
-    # Serve static files directly
     location / {
-        try_files \$uri \$uri/ /index.html;
-    }
-
-    # Proxy API requests to Node backend
-    location /api/ {
         proxy_pass http://localhost:$PORT;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
@@ -44,8 +34,6 @@ server {
     }
 }
 EOF
-
-echo "⚠️ IMPORTANT: Edit /etc/nginx/sites-available/$DOMAIN and replace /path/to/qualitivate.io with the actual path to your project directory!"
 
 # 3. Enable the site
 echo "🔗 Enabling the site..."
@@ -75,7 +63,7 @@ echo "🔒 Securing the domain with Let's Encrypt Free SSL..."
 # but we prompt the user for an email first if they want it fully automated.
 # For safety, we'll run the standard interactive certbot command:
 
-echo "Please follow the prompts from Certbot to complete the SSL installation."
-sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN
+echo "Securing domain headlessly..."
+sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN --non-interactive --agree-tos --register-unsafely-without-email
 
 echo "🎉 Setup complete! Your domain https://$DOMAIN is now securely pointing to your app."
