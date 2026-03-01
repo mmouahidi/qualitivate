@@ -23,5 +23,9 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "paramiko": "^0.0.1",
+    "ssh2": "^1.17.0"
   }
 }

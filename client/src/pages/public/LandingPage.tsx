@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Logo } from '../../components/ui/Logo';
 import { useTranslation } from 'react-i18next';
 import {
     Activity,
@@ -30,7 +31,7 @@ const LandingPage: React.FC = () => {
             <header className="fixed w-full bg-white/90 backdrop-blur-md border-b border-border z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <img src="/branding/logo1.webp" alt="Qualitivate" className="h-10 w-auto object-contain" />
+                        <Logo size="lg" />
                     </div>
                     <nav className="hidden md:flex items-center gap-8">
                         <a href="#methodology" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors">{t('nav.methodology')}</a>
@@ -304,7 +305,7 @@ const LandingPage: React.FC = () => {
             <footer className="bg-white border-t border-border py-12">
                 <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
                     <div className="flex items-center gap-2">
-                        <img src="/branding/logo1.webp" alt="Qualitivate" className="h-8 w-auto object-contain" />
+                        <Logo size="md" />
                     </div>
                     <p className="text-sm text-gray-500">{t('footer.copyright')}</p>
                     <div className={`flex gap-6 text-sm text-gray-600 ${isRTL ? 'flex-row-reverse' : ''}`}>

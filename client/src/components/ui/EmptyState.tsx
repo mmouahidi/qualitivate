@@ -26,8 +26,7 @@ interface EmptyStateProps {
     };
     /** Size variant */
     size?: 'sm' | 'md' | 'lg';
-    /** Custom image URL instead of icon */
-    imageUrl?: string;
+    /** Additional CSS classes */
     /** Additional CSS classes */
     className?: string;
 }
@@ -102,40 +101,30 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     action,
     secondaryAction,
     size = 'md',
-    imageUrl,
     className = '',
 }) => {
     const { t } = useTranslation();
-    
+
     const defaults = typeDefaults[type];
     const Icon = icon || defaults.icon;
     const sizes = sizeConfig[size];
-    
+
     const displayTitle = title || t(defaults.titleKey);
     const displayDescription = description || t(defaults.descriptionKey);
 
     return (
-        <div 
+        <div
             className={`flex flex-col items-center justify-center text-center ${sizes.container} ${className}`}
             role="status"
             aria-label={displayTitle}
         >
             {/* Icon or Image */}
-            {imageUrl ? (
-                <img 
-                    src={imageUrl} 
-                    alt="" 
-                    className={`${sizes.image} object-contain mb-4 opacity-80`}
-                    aria-hidden="true"
-                />
-            ) : (
-                <div 
-                    className={`${sizes.iconWrapper} bg-primary-100 rounded-full flex items-center justify-center mb-4`}
-                    aria-hidden="true"
-                >
-                    <Icon className={`${sizes.icon} text-primary-600`} />
-                </div>
-            )}
+            <div
+                className={`${sizes.iconWrapper} bg-primary-100/50 rounded-full flex items-center justify-center mb-4 ring-8 ring-primary-50/50`}
+                aria-hidden="true"
+            >
+                <Icon className={`${sizes.icon} text-primary-600`} />
+            </div>
 
             {/* Title */}
             <h3 className={`${sizes.title} font-semibold text-gray-900 mb-2`}>

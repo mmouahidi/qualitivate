@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Logo } from '../components/ui/Logo';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -35,7 +36,7 @@ const Login: React.FC = () => {
           {/* Branding */}
           <div className="mb-8 text-center sm:text-left">
             <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
-              <img src="/branding/logo1.webp" alt="Qualitivate" className="h-12 w-auto object-contain" />
+              <Logo size="xl" showText={false} />
             </div>
             <h2 className="text-3xl font-bold text-gray-900">{t('login.title')}</h2>
             <p className="mt-2 text-gray-600">

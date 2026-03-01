@@ -1,0 +1,25 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M50 0V100M0 50H100" stroke="#E5E7EB" stroke-width="1"/>
+<path d="M20 20C40 10 70 30 80 10" stroke="#F3F4F6" stroke-width="2" fill="none"/>
+<path d="M10 50C30 40 60 60 90 50" stroke="#F3F4F6" stroke-width="2" fill="none"/>
+<path d="M20 80C40 70 70 90 80 80" stroke="#F3F4F6" stroke-width="2" fill="none"/>
+<path d="M5 10C25 0 55 20 65 0" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
+<path d="M35 15C55 5 85 25 95 5" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
+<path d="M0 30C20 20 50 40 80 30" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
+<path d="M15 40C35 30 65 50 95 40" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
+<path d="M5 60C25 50 55 70 85 60" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
+<path d="M15 70C35 60 65 80 95 70" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
+<path d="M0 90C20 80 50 100 80 90" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
+<path d="M30 95C50 85 80 105 90 85" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
+<path d="M10 25C15 20 25 30 35 25" stroke="#E5E7EB" stroke-width="0.5" fill="none"/>
+<path d="M60 15C65 10 75 20 85 15" stroke="#E5E7EB" stroke-width="0.5" fill="none"/>
+<path d="M20 55C25 50 35 60 45 55" stroke="#E5E7EB" stroke-width="0.5" fill="none"/>
+<path d="M70 45C75 40 85 50 95 45" stroke="#E5E7EB" stroke-width="0.5" fill="none"/>
+<path d="M10 85C15 80 25 90 35 85" stroke="#E5E7EB" stroke-width="0.5" fill="none"/>
+<path d="M60 75C65 70 75 80 85 75" stroke="#E5E7EB" stroke-width="0.5" fill="none"/>
+<path d="M25 15C31 12 38 18 42 16" stroke="#F3F4F6" stroke-width="0.8" fill="none"/>
+<path d="M65 35C71 32 78 38 82 36" stroke="#F3F4F6" stroke-width="0.8" fill="none"/>
+<path d="M15 65C21 62 28 68 32 66" stroke="#F3F4F6" stroke-width="0.8" fill="none"/>
+<path d="M75 65C81 62 88 68 92 66" stroke="#F3F4F6" stroke-width="0.8" fill="none"/>
+<path d="M40 85C46 82 53 88 57 86" stroke="#F3F4F6" stroke-width="0.8" fill="none"/>
+</svg>

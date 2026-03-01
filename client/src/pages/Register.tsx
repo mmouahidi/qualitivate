@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Logo } from '../components/ui/Logo';
 import { useAuth } from '../contexts/AuthContext';
 
 const Register: React.FC = () => {
@@ -57,8 +58,7 @@ const Register: React.FC = () => {
         <div className="mx-auto w-full max-w-sm lg:w-96">
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-2">
-              <img src="/branding/icon1.webp" alt="Qualitivate" className="h-10 w-10 object-contain" />
-              <h1 className="text-2xl font-bold text-text-primary">Qualitivate</h1>
+              <Logo size="xl" />
             </div>
             <h2 className="text-3xl font-bold text-text-primary">Create an account</h2>
             <p className="mt-2 text-text-secondary">Start your quality journey today.</p>

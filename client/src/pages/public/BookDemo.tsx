@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Logo } from '../../components/ui/Logo';
 
 const BookDemo: React.FC = () => {
     const [submitted, setSubmitted] = useState(false);
@@ -15,8 +16,7 @@ const BookDemo: React.FC = () => {
             <header className="bg-white border-b border-border py-4">
                 <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
                     <Link to="/" className="flex items-center gap-2">
-                        <img src="/images/logo.png" alt="Qualitivate" className="h-10 w-auto object-contain" />
-                        <span className="font-bold text-xl text-text-primary">Qualitivate</span>
+                        <Logo size="lg" />
                     </Link>
                 </div>
             </header>
