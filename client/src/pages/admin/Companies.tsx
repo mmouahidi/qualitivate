@@ -18,7 +18,8 @@ const Companies: React.FC = () => {
     address: '',
     city: '',
     sitesCount: 0,
-    employeesCount: 0
+    employeesCount: 0,
+    settings: { logoUrl: '' } as Record<string, any>
   });
   const [error, setError] = useState<string | null>(null);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
@@ -41,7 +42,8 @@ const Companies: React.FC = () => {
         address: '',
         city: '',
         sitesCount: 0,
-        employeesCount: 0
+        employeesCount: 0,
+        settings: { logoUrl: '' }
       });
       setError(null);
     },
@@ -102,8 +104,36 @@ const Companies: React.FC = () => {
         city: editingCompany.city,
         sitesCount: editingCompany.sitesCount,
         employeesCount: editingCompany.employeesCount,
+        settings: editingCompany.settings,
       }
     });
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Logo file size must be less than 2MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      if (isEdit && editingCompany) {
+        setEditingCompany({
+          ...editingCompany,
+          settings: { ...(editingCompany.settings || {}), logoUrl: base64String }
+        });
+      } else {
+        setFormData({
+          ...formData,
+          settings: { ...(formData.settings || {}), logoUrl: base64String }
+        });
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   if (user?.role !== 'super_admin' && user?.role !== 'company_admin') {
@@ -251,6 +281,22 @@ const Companies: React.FC = () => {
                 </div>
               </div>
               <div className="mb-4">
+                <label className="label-soft">Company Logo</label>
+                <div className="flex items-center gap-4">
+                  {formData.settings?.logoUrl && (
+                    <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-border bg-surface flex-shrink-0">
+                      <img src={formData.settings.logoUrl} alt="Logo preview" className="w-full h-full object-contain" />
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleLogoUpload(e, false)}
+                    className="input-soft file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                  />
+                </div>
+              </div>
+              <div className="mb-4">
                 <label className="label-soft">Activity</label>
                 <input
                   type="text"
@@ -346,6 +392,22 @@ const Companies: React.FC = () => {
                     value={editingCompany.slug || ''}
                     disabled
                     className="input-soft opacity-50"
+                  />
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="label-soft">Company Logo</label>
+                <div className="flex items-center gap-4">
+                  {editingCompany.settings?.logoUrl && (
+                    <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-border bg-surface flex-shrink-0">
+                      <img src={editingCompany.settings.logoUrl} alt="Logo preview" className="w-full h-full object-contain" />
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleLogoUpload(e, true)}
+                    className="input-soft file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
                   />
                 </div>
               </div>

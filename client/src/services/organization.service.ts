@@ -46,6 +46,11 @@ export const companyService = {
     return response.data;
   },
 
+  async getPublic(): Promise<{ data: Array<{ id: string, name: string, logoUrl: string }> }> {
+    const response = await api.get('/companies/public');
+    return response.data;
+  },
+
   async get(id: string): Promise<CompanyWithStats> {
     const response = await api.get(`/companies/${id}`);
     return response.data;

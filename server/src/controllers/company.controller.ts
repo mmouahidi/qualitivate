@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
@@ -55,6 +55,22 @@ export const listCompanies = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     logger.error('List companies error:', { error });
     res.status(500).json({ error: 'Failed to list companies' });
+  }
+};
+
+export const getPublicCompanies = async (req: Request, res: Response) => {
+  try {
+    const companies = await db('companies')
+      .select('id', 'name')
+      .select(db.raw("settings->>'logoUrl' as logoUrl"))
+      .whereRaw("settings->>'logoUrl' IS NOT NULL")
+      .orderBy('created_at', 'desc')
+      .limit(6);
+
+    res.json({ data: companies });
+  } catch (error) {
+    logger.error('Get public companies error:', { error });
+    res.status(500).json({ error: 'Failed to fetch public companies' });
   }
 };
 

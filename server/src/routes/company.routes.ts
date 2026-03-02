@@ -4,6 +4,7 @@ import { authenticate, authorize } from '../middlewares/auth.middleware';
 
 const router = Router();
 
+router.get('/public', companyController.getPublicCompanies);
 router.get('/', authenticate, companyController.listCompanies);
 router.get('/:id', authenticate, companyController.getCompany);
 router.post('/', authenticate, authorize('super_admin'), companyController.createCompany);

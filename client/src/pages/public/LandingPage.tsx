@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { companyService } from '../../services/organization.service';
 import { Logo } from '../../components/ui/Logo';
 import { useTranslation } from 'react-i18next';
 import {
@@ -21,6 +23,11 @@ import {
 const LandingPage: React.FC = () => {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === 'ar';
+
+    const { data: publicCompanies } = useQuery({
+        queryKey: ['publicCompanies'],
+        queryFn: () => companyService.getPublic()
+    });
 
     const changeLanguage = (lng: string) => {
         i18n.changeLanguage(lng);
@@ -83,11 +90,23 @@ const LandingPage: React.FC = () => {
                                 </a>
                             </div>
                             <div className="mt-8 flex items-center gap-4 text-sm text-text-muted">
-                                <div className="flex -space-x-2">
-                                    <div className="w-8 h-8 rounded-full bg-primary-200 border-2 border-white"></div>
-                                    <div className="w-8 h-8 rounded-full bg-secondary-200 border-2 border-white"></div>
-                                    <div className="w-8 h-8 rounded-full bg-accent-200 border-2 border-white"></div>
-                                </div>
+                                {publicCompanies?.data && publicCompanies.data.length > 0 ? (
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex flex-wrap gap-2">
+                                            {publicCompanies.data.map((company) => (
+                                                <div key={company.id} className="w-10 h-10 rounded-full bg-white border border-gray-100 overflow-hidden shadow-sm flex items-center justify-center relative group" title={company.name}>
+                                                    <img src={company.logoUrl} alt={company.name} className="w-full h-full object-contain p-1" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex -space-x-2">
+                                        <div className="w-8 h-8 rounded-full bg-primary-200 border-2 border-white"></div>
+                                        <div className="w-8 h-8 rounded-full bg-secondary-200 border-2 border-white"></div>
+                                        <div className="w-8 h-8 rounded-full bg-accent-200 border-2 border-white"></div>
+                                    </div>
+                                )}
                                 <span>{t('hero.trustLine', 'Trusted by 500+ organizations')}</span>
                             </div>
                         </div>
