@@ -12,7 +12,8 @@ export interface ToolboxItem {
   type: ExtendedQuestionType;
   title: string;
   icon: React.ReactNode;
-  category: 'input' | 'choice' | 'rating' | 'matrix' | 'media' | 'layout';
+  category: string;
+  description?: string;
   defaultOptions?: Record<string, any>;
 }
 
@@ -204,130 +205,143 @@ const Icons = {
   ),
 };
 
-// Complete toolbox items configuration
+// Complete toolbox items configuration mapped to User's explicit 6 categories
 export const TOOLBOX_ITEMS: ToolboxItem[] = [
-  // Layout & Structural
+  // 1. Structural & Informational Elements
   {
     type: 'html',
     title: 'Title & Description / Policy',
+    description: 'Read-only text blocks for instructions or policies.',
     icon: <Icons.TitleSettings />,
-    category: 'layout',
+    category: '1. Structural & Informational Elements',
     defaultOptions: { html: '<h2>Section Title</h2><p>Describe this section or add policy text here...</p>' },
   },
   {
     type: 'panel',
     title: 'Panel',
+    description: 'Structural container to group related questions.',
     icon: <Icons.Panel />,
-    category: 'layout',
+    category: '1. Structural & Informational Elements',
     defaultOptions: { title: 'Panel Title' },
   },
   {
     type: 'panel_dynamic',
     title: 'Dynamic Panel',
+    description: 'Repeating container for multiple instances of questions.',
     icon: <Icons.DynamicPanel />,
-    category: 'layout',
+    category: '1. Structural & Informational Elements',
     defaultOptions: { panelCount: 1, minPanelCount: 1, maxPanelCount: 5 },
   },
-  // Choice questions
+
+  // 2. Selection & Choice Inputs
   {
     type: 'multiple_choice',
     title: 'Single Choice (Radio)',
+    description: 'Mutually exclusive choices. Select exactly one.',
     icon: <Icons.RadioGroup />,
-    category: 'choice',
+    category: '2. Selection & Choice Inputs',
     defaultOptions: { choices: ['Option 1', 'Option 2', 'Option 3'] },
-  },
-  {
-    type: 'rating_scale',
-    title: 'Rating Scale',
-    icon: <Icons.Rating />,
-    category: 'rating',
-    defaultOptions: { rateMin: 1, rateMax: 5, rateType: 'stars' },
-  },
-  {
-    type: 'slider',
-    title: 'Slider',
-    icon: <Icons.Slider />,
-    category: 'rating',
-    defaultOptions: { min: 0, max: 100, step: 1 },
   },
   {
     type: 'checkbox',
     title: 'Multiple Choice (Checkboxes)',
+    description: 'Select one, multiple, or all options.',
     icon: <Icons.Checkbox />,
-    category: 'choice',
+    category: '2. Selection & Choice Inputs',
     defaultOptions: { choices: ['Option 1', 'Option 2', 'Option 3'] },
   },
   {
     type: 'dropdown',
     title: 'Dropdown',
+    description: 'Space-saving menu. Select exactly one.',
     icon: <Icons.Dropdown />,
-    category: 'choice',
+    category: '2. Selection & Choice Inputs',
     defaultOptions: { choices: ['Option 1', 'Option 2', 'Option 3'] },
   },
   {
     type: 'multiselect_dropdown',
     title: 'Multiselect Dropdown',
+    description: 'Pick multiple items from a compact list.',
     icon: <Icons.MultiSelect />,
-    category: 'choice',
+    category: '2. Selection & Choice Inputs',
     defaultOptions: { choices: ['Option 1', 'Option 2', 'Option 3'], multiSelect: true },
   },
   {
     type: 'boolean',
     title: 'Yes/No',
+    description: 'Simple binary toggle for absolute questions.',
     icon: <Icons.YesNo />,
-    category: 'choice',
+    category: '2. Selection & Choice Inputs',
     defaultOptions: { labelTrue: 'Yes', labelFalse: 'No' },
-  },
-  {
-    type: 'file_upload',
-    title: 'File Upload',
-    icon: <Icons.FileUpload />,
-    category: 'media',
-    defaultOptions: { allowMultiple: false, maxSize: 10 * 1024 * 1024 },
   },
   {
     type: 'image_picker',
     title: 'Image Picker',
+    description: 'Click on images to make a selection.',
     icon: <Icons.ImagePicker />,
-    category: 'choice',
+    category: '2. Selection & Choice Inputs',
     defaultOptions: { choices: [], showLabel: true },
+  },
+
+  // 3. Rating & Evaluation
+  {
+    type: 'rating_scale',
+    title: 'Rating Scale',
+    description: 'Measure satisfaction or agreement linearly.',
+    icon: <Icons.Rating />,
+    category: '3. Rating & Evaluation',
+    defaultOptions: { rateMin: 1, rateMax: 5, rateType: 'stars' },
+  },
+  {
+    type: 'slider',
+    title: 'Slider',
+    description: 'Dragable handle for granular values within a range.',
+    icon: <Icons.Slider />,
+    category: '3. Rating & Evaluation',
+    defaultOptions: { min: 0, max: 100, step: 1 },
   },
   {
     type: 'ranking',
     title: 'Ranking',
+    description: 'Reorder a list of items based on priority.',
     icon: <Icons.Ranking />,
-    category: 'choice',
+    category: '3. Rating & Evaluation',
     defaultOptions: { choices: ['Item 1', 'Item 2', 'Item 3'] },
   },
-  // Text input
+
+  // 4. Text & Open-Ended Inputs
   {
     type: 'text_short',
     title: 'Short Answer',
+    description: 'Single-line text box for brief responses.',
     icon: <Icons.TextShort />,
-    category: 'input',
+    category: '4. Text & Open-Ended Inputs',
     defaultOptions: { inputType: 'text' },
   },
   {
     type: 'text_long',
     title: 'Paragraph',
+    description: 'Multi-line area for open-ended feedback.',
     icon: <Icons.TextLong />,
-    category: 'input',
+    category: '4. Text & Open-Ended Inputs',
     defaultOptions: { rows: 4 },
   },
   {
     type: 'multiple_textboxes',
     title: 'Multiple Textboxes',
+    description: 'Group several short answer fields together.',
     icon: <Icons.MultipleTextboxes />,
-    category: 'input',
+    category: '4. Text & Open-Ended Inputs',
     defaultOptions: { items: [{ name: 'item1', title: 'Item 1' }, { name: 'item2', title: 'Item 2' }] },
   },
 
-  // Matrix
+  // 5. Matrix / Grid Inputs
   {
     type: 'matrix',
     title: 'Single Select Matrix',
+    description: 'Grid evaluating items on a shared scale. Pick one per row.',
     icon: <Icons.MatrixSingle />,
-    category: 'matrix',
+    category: '5. Matrix / Grid Inputs',
     defaultOptions: {
       rows: ['Row 1', 'Row 2', 'Row 3'],
       columns: ['Column 1', 'Column 2', 'Column 3'],
@@ -336,8 +350,9 @@ export const TOOLBOX_ITEMS: ToolboxItem[] = [
   {
     type: 'matrix_dropdown',
     title: 'Multi Select Matrix',
+    description: 'Grid allowing multiple selections per row via dropdowns.',
     icon: <Icons.MatrixMulti />,
-    category: 'matrix',
+    category: '5. Matrix / Grid Inputs',
     defaultOptions: {
       rows: ['Row 1', 'Row 2'],
       columns: [{ name: 'col1', title: 'Column 1', cellType: 'dropdown', choices: ['A', 'B', 'C'] }],
@@ -346,34 +361,38 @@ export const TOOLBOX_ITEMS: ToolboxItem[] = [
   {
     type: 'matrix_dynamic',
     title: 'Dynamic Matrix',
+    description: 'Grid where respondents can add/remove rows on the fly.',
     icon: <Icons.MatrixDynamic />,
-    category: 'matrix',
+    category: '5. Matrix / Grid Inputs',
     defaultOptions: {
       columns: [{ name: 'col1', title: 'Column 1' }],
       rowCount: 2,
     },
   },
-  // Content/Display
 
+  // 6. Advanced & Media Elements
   {
     type: 'expression',
-    title: 'Expression',
+    title: 'fx Expression',
+    description: 'Calculated, read-only field using logical formulas.',
     icon: <Icons.Expression />,
-    category: 'layout',
+    category: '6. Advanced & Media Elements',
     defaultOptions: { expression: '', displayStyle: 'none' },
   },
   {
     type: 'image',
     title: 'Image',
+    description: 'Insert a static, non-interactive visual element.',
     icon: <Icons.Image />,
-    category: 'media',
+    category: '6. Advanced & Media Elements',
     defaultOptions: { imageLink: '', imageHeight: '150px', imageWidth: 'auto' },
   },
   {
     type: 'signature_pad',
     title: 'Signature',
+    description: 'Digital canvas pad for physical signatures.',
     icon: <Icons.Signature />,
-    category: 'media',
+    category: '6. Advanced & Media Elements',
     defaultOptions: { signatureWidth: 400, signatureHeight: 200 },
   },
 ];
@@ -455,27 +474,49 @@ const EnhancedToolbox: React.FC<EnhancedToolboxProps> = ({
         </div>
       </div>
 
-      {/* Items list */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Items list grouped by category */}
+      <div className="flex-1 overflow-y-auto pb-4">
         {filteredItems.length === 0 ? (
-          <div className="p-4 text-center text-text-muted text-sm">
+          <div className="p-4 text-center text-text-muted text-sm border-t border-border">
             No matching question types
           </div>
         ) : (
           <div className="py-1">
-            {filteredItems.map((item) => (
-              <button
-                key={item.type}
-                onClick={() => onSelect(item.type, item.defaultOptions)}
-                className="w-full px-3 py-2.5 flex items-center gap-3 text-left hover:bg-surface-hover group transition-colors"
-              >
-                <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center text-text-secondary group-hover:text-primary-600 group-hover:border-primary-300 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 transition-colors">
-                  {item.icon}
-                </span>
-                <span className="text-sm text-text-primary group-hover:text-primary-700 dark:group-hover:text-primary-400 truncate">
-                  {item.title}
-                </span>
-              </button>
+            {Object.entries(
+              filteredItems.reduce((acc, item) => {
+                if (!acc[item.category]) acc[item.category] = [];
+                acc[item.category].push(item);
+                return acc;
+              }, {} as Record<string, typeof filteredItems>)
+            ).sort((a, b) => a[0].localeCompare(b[0])).map(([categoryName, items]) => (
+              <div key={categoryName} className="mb-2">
+                <div className="px-4 py-2 sticky top-0 bg-surface z-10 border-y border-border/50">
+                  <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider">{categoryName}</h4>
+                </div>
+                <div>
+                  {items.map((item) => (
+                    <button
+                      key={item.type}
+                      onClick={() => onSelect(item.type, item.defaultOptions)}
+                      className="w-full px-4 py-2 flex items-start gap-3 text-left hover:bg-surface-hover group transition-colors"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 mt-0.5 rounded-lg bg-background border border-border flex items-center justify-center text-text-secondary group-hover:text-primary-600 group-hover:border-primary-300 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 transition-colors">
+                        {item.icon}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-text-primary group-hover:text-primary-700 dark:group-hover:text-primary-400 truncate">
+                          {item.title}
+                        </div>
+                        {item.description && (
+                          <div className="text-xs text-text-muted mt-0.5 leading-tight line-clamp-2">
+                            {item.description}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
