@@ -247,8 +247,8 @@ const SurveyRespond: React.FC = () => {
                   key={num}
                   onClick={() => handleAnswer(num)}
                   className={`w-10 h-10 rounded-lg font-semibold transition-colors ${value === num
-                      ? num <= 6 ? 'bg-red-500 text-white' : num <= 8 ? 'bg-yellow-500 text-white' : 'bg-green-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? num <= 6 ? 'bg-red-500 text-white' : num <= 8 ? 'bg-yellow-500 text-white' : 'bg-green-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                 >
                   {num}
@@ -318,11 +318,10 @@ const SurveyRespond: React.FC = () => {
                 <button
                   key={rating}
                   onClick={() => handleAnswer(rating)}
-                  className={`w-12 h-12 rounded-lg font-bold text-lg transition-all ${
-                    value === rating
+                  className={`w-12 h-12 rounded-lg font-bold text-lg transition-all ${value === rating
                       ? 'bg-primary-500 text-white shadow-lg'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   {rating}
                 </button>
@@ -481,9 +480,11 @@ const SurveyRespond: React.FC = () => {
         {/* Question card */}
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="mb-6">
-            <span className="text-sm text-gray-500">
-              Question {currentQuestionIndex + 1} of {survey.questions.length}
-            </span>
+            {!['html', 'panel', 'panel_dynamic'].includes(currentQuestion.type) && (
+              <span className="text-sm text-gray-500">
+                Question {currentQuestionIndex + 1} of {survey.questions.length}
+              </span>
+            )}
             <h2 className="text-xl font-semibold text-gray-900 mt-2">
               {currentQuestion.content}
               {currentQuestion.isRequired && <span className="text-red-500 ml-1">*</span>}

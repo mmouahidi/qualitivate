@@ -501,28 +501,32 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         {/* Question Text / HTML Content */}
                         <div>
                             <label className="block text-sm font-medium text-text-secondary mb-1">
-                                {question.type === 'html' ? 'HTML Editor (Raw)' : 'Question'}
+                                {question.type === 'html' ? 'Title' : 'Question'}
                             </label>
-                            {question.type === 'html' ? (
-                                <textarea
-                                    value={question.options?.html || localContent}
-                                    onChange={(e) => onUpdate({ options: { ...question.options, html: e.target.value } })}
-                                    className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none font-mono text-sm text-text-primary"
-                                    rows={4}
-                                    placeholder="<h2>Your HTML here...</h2>"
-                                    autoFocus
-                                />
-                            ) : (
-                                <textarea
-                                    value={localContent}
-                                    onChange={(e) => setLocalContent(e.target.value)}
-                                    className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-text-primary"
-                                    rows={2}
-                                    placeholder="Enter your question..."
-                                    autoFocus
-                                />
-                            )}
+                            <textarea
+                                value={localContent}
+                                onChange={(e) => setLocalContent(e.target.value)}
+                                className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-text-primary"
+                                rows={2}
+                                placeholder={question.type === 'html' ? "Enter section title..." : "Enter your question..."}
+                                autoFocus
+                            />
                         </div>
+
+                        {question.type === 'html' && (
+                            <div>
+                                <label className="block text-sm font-medium text-text-secondary mb-1 mt-4">
+                                    Description / Policy Text
+                                </label>
+                                <textarea
+                                    value={question.options?.description || ''}
+                                    onChange={(e) => onUpdate({ options: { ...question.options, description: e.target.value } })}
+                                    className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-text-primary"
+                                    rows={4}
+                                    placeholder="Enter instructions, descriptions, or policy details..."
+                                />
+                            </div>
+                        )}
 
                         {/* Shared Unified Tool Preview Layer */}
                         <div className="mt-4 mb-2 pointer-events-none">
@@ -583,14 +587,20 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     </div>
                 ) : (
                     <div className="pointer-events-none">
-                        {question.type === 'html' ? (
-                            <div
-                                className="prose prose-sm dark:prose-invert max-w-none mb-4"
-                                dangerouslySetInnerHTML={{ __html: question.options?.html || question.content || '<em class="text-text-muted">Empty HTML Block</em>' }}
-                            />
+                        {['html', 'panel', 'panel_dynamic'].includes(question.type) ? (
+                            <div className="mb-4">
+                                {question.content && <h2 className="text-lg font-bold text-text-primary mb-2">{question.content}</h2>}
+                                {question.options?.description && <p className="text-text-secondary whitespace-pre-wrap">{question.options.description}</p>}
+                                {question.type === 'html' && !question.content && !question.options?.description && (
+                                    <em className="text-text-muted">Empty HTML/Informational Block</em>
+                                )}
+                            </div>
                         ) : (
-                            <p className="text-text-primary font-medium mb-4">
-                                {question.content || <span className="text-text-muted italic">Untitled question</span>}
+                            <p className="text-text-primary font-medium mb-4 flex items-start gap-2">
+                                <span className="text-text-muted text-sm mt-0.5">
+                                    {(question as any).order_index !== undefined ? (question as any).order_index + 1 : Number(question.id.split('-').pop()) || 1}.
+                                </span>
+                                <span>{question.content || <span className="text-text-muted italic">Untitled question</span>}</span>
                             </p>
                         )}
 

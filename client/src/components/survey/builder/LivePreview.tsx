@@ -30,30 +30,43 @@ const LivePreview: React.FC<LivePreviewProps> = ({ survey, isMobile = false }) =
                     )}
                 </div>
 
-                {/* Questions */}
                 <div className="p-6 space-y-6">
                     {survey.questions && survey.questions.length > 0 ? (
-                        survey.questions.map((question, index) => (
-                            <div key={question.id} className="border-b border-border pb-6 last:border-0">
-                                <div className="flex items-start gap-2 mb-3">
-                                    <span className="text-sm font-medium text-text-muted">{index + 1}.</span>
-                                    <div className="flex-1">
-                                        <p className="font-medium text-text-primary">
-                                            {question.content || 'Untitled question'}
-                                            {question.is_required && <span className="text-red-500 ml-1">*</span>}
-                                        </p>
+                        survey.questions.map((question, index) => {
+                            const isInformational = ['html', 'panel', 'panel_dynamic'].includes(question.type);
+                            return (
+                                <div key={question.id} className="border-b border-border pb-6 last:border-0">
+                                    <div className="flex items-start gap-2 mb-3">
+                                        {!isInformational && (
+                                            <span className="text-sm font-medium text-text-muted mt-0.5">{index + 1}.</span>
+                                        )}
+                                        <div className="flex-1">
+                                            {isInformational ? (
+                                                <div className="mb-2">
+                                                    {question.content && <h2 className="text-lg font-bold text-text-primary mb-1">{question.content}</h2>}
+                                                    {question.options?.description && <p className="text-text-secondary whitespace-pre-wrap">{question.options.description}</p>}
+                                                </div>
+                                            ) : (
+                                                <p className="font-medium text-text-primary">
+                                                    {question.content || 'Untitled question'}
+                                                    {question.is_required && <span className="text-red-500 ml-1">*</span>}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
+                                    {(!isInformational || (isInformational && question.type !== 'html')) && (
+                                        <div className={isInformational ? "mt-2" : "ml-5"}>
+                                            <QuestionRenderer
+                                                question={question}
+                                                value={null}
+                                                onChange={() => { }}
+                                                disabled
+                                            />
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="ml-5">
-                                    <QuestionRenderer
-                                        question={question}
-                                        value={null}
-                                        onChange={() => { }}
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-                        ))
+                            );
+                        })
                     ) : (
                         <div className="text-center py-8 text-text-muted">
                             <p>No questions yet</p>
