@@ -167,6 +167,258 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         }
     };
 
+    const renderPreview = () => {
+        const type = question.type;
+        const opts = question.options || {};
+
+        switch (type) {
+            case 'text_short':
+                return <input type="text" disabled className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-muted cursor-not-allowed opacity-70" placeholder="Short answer text..." />;
+
+            case 'text_long':
+                return <textarea disabled className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-muted resize-none cursor-not-allowed opacity-70" rows={3} placeholder="Long paragraph text..."></textarea>;
+
+            case 'multiple_textboxes':
+                const items = opts.items || [{ title: 'Item 1' }, { title: 'Item 2' }];
+                return (
+                    <div className="space-y-2">
+                        {items.slice(0, 3).map((item: any, i: number) => (
+                            <div key={i} className="flex flex-col gap-1">
+                                <span className="text-xs text-text-secondary">{item.title || `Item ${i + 1}`}</span>
+                                <input type="text" disabled className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-muted cursor-not-allowed opacity-70" placeholder="Short answer..." />
+                            </div>
+                        ))}
+                        {items.length > 3 && <div className="text-xs text-text-muted italic">...and {items.length - 3} more</div>}
+                    </div>
+                );
+
+            case 'multiple_choice':
+                return (
+                    <div className="space-y-2">
+                        {(opts.choices || localChoices || ['Option 1', 'Option 2', 'Option 3']).map((c: string, i: number) => (
+                            <label key={i} className="flex items-center gap-2 opacity-70">
+                                <input type="radio" disabled className="w-4 h-4 text-primary-600" />
+                                <span className="text-sm text-text-secondary">{c}</span>
+                            </label>
+                        ))}
+                    </div>
+                );
+
+            case 'checkbox':
+                return (
+                    <div className="space-y-2">
+                        {(opts.choices || localChoices || ['Option 1', 'Option 2', 'Option 3']).map((c: string, i: number) => (
+                            <label key={i} className="flex items-center gap-2 opacity-70">
+                                <input type="checkbox" disabled className="w-4 h-4 rounded text-primary-600" />
+                                <span className="text-sm text-text-secondary">{c}</span>
+                            </label>
+                        ))}
+                    </div>
+                );
+
+            case 'dropdown':
+            case 'multiselect_dropdown':
+                return (
+                    <div className="relative opacity-70">
+                        <select disabled className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-muted appearance-none cursor-not-allowed">
+                            <option>Select {type === 'multiselect_dropdown' ? 'options...' : 'an option...'}</option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                        </div>
+                    </div>
+                );
+
+            case 'boolean':
+                return (
+                    <div className="flex gap-4 opacity-80">
+                        <button disabled className="px-6 py-2 border border-border rounded-lg bg-surface text-text-secondary hover:bg-surface-hover transition-colors font-medium cursor-not-allowed">
+                            {opts.labelTrue || 'Yes'}
+                        </button>
+                        <button disabled className="px-6 py-2 border border-border rounded-lg bg-surface text-text-secondary hover:bg-surface-hover transition-colors font-medium cursor-not-allowed">
+                            {opts.labelFalse || 'No'}
+                        </button>
+                    </div>
+                );
+
+            case 'image_picker':
+                return (
+                    <div className="grid grid-cols-3 gap-4 opacity-70">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="aspect-square bg-surface border border-border rounded-lg flex flex-col items-center justify-center text-text-muted">
+                                <svg className="w-8 h-8 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                <span className="text-xs">Image {i}</span>
+                            </div>
+                        ))}
+                    </div>
+                );
+
+            case 'rating_scale':
+                const rateType = opts.rateType || 'stars';
+                const maxRate = Math.min(opts.rateMax || 5, 10);
+                return (
+                    <div className="flex gap-2 items-center opacity-80">
+                        {Array.from({ length: maxRate }).map((_, i) => (
+                            <div key={i} className={`w-10 h-10 flex items-center justify-center rounded-lg ${rateType === 'stars' ? 'text-yellow-400' : 'bg-surface border border-border text-text-secondary'} cursor-not-allowed`}>
+                                {rateType === 'stars' ? (
+                                    <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                ) : (
+                                    <span className="font-medium">{i + 1}</span>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                );
+
+            case 'nps':
+                return (
+                    <div className="flex flex-col gap-2 opacity-80">
+                        <div className="flex gap-1 w-full overflow-x-auto pb-2">
+                            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                                <div key={n} className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded border font-medium cursor-not-allowed
+                                    ${n <= 6 ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/10 dark:text-red-400 dark:border-red-900/30' :
+                                        n <= 8 ? 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/10 dark:text-yellow-400 dark:border-yellow-900/30' :
+                                            'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/10 dark:text-green-400 dark:border-green-900/30'}`}
+                                >
+                                    {n}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex justify-between text-xs text-text-muted px-1">
+                            <span>Not likely</span>
+                            <span>Very likely</span>
+                        </div>
+                    </div>
+                );
+
+            case 'slider':
+                return (
+                    <div className="py-4 opacity-80">
+                        <input type="range" min={opts.min || 0} max={opts.max || 100} disabled className="w-full accent-primary-500 cursor-not-allowed" />
+                        <div className="flex justify-between text-xs text-text-muted mt-2">
+                            <span>{opts.min || 0}</span>
+                            <span>{opts.max || 100}</span>
+                        </div>
+                    </div>
+                );
+
+            case 'ranking':
+                return (
+                    <div className="space-y-2 opacity-80">
+                        {(opts.choices || localChoices || ['Item 1', 'Item 2', 'Item 3']).map((c: string, i: number) => (
+                            <div key={i} className="flex items-center gap-3 p-3 bg-surface border border-border rounded-lg">
+                                <svg className="w-5 h-5 text-text-muted opacity-50 cursor-grab" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                                <span className="font-medium text-text-secondary w-5 text-center">{i + 1}.</span>
+                                <span className="text-sm text-text-primary">{c}</span>
+                            </div>
+                        ))}
+                    </div>
+                );
+
+            case 'matrix':
+            case 'matrix_dropdown':
+            case 'matrix_dynamic':
+                const rows = opts.rows || ['Row 1', 'Row 2'];
+                const cols = opts.columns || ['Col 1', 'Col 2', 'Col 3'];
+                return (
+                    <div className="w-full overflow-x-auto opacity-80 border border-border rounded-lg">
+                        <table className="w-full text-sm text-left">
+                            <thead className="text-xs text-text-muted uppercase bg-surface border-b border-border">
+                                <tr>
+                                    <th className="px-4 py-3 font-medium"></th>
+                                    {cols.map((c: any, i: number) => (
+                                        <th key={i} className="px-4 py-3 font-medium text-center">{typeof c === 'object' ? c.title || c.name : c}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows.map((r: any, rId: number) => (
+                                    <tr key={rId} className="bg-background border-b border-border last:border-b-0">
+                                        <th className="px-4 py-3 font-medium text-text-secondary whitespace-nowrap bg-surface/50 border-r border-border">
+                                            {typeof r === 'object' ? r.text || r.value : r}
+                                        </th>
+                                        {cols.map((_, cId: number) => (
+                                            <td key={cId} className="px-4 py-3 text-center">
+                                                {type === 'matrix_dropdown' ? (
+                                                    <select disabled className="w-20 px-1 py-1 text-xs border border-border rounded bg-surface text-text-muted"><option>...</option></select>
+                                                ) : (
+                                                    <input type={type === 'matrix' ? 'radio' : 'checkbox'} disabled className="w-4 h-4 text-primary-600" />
+                                                )}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {type === 'matrix_dynamic' && (
+                            <div className="p-3 bg-surface/30 border-t border-border flex justify-center">
+                                <button disabled className="text-xs font-medium text-primary-600 border border-primary-200 bg-primary-50 px-3 py-1.5 rounded-md flex items-center gap-1">
+                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg> Add Row
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                );
+
+            case 'expression':
+                return (
+                    <div className="flex items-center gap-3 p-3 bg-fuchsia-50 dark:bg-fuchsia-900/10 border border-fuchsia-200 dark:border-fuchsia-900/30 rounded-lg opacity-80">
+                        <span className="font-mono font-bold text-fuchsia-600 dark:text-fuchsia-400">fx</span>
+                        <div className="flex-1 font-mono text-sm text-text-muted bg-background px-3 py-1.5 rounded border border-border">
+                            {opts.expression || 'computed_value = (empty)'}
+                        </div>
+                    </div>
+                );
+
+            case 'image':
+                return (
+                    <div className="w-full flex justify-center py-4 opacity-80">
+                        <div className="w-64 h-32 bg-surface border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center text-text-muted">
+                            <svg className="w-6 h-6 mb-2 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
+                            <span className="text-xs mt-2">Static Image Display</span>
+                        </div>
+                    </div>
+                );
+
+            case 'signature_pad':
+                return (
+                    <div className="w-full max-w-[400px] h-[200px] bg-surface border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center text-text-muted opacity-80">
+                        <svg className="w-10 h-10 mb-2 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        <span className="text-sm font-medium">Draw Signature Here</span>
+                        <div className="w-64 border-b-2 border-border mt-8"></div>
+                    </div>
+                );
+
+            case 'file_upload':
+                return (
+                    <div className="w-full p-8 bg-surface border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center text-text-muted opacity-80 cursor-not-allowed">
+                        <svg className="w-10 h-10 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                        <span className="text-sm font-medium text-text-secondary mb-1">Drag & drop files here</span>
+                        <span className="text-xs">or click to browse {opts.maxSize ? `(Max: ${opts.maxSize / (1024 * 1024)}MB)` : ''}</span>
+                    </div>
+                );
+
+            case 'panel':
+            case 'panel_dynamic':
+                return (
+                    <div className="border border-border rounded-lg bg-surface/50 p-4 opacity-80">
+                        <div className="border border-dashed border-border bg-background rounded p-6 flex items-center justify-center text-text-muted">
+                            <span className="text-sm font-medium flex items-center gap-2">
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="15" y1="3" x2="15" y2="21" /></svg>
+                                {type === 'panel_dynamic' ? 'Dynamic Repeating Array Block' : 'Grouped Questions Panel'}
+                            </span>
+                        </div>
+                    </div>
+                );
+
+            case 'date':
+                return <input type="date" disabled className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-muted cursor-not-allowed opacity-70" />;
+
+            default:
+                return <div className="p-3 border border-dashed border-border rounded text-text-muted text-sm italic opacity-50">Preview not available for {type}</div>;
+        }
+    };
+
     return (
         <div
             ref={(node) => {
@@ -272,133 +524,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                             )}
                         </div>
 
-                        {/* Short Text Preview */}
-                        {question.type === 'text_short' && (
-                            <div className="bg-background rounded-lg p-3 border border-border/50">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Short Answer Preview</p>
-                                <input type="text" disabled className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-muted cursor-not-allowed opacity-70" placeholder="Respondent text will go here..." />
-                            </div>
-                        )}
-
-                        {/* Long Text Preview */}
-                        {question.type === 'text_long' && (
-                            <div className="bg-background rounded-lg p-3 border border-border/50">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Paragraph Preview</p>
-                                <textarea disabled className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-muted resize-none cursor-not-allowed opacity-70" rows={3} placeholder="Respondent long answer will go here..."></textarea>
-                            </div>
-                        )}
-
-                        {/* Choice-based Options (multiple_choice, dropdown, yes_no, ranking, image_choice) */}
-                        {hasChoices(question.type) && (
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="block text-sm font-medium text-text-secondary">Choices</label>
-                                    <label className="flex items-center gap-2 cursor-pointer bg-surface border border-border px-3 py-1 rounded-full shadow-sm hover:border-primary-300 transition-colors">
-                                        <input
-                                            type="checkbox"
-                                            checked={localQuizMode}
-                                            onChange={(e) => setLocalQuizMode(e.target.checked)}
-                                            className="w-3.5 h-3.5 rounded border-border text-primary-600 focus:ring-primary-500"
-                                        />
-                                        <span className="text-xs font-medium text-text-secondary">Quiz Mode (Correct Answers)</span>
-                                    </label>
-                                </div>
-                                <div className="space-y-2">
-                                    {localChoices.map((choice, index) => (
-                                        <div key={index} className="flex items-center gap-2">
-                                            {localQuizMode && (
-                                                <button
-                                                    onClick={() => toggleCorrectAnswer(choice)}
-                                                    className={`p-1 rounded-full transition-colors mr-1 flex-shrink-0 ${localCorrectAnswers.includes(choice) ? 'text-green-500 bg-green-50 shadow-sm border border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'text-text-muted opacity-50 hover:opacity-100 hover:text-green-500'}`}
-                                                    title="Mark as correct answer"
-                                                >
-                                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                                                </button>
-                                            )}
-                                            <span className="text-text-muted flex items-center justify-center w-6 opacity-60">
-                                                {question.type === 'ranking' ? `${index + 1}.` : question.type === 'checkbox' ? <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /></svg> : question.type === 'dropdown' ? `${index + 1}.` : <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /></svg>}
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={choice}
-                                                onChange={(e) => handleChoiceChange(index, e.target.value)}
-                                                className="flex-1 px-3 py-2 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-text-primary"
-                                                placeholder={`Choice ${index + 1}`}
-                                            />
-                                            {localChoices.length > 1 && (
-                                                <button
-                                                    onClick={() => handleRemoveChoice(index)}
-                                                    className="p-1.5 text-text-muted hover:text-red-500"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                                <button
-                                    onClick={handleAddChoice}
-                                    className="mt-2 text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
-                                >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                    </svg>
-                                    Add choice
-                                </button>
-                            </div>
-                        )}
-
-                        {/* NPS Preview */}
-                        {question.type === 'nps' && (
-                            <div className="bg-background rounded-lg p-4">
-                                <p className="text-sm text-text-secondary mb-2">NPS Scale Preview:</p>
-                                <div className="flex gap-1">
-                                    {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                                        <div
-                                            key={n}
-                                            className={`w-8 h-8 flex items-center justify-center rounded text-sm font-medium
-                        ${n <= 6 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : n <= 8 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}
-                      `}
-                                        >
-                                            {n}
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="flex justify-between text-xs text-text-muted mt-1">
-                                    <span>Not likely</span>
-                                    <span>Very likely</span>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Slider Preview */}
-                        {question.type === 'slider' && (
-                            <div className="bg-background rounded-lg p-4">
-                                <p className="text-sm text-text-secondary mb-2">Slider Preview:</p>
-                                <input type="range" min={question.options?.min ?? 0} max={question.options?.max ?? 100} disabled className="w-full" />
-                                <div className="flex justify-between text-xs text-text-muted mt-1">
-                                    <span>{question.options?.min ?? 0}</span>
-                                    <span>{question.options?.max ?? 100}</span>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Date Preview */}
-                        {question.type === 'date' && (
-                            <div className="bg-background rounded-lg p-4">
-                                <p className="text-sm text-text-secondary mb-2">Date Input Preview:</p>
-                                <input type="date" disabled className="px-3 py-2 border border-border rounded-lg bg-surface text-text-primary" />
-                            </div>
-                        )}
-
-                        {/* File Upload Preview */}
-                        {question.type === 'file_upload' && (
-                            <div className="bg-background rounded-lg p-4 text-center border-2 border-dashed border-border">
-                                <p className="text-text-muted text-sm">📎 Drag & drop or click to upload</p>
-                            </div>
-                        )}
+                        {/* Shared Unified Tool Preview Layer */}
+                        <div className="mt-4 mb-2 pointer-events-none">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Build Preview</p>
+                            {renderPreview()}
+                        </div>
 
                         {/* Skip Logic Section */}
                         {supportsLogicRules(question.type) && (
@@ -452,16 +582,25 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         )}
                     </div>
                 ) : (
-                    question.type === 'html' ? (
-                        <div
-                            className="prose prose-sm dark:prose-invert max-w-none pointer-events-none"
-                            dangerouslySetInnerHTML={{ __html: question.options?.html || question.content || '<em class="text-text-muted">Empty HTML Block</em>' }}
-                        />
-                    ) : (
-                        <p className="text-text-primary font-medium">
-                            {question.content || <span className="text-text-muted italic">Untitled question</span>}
-                        </p>
-                    )
+                    <div className="pointer-events-none">
+                        {question.type === 'html' ? (
+                            <div
+                                className="prose prose-sm dark:prose-invert max-w-none mb-4"
+                                dangerouslySetInnerHTML={{ __html: question.options?.html || question.content || '<em class="text-text-muted">Empty HTML Block</em>' }}
+                            />
+                        ) : (
+                            <p className="text-text-primary font-medium mb-4">
+                                {question.content || <span className="text-text-muted italic">Untitled question</span>}
+                            </p>
+                        )}
+
+                        {/* Always show the beautiful preview even when inactive */}
+                        {(!['html'].includes(question.type)) && (
+                            <div className="pointer-events-none w-full">
+                                {renderPreview()}
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
         </div>
