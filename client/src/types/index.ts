@@ -113,6 +113,7 @@ export interface QuestionOptions {
   columns?: string[];
   logicRules?: LogicRule[];
   html?: string;
+  correctAnswers?: any[];
   [key: string]: any;
 }
 

@@ -70,6 +70,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     const [localContent, setLocalContent] = useState(question.content || '');
     const [localRequired, setLocalRequired] = useState(question.is_required);
     const [localChoices, setLocalChoices] = useState<string[]>(question.options?.choices || []);
+    const [localCorrectAnswers, setLocalCorrectAnswers] = useState<any[]>(question.options?.correctAnswers || []);
+    const [localQuizMode, setLocalQuizMode] = useState<boolean>(!!(question.options?.correctAnswers && question.options.correctAnswers.length > 0));
     const [localLogicRules, setLocalLogicRules] = useState<LogicRule[]>(question.options?.logicRules || []);
     const cardRef = useRef<HTMLDivElement>(null);
 
@@ -89,6 +91,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         setLocalContent(question.content || '');
         setLocalRequired(question.is_required);
         setLocalChoices(question.options?.choices || []);
+        setLocalCorrectAnswers(question.options?.correctAnswers || []);
+        setLocalQuizMode(!!(question.options?.correctAnswers && question.options.correctAnswers.length > 0));
         setLocalLogicRules(question.options?.logicRules || []);
     }, [question.id]);
 
@@ -103,7 +107,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [isActive, localContent, localRequired, localChoices, localLogicRules]);
+    }, [isActive, localContent, localRequired, localChoices, localLogicRules, localCorrectAnswers, localQuizMode]);
 
     const handleSave = () => {
         const sanitizedContent = (localContent || '').trim() || 'Untitled question';
@@ -113,6 +117,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         const nextOptions: Record<string, any> = { ...(question.options || {}) };
         if (hasChoices(question.type)) {
             nextOptions.choices = localChoices;
+            if (localQuizMode) {
+                nextOptions.correctAnswers = localCorrectAnswers;
+            } else {
+                delete nextOptions.correctAnswers;
+            }
         }
         if (localLogicRules.length > 0) {
             nextOptions.logicRules = localLogicRules;
@@ -136,8 +145,26 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
     const handleChoiceChange = (index: number, value: string) => {
         const newChoices = [...localChoices];
+        const oldValue = newChoices[index];
         newChoices[index] = value;
         setLocalChoices(newChoices);
+
+        // Update correct answer if the choice text was changed and it was marked as correct
+        if (localCorrectAnswers.includes(oldValue)) {
+            setLocalCorrectAnswers(localCorrectAnswers.map(ans => ans === oldValue ? value : ans));
+        }
+    };
+
+    const toggleCorrectAnswer = (value: string) => {
+        if (question.type === 'multiple_choice' || question.type === 'dropdown' || question.type === 'yes_no') {
+            setLocalCorrectAnswers([value]);
+        } else {
+            if (localCorrectAnswers.includes(value)) {
+                setLocalCorrectAnswers(localCorrectAnswers.filter(a => a !== value));
+            } else {
+                setLocalCorrectAnswers([...localCorrectAnswers, value]);
+            }
+        }
     };
 
     return (
@@ -245,15 +272,51 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                             )}
                         </div>
 
+                        {/* Short Text Preview */}
+                        {question.type === 'text_short' && (
+                            <div className="bg-background rounded-lg p-3 border border-border/50">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Short Answer Preview</p>
+                                <input type="text" disabled className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-muted cursor-not-allowed opacity-70" placeholder="Respondent text will go here..." />
+                            </div>
+                        )}
+
+                        {/* Long Text Preview */}
+                        {question.type === 'text_long' && (
+                            <div className="bg-background rounded-lg p-3 border border-border/50">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Paragraph Preview</p>
+                                <textarea disabled className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-muted resize-none cursor-not-allowed opacity-70" rows={3} placeholder="Respondent long answer will go here..."></textarea>
+                            </div>
+                        )}
+
                         {/* Choice-based Options (multiple_choice, dropdown, yes_no, ranking, image_choice) */}
                         {hasChoices(question.type) && (
                             <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-2">Choices</label>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="block text-sm font-medium text-text-secondary">Choices</label>
+                                    <label className="flex items-center gap-2 cursor-pointer bg-surface border border-border px-3 py-1 rounded-full shadow-sm hover:border-primary-300 transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            checked={localQuizMode}
+                                            onChange={(e) => setLocalQuizMode(e.target.checked)}
+                                            className="w-3.5 h-3.5 rounded border-border text-primary-600 focus:ring-primary-500"
+                                        />
+                                        <span className="text-xs font-medium text-text-secondary">Quiz Mode (Correct Answers)</span>
+                                    </label>
+                                </div>
                                 <div className="space-y-2">
                                     {localChoices.map((choice, index) => (
                                         <div key={index} className="flex items-center gap-2">
-                                            <span className="text-text-muted">
-                                                {question.type === 'ranking' ? `${index + 1}.` : question.type === 'checkbox' ? '☐' : '○'}
+                                            {localQuizMode && (
+                                                <button
+                                                    onClick={() => toggleCorrectAnswer(choice)}
+                                                    className={`p-1 rounded-full transition-colors mr-1 flex-shrink-0 ${localCorrectAnswers.includes(choice) ? 'text-green-500 bg-green-50 shadow-sm border border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'text-text-muted opacity-50 hover:opacity-100 hover:text-green-500'}`}
+                                                    title="Mark as correct answer"
+                                                >
+                                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                                                </button>
+                                            )}
+                                            <span className="text-text-muted flex items-center justify-center w-6 opacity-60">
+                                                {question.type === 'ranking' ? `${index + 1}.` : question.type === 'checkbox' ? <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /></svg> : question.type === 'dropdown' ? `${index + 1}.` : <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /></svg>}
                                             </span>
                                             <input
                                                 type="text"
@@ -355,23 +418,38 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         )}
 
                         {/* Required Toggle */}
-                        <div className="flex items-center justify-between pt-2 border-t border-border">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={localRequired}
-                                    onChange={(e) => setLocalRequired(e.target.checked)}
-                                    className="w-4 h-4 rounded border-border text-primary-600 focus:ring-primary-500"
-                                />
-                                <span className="text-sm text-text-secondary">Required question</span>
-                            </label>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); handleSave(); onDeactivate(); }}
-                                className="px-4 py-1.5 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700"
-                            >
-                                Done
-                            </button>
-                        </div>
+                        {!['html', 'panel', 'panel_dynamic'].includes(question.type) ? (
+                            <div className="flex items-center justify-between pt-2 border-t border-border mt-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={localRequired}
+                                        onChange={(e) => setLocalRequired(e.target.checked)}
+                                        className="w-4 h-4 rounded border-border text-primary-600 focus:ring-primary-500"
+                                    />
+                                    <span className="text-sm text-text-secondary">Required question</span>
+                                </label>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleSave(); onDeactivate(); }}
+                                    className="px-4 py-1.5 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700"
+                                >
+                                    Done
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-between pt-2 border-t border-border mt-4">
+                                <span className="text-xs text-text-muted flex items-center gap-1">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    Explanatory block / Section structural element
+                                </span>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleSave(); onDeactivate(); }}
+                                    className="px-4 py-1.5 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700"
+                                >
+                                    Done
+                                </button>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     question.type === 'html' ? (

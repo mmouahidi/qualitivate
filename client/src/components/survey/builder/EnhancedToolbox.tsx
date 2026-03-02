@@ -206,10 +206,32 @@ const Icons = {
 
 // Complete toolbox items configuration
 export const TOOLBOX_ITEMS: ToolboxItem[] = [
+  // Layout & Structural
+  {
+    type: 'html',
+    title: 'Title & Description / Policy',
+    icon: <Icons.TitleSettings />,
+    category: 'layout',
+    defaultOptions: { html: '<h2>Section Title</h2><p>Describe this section or add policy text here...</p>' },
+  },
+  {
+    type: 'panel',
+    title: 'Panel',
+    icon: <Icons.Panel />,
+    category: 'layout',
+    defaultOptions: { title: 'Panel Title' },
+  },
+  {
+    type: 'panel_dynamic',
+    title: 'Dynamic Panel',
+    icon: <Icons.DynamicPanel />,
+    category: 'layout',
+    defaultOptions: { panelCount: 1, minPanelCount: 1, maxPanelCount: 5 },
+  },
   // Choice questions
   {
     type: 'multiple_choice',
-    title: 'Radio Button Group',
+    title: 'Single Choice (Radio)',
     icon: <Icons.RadioGroup />,
     category: 'choice',
     defaultOptions: { choices: ['Option 1', 'Option 2', 'Option 3'] },
@@ -230,7 +252,7 @@ export const TOOLBOX_ITEMS: ToolboxItem[] = [
   },
   {
     type: 'checkbox',
-    title: 'Checkboxes',
+    title: 'Multiple Choice (Checkboxes)',
     icon: <Icons.Checkbox />,
     category: 'choice',
     defaultOptions: { choices: ['Option 1', 'Option 2', 'Option 3'] },
@@ -280,14 +302,14 @@ export const TOOLBOX_ITEMS: ToolboxItem[] = [
   // Text input
   {
     type: 'text_short',
-    title: 'Single Line Input',
+    title: 'Short Answer',
     icon: <Icons.TextShort />,
     category: 'input',
     defaultOptions: { inputType: 'text' },
   },
   {
     type: 'text_long',
-    title: 'Long Text',
+    title: 'Paragraph',
     icon: <Icons.TextLong />,
     category: 'input',
     defaultOptions: { rows: 4 },
@@ -299,28 +321,7 @@ export const TOOLBOX_ITEMS: ToolboxItem[] = [
     category: 'input',
     defaultOptions: { items: [{ name: 'item1', title: 'Item 1' }, { name: 'item2', title: 'Item 2' }] },
   },
-  // Layout
-  {
-    type: 'html',
-    title: 'Title / Text Block',
-    icon: <Icons.TitleSettings />,
-    category: 'layout',
-    defaultOptions: { html: '<h2>Section Title</h2><p>Describe this section here...</p>' },
-  },
-  {
-    type: 'panel',
-    title: 'Panel',
-    icon: <Icons.Panel />,
-    category: 'layout',
-    defaultOptions: { title: 'Panel Title' },
-  },
-  {
-    type: 'panel_dynamic',
-    title: 'Dynamic Panel',
-    icon: <Icons.DynamicPanel />,
-    category: 'layout',
-    defaultOptions: { panelCount: 1, minPanelCount: 1, maxPanelCount: 5 },
-  },
+
   // Matrix
   {
     type: 'matrix',
@@ -353,13 +354,7 @@ export const TOOLBOX_ITEMS: ToolboxItem[] = [
     },
   },
   // Content/Display
-  {
-    type: 'html',
-    title: 'Custom HTML',
-    icon: <Icons.Html />,
-    category: 'layout',
-    defaultOptions: { html: '<p>Enter your custom HTML content here...</p>' },
-  },
+
   {
     type: 'expression',
     title: 'Expression',
