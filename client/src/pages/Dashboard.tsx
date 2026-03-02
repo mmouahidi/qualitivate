@@ -20,6 +20,7 @@ import { DashboardLayout } from '../components/layout';
 import { surveyService } from '../services/survey.service';
 import responseService from '../services/response.service';
 import analyticsService, { RoleDashboardData } from '../services/analytics.service';
+import { companyService } from '../services/organization.service';
 
 const Dashboard: React.FC = () => {
     const { t } = useTranslation();
@@ -33,6 +34,13 @@ const Dashboard: React.FC = () => {
         queryKey: ['role-dashboard'],
         queryFn: () => analyticsService.getRoleDashboard(),
         enabled: isAdmin
+    });
+
+    // Fetch user's company to get the logo
+    const { data: companyData } = useQuery({
+        queryKey: ['company', user?.companyId],
+        queryFn: () => companyService.get(user!.companyId!),
+        enabled: !!user?.companyId
     });
 
     // Fetch surveys for regular users
@@ -113,15 +121,26 @@ const Dashboard: React.FC = () => {
     return (
         <DashboardLayout>
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-2xl md:text-3xl font-bold text-text-primary">
-                    {t('dashboard.welcome')}{user?.firstName ? `, ${user.firstName}` : user?.email ? `, ${user.email.split('@')[0]}` : ''}
-                </h1>
-                <p className="text-text-secondary mt-1">
-                    {isAdmin
-                        ? t('dashboard.adminSubtitle')
-                        : t('dashboard.userSubtitle')}
-                </p>
+            <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-text-primary">
+                        {t('dashboard.welcome')}{user?.firstName ? `, ${user.firstName}` : user?.email ? `, ${user.email.split('@')[0]}` : ''}
+                    </h1>
+                    <p className="text-text-secondary mt-1">
+                        {isAdmin
+                            ? t('dashboard.adminSubtitle')
+                            : t('dashboard.userSubtitle')}
+                    </p>
+                </div>
+                {companyData?.settings?.logoUrl && (
+                    <div className="hidden sm:block">
+                        <img
+                            src={companyData.settings.logoUrl}
+                            alt={companyData.name || 'Company Logo'}
+                            className="h-14 w-auto object-contain bg-white rounded-lg border border-border p-1.5 shadow-sm"
+                        />
+                    </div>
+                )}
             </div>
 
             {/* Admin Dashboard */}
