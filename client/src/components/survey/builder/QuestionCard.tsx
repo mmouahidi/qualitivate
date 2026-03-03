@@ -519,8 +519,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                                     Description / Policy Text
                                 </label>
                                 <textarea
-                                    value={question.options?.description || ''}
-                                    onChange={(e) => onUpdate({ options: { ...question.options, description: e.target.value } })}
+                                    value={(question as any).description || ''}
+                                    onChange={(e) => onUpdate({ description: e.target.value })}
                                     className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-text-primary"
                                     rows={4}
                                     placeholder="Enter instructions, descriptions, or policy details..."

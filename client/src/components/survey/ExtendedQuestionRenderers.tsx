@@ -134,18 +134,16 @@ export const CheckboxRenderer: React.FC<BaseRendererProps> = ({
               type="button"
               onClick={() => toggleValue(choiceValue)}
               disabled={disabled || readOnly}
-              className={`w-full text-left p-4 border-2 rounded-xl transition-all ${
-                isSelected
+              className={`w-full text-left p-4 border-2 rounded-xl transition-all ${isSelected
                   ? 'border-primary-500 bg-primary-50 shadow-md'
                   : hasError
                     ? 'border-red-300 hover:border-red-400'
                     : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50'
-              } ${disabled || readOnly ? 'cursor-not-allowed opacity-75' : ''}`}
+                } ${disabled || readOnly ? 'cursor-not-allowed opacity-75' : ''}`}
             >
               <div className="flex items-center">
-                <div className={`w-6 h-6 rounded border-2 flex items-center justify-center mr-4 ${
-                  isSelected ? 'border-primary-500 bg-primary-500' : 'border-gray-300'
-                }`}>
+                <div className={`w-6 h-6 rounded border-2 flex items-center justify-center mr-4 ${isSelected ? 'border-primary-500 bg-primary-500' : 'border-gray-300'
+                  }`}>
                   {isSelected && (
                     <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -162,16 +160,14 @@ export const CheckboxRenderer: React.FC<BaseRendererProps> = ({
             type="button"
             onClick={() => onChange([])}
             disabled={disabled || readOnly}
-            className={`w-full text-left p-4 border-2 rounded-xl transition-all ${
-              selectedValues.length === 0
+            className={`w-full text-left p-4 border-2 rounded-xl transition-all ${selectedValues.length === 0
                 ? 'border-primary-500 bg-primary-50'
                 : 'border-gray-200 hover:border-primary-300'
-            }`}
+              }`}
           >
             <div className="flex items-center">
-              <div className={`w-6 h-6 rounded border-2 flex items-center justify-center mr-4 ${
-                selectedValues.length === 0 ? 'border-primary-500 bg-primary-500' : 'border-gray-300'
-              }`}>
+              <div className={`w-6 h-6 rounded border-2 flex items-center justify-center mr-4 ${selectedValues.length === 0 ? 'border-primary-500 bg-primary-500' : 'border-gray-300'
+                }`}>
                 {selectedValues.length === 0 && (
                   <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -209,11 +205,10 @@ export const BooleanRenderer: React.FC<BaseRendererProps> = ({
         type="button"
         onClick={() => !disabled && !readOnly && onChange(trueValue)}
         disabled={disabled || readOnly}
-        className={`flex-1 py-4 px-6 rounded-xl font-medium text-lg transition-all ${
-          value === trueValue
+        className={`flex-1 py-4 px-6 rounded-xl font-medium text-lg transition-all ${value === trueValue
             ? 'bg-green-500 text-white shadow-lg'
             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-        } ${disabled || readOnly ? 'cursor-not-allowed opacity-75' : ''}`}
+          } ${disabled || readOnly ? 'cursor-not-allowed opacity-75' : ''}`}
       >
         {trueLabel}
       </button>
@@ -221,11 +216,10 @@ export const BooleanRenderer: React.FC<BaseRendererProps> = ({
         type="button"
         onClick={() => !disabled && !readOnly && onChange(falseValue)}
         disabled={disabled || readOnly}
-        className={`flex-1 py-4 px-6 rounded-xl font-medium text-lg transition-all ${
-          value === falseValue
+        className={`flex-1 py-4 px-6 rounded-xl font-medium text-lg transition-all ${value === falseValue
             ? 'bg-red-500 text-white shadow-lg'
             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-        } ${disabled || readOnly ? 'cursor-not-allowed opacity-75' : ''}`}
+          } ${disabled || readOnly ? 'cursor-not-allowed opacity-75' : ''}`}
       >
         {falseLabel}
       </button>
@@ -377,7 +371,7 @@ export const ImagePickerRenderer: React.FC<BaseRendererProps> = ({
 
   const toggleSelection = (choiceValue: string | number) => {
     if (disabled || readOnly) return;
-    
+
     if (multiSelect) {
       const newValues = selectedValues.includes(choiceValue)
         ? selectedValues.filter((v: any) => v !== choiceValue)
@@ -401,11 +395,10 @@ export const ImagePickerRenderer: React.FC<BaseRendererProps> = ({
             type="button"
             onClick={() => toggleSelection(choiceValue)}
             disabled={disabled || readOnly}
-            className={`relative aspect-square rounded-xl overflow-hidden border-4 transition-all ${
-              isSelected
+            className={`relative aspect-square rounded-xl overflow-hidden border-4 transition-all ${isSelected
                 ? 'border-primary-500 shadow-lg scale-105'
                 : 'border-transparent hover:border-primary-300'
-            } ${disabled || readOnly ? 'cursor-not-allowed opacity-75' : ''}`}
+              } ${disabled || readOnly ? 'cursor-not-allowed opacity-75' : ''}`}
           >
             {imageLink ? (
               <img
@@ -453,7 +446,7 @@ export const SignaturePadRenderer: React.FC<BaseRendererProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  
+
   const width = element.signatureWidth || 400;
   const height = element.signatureHeight || 200;
   const penColor = element.penColor || '#000000';
@@ -462,7 +455,7 @@ export const SignaturePadRenderer: React.FC<BaseRendererProps> = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -481,17 +474,17 @@ export const SignaturePadRenderer: React.FC<BaseRendererProps> = ({
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     if (disabled || readOnly) return;
     setIsDrawing(true);
-    
+
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const rect = canvas.getBoundingClientRect();
     const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
     const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
-    
+
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.strokeStyle = penColor;
@@ -501,17 +494,17 @@ export const SignaturePadRenderer: React.FC<BaseRendererProps> = ({
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDrawing || disabled || readOnly) return;
-    
+
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const rect = canvas.getBoundingClientRect();
     const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
     const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
-    
+
     ctx.lineTo(x, y);
     ctx.stroke();
   };
@@ -519,19 +512,19 @@ export const SignaturePadRenderer: React.FC<BaseRendererProps> = ({
   const stopDrawing = () => {
     if (!isDrawing) return;
     setIsDrawing(false);
-    
+
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     onChange(canvas.toDataURL('image/png'));
   };
 
   const clearSignature = () => {
     if (disabled || readOnly) return;
-    
+
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -591,7 +584,7 @@ export const FileUploadRenderer: React.FC<BaseRendererProps> = ({
     if (!e.target.files || disabled || readOnly) return;
 
     const newFiles: any[] = [];
-    
+
     Array.from(e.target.files).forEach(file => {
       if (file.size > maxSize) {
         alert(`File "${file.name}" is too large. Maximum size is ${Math.round(maxSize / 1024 / 1024)}MB.`);
@@ -625,11 +618,10 @@ export const FileUploadRenderer: React.FC<BaseRendererProps> = ({
     <div className="space-y-4">
       <div
         onClick={() => !disabled && !readOnly && inputRef.current?.click()}
-        className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-          disabled || readOnly
+        className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${disabled || readOnly
             ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
             : 'border-gray-300 hover:border-primary-400 cursor-pointer'
-        }`}
+          }`}
       >
         <input
           ref={inputRef}
@@ -682,15 +674,23 @@ export const FileUploadRenderer: React.FC<BaseRendererProps> = ({
 };
 
 // ============================================================================
-// HTML Renderer
+// HTML (Informational) Renderer
 // ============================================================================
 
 export const HtmlRenderer: React.FC<BaseRendererProps> = ({ element }) => {
   return (
-    <div 
-      className="prose max-w-none"
-      dangerouslySetInnerHTML={{ __html: element.html || '' }}
-    />
+    <div className="prose max-w-none">
+      {element.content && (
+        <h2 className="text-xl font-bold text-gray-900 mb-2">
+          {element.content}
+        </h2>
+      )}
+      {(element as any).description && (
+        <p className="text-gray-700 whitespace-pre-wrap">
+          {(element as any).description}
+        </p>
+      )}
+    </div>
   );
 };
 
@@ -704,9 +704,9 @@ export const ExpressionRenderer: React.FC<BaseRendererProps> = ({
 }) => {
   const displayStyle = element.displayStyle || 'none';
   const currency = element.currency || 'USD';
-  
+
   let displayValue = value;
-  
+
   if (typeof value === 'number') {
     switch (displayStyle) {
       case 'decimal':
@@ -935,9 +935,9 @@ export const SliderRenderer: React.FC<BaseRendererProps> = ({
       <div className="relative">
         {/* Custom track background */}
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-2 bg-gray-200 rounded-full" />
-        
+
         {/* Filled portion */}
-        <div 
+        <div
           className="absolute top-1/2 -translate-y-1/2 h-2 bg-primary-500 rounded-full"
           style={{ width: `${percentage}%` }}
         />
@@ -1006,7 +1006,7 @@ export const MultiselectDropdownRenderer: React.FC<BaseRendererProps> = ({
 
   const toggleOption = (optionValue: string | number) => {
     if (disabled || readOnly) return;
-    
+
     if (selectedValues.includes(optionValue)) {
       onChange(selectedValues.filter((v: any) => v !== optionValue));
     } else {
@@ -1068,7 +1068,7 @@ export const MultiselectDropdownRenderer: React.FC<BaseRendererProps> = ({
             const optionValue = getChoiceValue(choice);
             const isSelected = selectedValues.includes(optionValue);
             const isDisabled = !isSelected && maxSelected && selectedValues.length >= maxSelected;
-            
+
             return (
               <button
                 key={idx}

@@ -137,9 +137,6 @@ const TYPE_SETTINGS: Record<string, { label: string; type: 'text' | 'number' | '
     { label: 'Height', type: 'number' },
     { label: 'Pen Color', type: 'text', placeholder: '#000000' },
   ],
-  html: [
-    { label: 'HTML Content', type: 'text' },
-  ],
   expression: [
     { label: 'Expression', type: 'text' },
     { label: 'Display Style', type: 'select', options: ['none', 'decimal', 'currency', 'percent'] },
@@ -235,20 +232,32 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
     );
   };
 
+  // Debounce timer ref
+  const debounceTimerRef = React.useRef<any>(null);
+
   const handleChange = (key: string, value: any) => {
+    // 1. Instantly update local UI state so the user sees their typing immediately without losing focus
     setLocalValues(prev => ({ ...prev, [key]: value }));
-    
-    // Map certain keys to the correct update structure
-    if (key === 'title') {
-      onUpdate({ content: value });
-    } else if (key === 'isRequired') {
-      onUpdate({ isRequired: value });
-    } else if (['visibleIf', 'enableIf', 'requiredIf', 'description', 'name', 'visible'].includes(key)) {
-      onUpdate({ [key]: value });
-    } else {
-      // Update in options
-      onUpdate({ options: { ...question?.options, [key]: value } });
+
+    // 2. Clear any existing debounce timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
+
+    // 3. Set a new timer to fire the actual API update after 500ms of inactivity
+    debounceTimerRef.current = setTimeout(() => {
+      // Map certain keys to the correct update structure
+      if (key === 'title') {
+        onUpdate({ content: value });
+      } else if (key === 'isRequired') {
+        onUpdate({ isRequired: value });
+      } else if (['visibleIf', 'enableIf', 'requiredIf', 'description', 'name', 'visible'].includes(key)) {
+        onUpdate({ [key]: value });
+      } else {
+        // Update in options
+        onUpdate({ options: { ...question?.options, [key]: value } });
+      }
+    }, 500);
   };
 
   // Collapsed view
