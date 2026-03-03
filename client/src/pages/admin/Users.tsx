@@ -27,6 +27,7 @@ const Users: React.FC = () => {
         lastName: '',
         role: 'user',
         isActive: true,
+        companyId: null,
         siteId: null,
         departmentId: null
     });
@@ -51,11 +52,13 @@ const Users: React.FC = () => {
         enabled: currentUser?.role === 'super_admin'
     });
 
+    const activeCompanyId = isEditModalOpen ? editForm.companyId : formData.companyId;
+
     // Fetch sites based on selected company
     const { data: sitesData } = useQuery({
-        queryKey: ['sites-list', formData.companyId],
-        queryFn: () => formData.companyId ? siteService.listByCompany(formData.companyId) : siteService.list({ limit: 1000 }),
-        enabled: !!formData.companyId || currentUser?.role === 'company_admin'
+        queryKey: ['sites-list', activeCompanyId],
+        queryFn: () => activeCompanyId ? siteService.listByCompany(activeCompanyId) : siteService.list({ limit: 1000 }),
+        enabled: !!activeCompanyId || currentUser?.role === 'company_admin'
     });
 
     const { data, isLoading } = useQuery({
@@ -163,6 +166,7 @@ const Users: React.FC = () => {
             lastName: user.lastName || '',
             role: user.role,
             isActive: user.isActive,
+            companyId: user.companyId || null,
             siteId: user.siteId,
             departmentId: user.departmentId
         });
@@ -824,6 +828,30 @@ const Users: React.FC = () => {
                                     )}
                                 </select>
                             </div>
+
+                            {/* Company Selection - Only for super_admin */}
+                            {currentUser?.role === 'super_admin' && (
+                                <div>
+                                    <label className="label-soft">Company</label>
+                                    <select
+                                        value={editForm.companyId || ''}
+                                        onChange={(e) => setEditForm({
+                                            ...editForm,
+                                            companyId: e.target.value || null,
+                                            siteId: null, // Reset site logic when company changes
+                                            departmentId: null
+                                        })}
+                                        className="select-soft"
+                                    >
+                                        <option value="">— No Company (Super Admin) —</option>
+                                        {companiesData?.data?.map((company: any) => (
+                                            <option key={company.id} value={company.id}>
+                                                {company.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                             <div>
                                 <label className="label-soft">Site</label>
                                 <select

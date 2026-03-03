@@ -109,6 +109,29 @@ const templateService = {
     const response = await api.post(`/surveys/${surveyId}/save-as-template`, data);
     return response.data;
   },
+
+  // Add question to template
+  async addQuestion(templateId: string, data: Partial<TemplateQuestion>): Promise<TemplateQuestion> {
+    const response = await api.post(`/templates/${templateId}/questions`, data);
+    return response.data;
+  },
+
+  // Update template question
+  async updateQuestion(templateId: string, questionId: string, data: Partial<TemplateQuestion>): Promise<TemplateQuestion> {
+    const response = await api.put(`/templates/${templateId}/questions/${questionId}`, data);
+    return response.data;
+  },
+
+  // Delete template question
+  async deleteQuestion(templateId: string, questionId: string): Promise<void> {
+    await api.delete(`/templates/${templateId}/questions/${questionId}`);
+  },
+
+  // Reorder template questions
+  async reorderQuestions(templateId: string, questionIds: string[]): Promise<TemplateQuestion[]> {
+    const response = await api.put(`/templates/${templateId}/questions/reorder`, { questionIds });
+    return response.data;
+  },
 };
 
 export default templateService;

@@ -9,6 +9,10 @@ import {
   createSurveyFromTemplate,
   saveAsTemplate,
   getTemplateCategories,
+  createTemplateQuestion,
+  updateTemplateQuestion,
+  deleteTemplateQuestion,
+  reorderTemplateQuestions,
 } from '../controllers/template.controller';
 
 const router = Router();
@@ -36,5 +40,11 @@ router.delete('/:id', authorize('super_admin', 'company_admin'), deleteTemplate)
 
 // Create survey from template
 router.post('/:id/create-survey', authorize('super_admin', 'company_admin', 'site_admin', 'department_admin'), createSurveyFromTemplate);
+
+// Template Questions Management
+router.post('/:id/questions', authorize('super_admin', 'company_admin'), createTemplateQuestion);
+router.put('/:id/questions/reorder', authorize('super_admin', 'company_admin'), reorderTemplateQuestions);
+router.put('/:id/questions/:questionId', authorize('super_admin', 'company_admin'), updateTemplateQuestion);
+router.delete('/:id/questions/:questionId', authorize('super_admin', 'company_admin'), deleteTemplateQuestion);
 
 export default router;

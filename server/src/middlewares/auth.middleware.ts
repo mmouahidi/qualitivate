@@ -59,17 +59,81 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
   }
 };
 
-export const authorize = (...roles: string[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
+// In-memory permission cache (role -> Set<permission>)
+let permissionCache: Map<string, Set<string>> | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 60_000; // 60 seconds
+
+// Exported so RBAC controller can invalidate on update
+export const invalidatePermissionCache = () => {
+  permissionCache = null;
+  cacheTimestamp = 0;
+};
+
+const loadPermissions = async (): Promise<Map<string, Set<string>>> => {
+  const now = Date.now();
+  if (permissionCache && now - cacheTimestamp < CACHE_TTL_MS) {
+    return permissionCache;
+  }
+
+  const rows = await db('role_permissions').select('role', 'permission');
+  const map = new Map<string, Set<string>>();
+  for (const row of rows) {
+    if (!map.has(row.role)) map.set(row.role, new Set());
+    map.get(row.role)!.add(row.permission);
+  }
+  permissionCache = map;
+  cacheTimestamp = now;
+  return map;
+};
+
+/**
+ * Authorize middleware — supports both legacy roles and dynamic permissions.
+ * 
+ * Legacy usage (role names):  authorize('super_admin', 'company_admin')
+ * Permission usage (colon):   authorize('templates:write')
+ * Mixed usage:                authorize('super_admin', 'templates:write')
+ * 
+ * super_admin ALWAYS passes regardless of what is checked.
+ */
+export const authorize = (...rolesOrPermissions: string[]) => {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Forbidden' });
+    // super_admin always passes
+    if (req.user.role === 'super_admin') {
+      return next();
     }
 
-    next();
+    // Split into role checks and permission checks
+    const roleChecks = rolesOrPermissions.filter((r) => !r.includes(':'));
+    const permChecks = rolesOrPermissions.filter((r) => r.includes(':'));
+
+    // Legacy role-based check: if user's role is in the allowed list, pass
+    if (roleChecks.length > 0 && roleChecks.includes(req.user.role)) {
+      return next();
+    }
+
+    // Dynamic permission check: check if user's role has any of the required permissions
+    if (permChecks.length > 0) {
+      try {
+        const permMap = await loadPermissions();
+        const userPerms = permMap.get(req.user.role);
+        if (userPerms) {
+          const hasPermission = permChecks.some((p) => userPerms.has(p));
+          if (hasPermission) {
+            return next();
+          }
+        }
+      } catch (error) {
+        logger.error('Error checking dynamic permissions', { error });
+        // Fall through to forbidden
+      }
+    }
+
+    return res.status(403).json({ error: 'Forbidden' });
   };
 };
 

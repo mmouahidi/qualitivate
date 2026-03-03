@@ -14,6 +14,8 @@ import Users from './pages/admin/Users';
 import Sites from './pages/organizations/Sites';
 import Surveys from './pages/surveys/Surveys';
 import SurveyBuilder from './pages/surveys/SurveyBuilder';
+import TemplateBuilder from './pages/admin/TemplateBuilder';
+import Permissions from './pages/admin/Permissions';
 import SurveyDistribute from './pages/surveys/SurveyDistribute';
 import SurveyRespond from './pages/surveys/SurveyRespond';
 import TakeSurvey from './pages/public/TakeSurvey';
@@ -129,6 +131,14 @@ function App() {
                     }
                   />
                   <Route
+                    path="/templates/:id/edit"
+                    element={
+                      <ProtectedRoute>
+                        <TemplateBuilder />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="/analytics"
                     element={
                       <ProtectedRoute>
@@ -149,6 +159,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <ResponseDetails />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/permissions"
+                    element={
+                      <ProtectedRoute>
+                        <Permissions />
                       </ProtectedRoute>
                     }
                   />

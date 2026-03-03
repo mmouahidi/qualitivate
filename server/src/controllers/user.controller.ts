@@ -220,7 +220,7 @@ export const inviteUser = async (req: AuthRequest, res: Response) => {
 export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { email, password, firstName, lastName, role, isActive, siteId, departmentId } = req.body;
+    const { email, password, firstName, lastName, role, isActive, companyId, siteId, departmentId } = req.body;
     const currentUser = req.user!;
 
     const user = await db('users').where({ id }).first();
@@ -269,9 +269,27 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     if (lastName !== undefined) updateData.last_name = lastName;
     if (isActive !== undefined) updateData.is_active = isActive;
 
+    // Handle company update (super_admin only)
+    if (companyId !== undefined && currentUser.role === 'super_admin' && companyId !== user.company_id) {
+      if (companyId === null || companyId === '') {
+        updateData.company_id = null;
+        updateData.site_id = null;
+        updateData.department_id = null;
+      } else {
+        const company = await db('companies').where({ id: companyId }).first();
+        if (!company) {
+          return res.status(404).json({ error: 'Company not found' });
+        }
+        updateData.company_id = companyId;
+        // If company changes, reset site and department unless they are also being validly updated in this request
+        if (siteId === undefined) updateData.site_id = null;
+        if (departmentId === undefined) updateData.department_id = null;
+      }
+    }
+
     // Validate site belongs to user's company
     if (siteId !== undefined) {
-      if (siteId === null) {
+      if (siteId === null || siteId === '') {
         updateData.site_id = null;
         updateData.department_id = null; // Clear department if site is cleared
       } else {
@@ -280,7 +298,8 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
           return res.status(404).json({ error: 'Site not found' });
         }
         // Ensure site belongs to user's company
-        if (site.company_id !== user.company_id) {
+        const targetCompanyId = updateData.company_id !== undefined ? updateData.company_id : user.company_id;
+        if (site.company_id !== targetCompanyId) {
           return res.status(400).json({ error: 'Site does not belong to user\'s company' });
         }
         // Check caller has scope over this site

@@ -447,3 +447,186 @@ export const getTemplateCategories = async (req: AuthRequest, res: Response) => 
     res.status(500).json({ error: 'Failed to get template categories' });
   }
 };
+
+// Create template question
+export const createTemplateQuestion = async (req: AuthRequest, res: Response) => {
+  try {
+    const user = req.user!;
+    const { id } = req.params;
+    const { type, content, isRequired = false, options = {} } = req.body;
+
+    const template = await db('survey_templates').where('id', id).first();
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    if (!template.is_global && template.company_id !== user.companyId && user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (template.is_global && user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Only super admins can modify global templates' });
+    }
+
+    if (!isValidQuestionType(type)) {
+      return res.status(400).json({ error: 'Invalid question type' });
+    }
+
+    const maxOrder = await db('template_questions')
+      .where('template_id', id)
+      .max('order_index as max')
+      .first();
+
+    const orderIndex = maxOrder?.max != null ? maxOrder.max + 1 : 0;
+
+    const [question] = await db('template_questions')
+      .insert({
+        id: uuidv4(),
+        template_id: id,
+        type,
+        content,
+        options: normalizeJson(options, {}),
+        is_required: isRequired,
+        order_index: orderIndex,
+      })
+      .returning('*');
+
+    await db('survey_templates').where('id', id).update({ updated_at: db.fn.now() });
+
+    res.status(201).json(question);
+  } catch (error: any) {
+    logger.error('Error creating template question:', { error });
+    res.status(500).json({ error: 'Failed to create template question' });
+  }
+};
+
+// Update template question
+export const updateTemplateQuestion = async (req: AuthRequest, res: Response) => {
+  try {
+    const user = req.user!;
+    const { id, questionId } = req.params;
+    const { content, isRequired, options } = req.body;
+
+    const template = await db('survey_templates').where('id', id).first();
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    if (!template.is_global && template.company_id !== user.companyId && user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (template.is_global && user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Only super admins can modify global templates' });
+    }
+
+    const question = await db('template_questions').where({ id: questionId, template_id: id }).first();
+    if (!question) {
+      return res.status(404).json({ error: 'Question not found' });
+    }
+
+    const updateData: any = {};
+    if (content !== undefined) updateData.content = content;
+    if (isRequired !== undefined) updateData.is_required = isRequired;
+    if (options !== undefined) updateData.options = normalizeJson(options, {});
+
+    const [updated] = await db('template_questions')
+      .where({ id: questionId, template_id: id })
+      .update(updateData)
+      .returning('*');
+
+    await db('survey_templates').where('id', id).update({ updated_at: db.fn.now() });
+
+    res.json(updated);
+  } catch (error: any) {
+    logger.error('Error updating template question:', { error });
+    res.status(500).json({ error: 'Failed to update template question' });
+  }
+};
+
+// Delete template question
+export const deleteTemplateQuestion = async (req: AuthRequest, res: Response) => {
+  try {
+    const user = req.user!;
+    const { id, questionId } = req.params;
+
+    const template = await db('survey_templates').where('id', id).first();
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    if (!template.is_global && template.company_id !== user.companyId && user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (template.is_global && user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Only super admins can modify global templates' });
+    }
+
+    const deleted = await db('template_questions')
+      .where({ id: questionId, template_id: id })
+      .delete();
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Question not found' });
+    }
+
+    await db('survey_templates').where('id', id).update({ updated_at: db.fn.now() });
+
+    res.json({ message: 'Question deleted successfully' });
+  } catch (error: any) {
+    logger.error('Error deleting template question:', { error });
+    res.status(500).json({ error: 'Failed to delete template question' });
+  }
+};
+
+// Reorder template questions
+export const reorderTemplateQuestions = async (req: AuthRequest, res: Response) => {
+  try {
+    const user = req.user!;
+    const { id } = req.params;
+    const { questionIds } = req.body;
+
+    if (!Array.isArray(questionIds)) {
+      return res.status(400).json({ error: 'questionIds array is required' });
+    }
+
+    const template = await db('survey_templates').where('id', id).first();
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    if (!template.is_global && template.company_id !== user.companyId && user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (template.is_global && user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Only super admins can modify global templates' });
+    }
+
+    const trx = await db.transaction();
+
+    try {
+      for (let i = 0; i < questionIds.length; i++) {
+        await trx('template_questions')
+          .where({ id: questionIds[i], template_id: id })
+          .update({ order_index: i });
+      }
+
+      await trx('survey_templates').where('id', id).update({ updated_at: db.fn.now() });
+      await trx.commit();
+
+      const updatedQuestions = await db('template_questions')
+        .where('template_id', id)
+        .orderBy('order_index');
+
+      res.json(updatedQuestions);
+    } catch (error) {
+      await trx.rollback();
+      throw error;
+    }
+  } catch (error: any) {
+    logger.error('Error reordering template questions:', { error });
+    res.status(500).json({ error: 'Failed to reorder template questions' });
+  }
+};

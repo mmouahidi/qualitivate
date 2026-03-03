@@ -41,6 +41,7 @@ export interface UpdateUserData {
   lastName?: string;
   role?: string;
   isActive?: boolean;
+  companyId?: string | null;
   siteId?: string | null;
   departmentId?: string | null;
 }

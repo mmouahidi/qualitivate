@@ -16,6 +16,7 @@ import responseRoutes from './routes/response.routes';
 import analyticsRoutes from './routes/analytics.routes';
 import distributionRoutes from './routes/distribution.routes';
 import templateRoutes from './routes/template.routes';
+import rbacRoutes from './routes/rbac.routes';
 import { camelCaseResponse } from './utils/transformCase';
 import db from './config/database';
 import logger from './config/logger';
@@ -126,6 +127,7 @@ app.use('/api/responses', responseRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/distributions', distributionRoutes);
 app.use('/api/templates', templateRoutes);
+app.use('/api/rbac', rbacRoutes);
 
 // Health check with database connectivity (must be before catch-all)
 app.get('/api/health', async (req, res) => {
