@@ -45,8 +45,9 @@ export const createSurveySchema: ValidationSchema = {
 // Update survey schema
 export const updateSurveySchema: ValidationSchema = {
     params: Joi.object({
-        id: Joi.string().uuid().required().messages({
-            'string.guid': 'Invalid survey ID format'
+        id: Joi.string().trim().uuid().required().messages({
+            'string.guid': 'Invalid survey ID format',
+            'string.uuid': 'Invalid survey ID format'
         })
     }),
     body: Joi.object({
@@ -60,12 +61,12 @@ export const updateSurveySchema: ValidationSchema = {
         allowAnonymous: Joi.boolean().optional(),
         defaultLanguage: Joi.string().min(2).max(5).optional(),
         companyId: Joi.string().uuid().allow(null, '').optional(),
-        settings: Joi.object().unknown(true).optional(),
+        settings: Joi.object().unknown(true).allow(null).optional(),
         notificationEmails: Joi.array().items(Joi.string().trim().min(1)).allow(null).optional(),
         startsAt: Joi.date().iso().allow(null).optional(),
         endsAt: Joi.date().iso().allow(null).optional(),
-        schema: Joi.object().unknown(true).optional(),
-    }).custom((value, helpers) => {
+        schema: Joi.object().unknown(true).allow(null).optional(),
+    }).unknown(true).custom((value, helpers) => {
         if (value.startsAt && value.endsAt) {
             if (new Date(value.endsAt) <= new Date(value.startsAt)) {
                 return helpers.error('custom.dateRange');

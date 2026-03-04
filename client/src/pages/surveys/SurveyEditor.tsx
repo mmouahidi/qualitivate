@@ -173,9 +173,18 @@ const SurveyEditor: React.FC = () => {
 
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
-    updateSurveyMutation.mutate({
-      settings: surveySettings
-    });
+    updateSurveyMutation.mutate(
+      { settings: surveySettings },
+      {
+        onSuccess: () => setIsSettingsOpen(false),
+        onError: (err: any) => {
+          const msg = err.response?.data?.details?.length
+            ? err.response.data.details.join(', ')
+            : err.response?.data?.error || err.message || 'Failed to save settings';
+          alert(`Could not save settings: ${msg}`);
+        }
+      }
+    );
   };
 
   const handleDragEnd = (event: DragEndEvent) => {

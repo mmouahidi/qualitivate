@@ -263,15 +263,18 @@ const SurveyBuilder: React.FC = () => {
         if (isSuperAdmin) {
             payload.companyId = localCompanyId || null;
         }
-        updateSurveyMutation.mutate(
-            payload,
-            {
-                onSuccess: () => {
-                    setIsSettingsOpen(false);
-                    alert('Survey settings saved!');
-                }
+        updateSurveyMutation.mutate(payload, {
+            onSuccess: () => {
+                setIsSettingsOpen(false);
+                alert('Survey settings saved!');
+            },
+            onError: (err: any) => {
+                const msg = err.response?.data?.details?.length
+                    ? err.response.data.details.join(', ')
+                    : err.response?.data?.error || err.message || 'Failed to save settings';
+                alert(`Could not save settings: ${msg}`);
             }
-        );
+        });
     };
 
     const handleSaveAsTemplate = (e: React.FormEvent) => {
