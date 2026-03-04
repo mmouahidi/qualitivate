@@ -12,6 +12,7 @@ import { taxonomyService } from '../../../services/taxonomy.service';
 
 interface ConfigurationPanelProps {
   question: any | null;
+  surveySettings?: Record<string, any>;
   onUpdate: (updates: Record<string, any>) => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
@@ -201,6 +202,7 @@ const LABEL_TO_PROP: Record<string, string> = {
 
 const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   question,
+  surveySettings = {},
   onUpdate,
   collapsed = false,
   onToggleCollapse,
@@ -223,6 +225,7 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
         const requiredIf = question.requiredIf || '';
         const categoryId = (question as any).category_id || (question as any).categoryId || '';
         const dimensionId = (question as any).dimension_id || (question as any).dimensionId || '';
+        const maxScore = question.options?.maxScore || 0;
 
         const nextValues = {
           title,
@@ -235,6 +238,7 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
           requiredIf,
           categoryId,
           dimensionId,
+          maxScore,
           ...question.options,
         };
 
@@ -423,6 +427,7 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
         {type === 'choices' && (
           <ChoicesEditor
             value={value || []}
+            scoringEnabled={surveySettings?.scoringMethod && surveySettings.scoringMethod !== 'none'}
             onChange={(newChoices) => handleChange(key, newChoices)}
           />
         )}
@@ -460,6 +465,9 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
             {renderField('Name', 'text', 'name', { placeholder: 'question_name' })}
             {renderField('Required', 'boolean', 'isRequired')}
             {renderField('Visible', 'boolean', 'visible')}
+            {surveySettings?.scoringMethod && surveySettings.scoringMethod !== 'none' && (
+              renderField('Max Score / Weight', 'number', 'maxScore')
+            )}
           </div>
         )}
 
@@ -562,14 +570,15 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
 
 // Choices Editor Sub-component
 const ChoicesEditor: React.FC<{
-  value: (string | { value: string; text?: string })[];
+  value: (string | { value: string; text?: string; score?: number })[];
+  scoringEnabled?: boolean;
   onChange: (value: any[]) => void;
-}> = ({ value, onChange }) => {
+}> = ({ value, scoringEnabled, onChange }) => {
   const [newChoice, setNewChoice] = useState('');
 
   const addChoice = () => {
     if (newChoice.trim()) {
-      onChange([...value, newChoice.trim()]);
+      onChange([...value, scoringEnabled ? { value: newChoice.trim(), score: 0 } : newChoice.trim()]);
       setNewChoice('');
     }
   };
@@ -580,28 +589,62 @@ const ChoicesEditor: React.FC<{
 
   const updateChoice = (index: number, newValue: string) => {
     const updated = [...value];
-    updated[index] = newValue;
+    const current = updated[index];
+    if (typeof current === 'object' && current !== null) {
+      updated[index] = { ...current, value: newValue };
+    } else {
+      updated[index] = newValue;
+    }
+    onChange(updated);
+  };
+
+  const updateChoiceScore = (index: number, scoreStr: string) => {
+    const score = parseFloat(scoreStr) || 0;
+    const updated = [...value];
+    const current = updated[index];
+    if (typeof current === 'string') {
+      updated[index] = { value: current, score };
+    } else {
+      updated[index] = { ...current, score };
+    }
     onChange(updated);
   };
 
   return (
     <div className="space-y-2">
-      {value.map((choice, index) => (
-        <div key={index} className="flex items-center gap-2">
-          <input
-            type="text"
-            value={typeof choice === 'string' ? choice : choice.value}
-            onChange={(e) => updateChoice(index, e.target.value)}
-            className="flex-1 px-2 py-1.5 text-sm bg-background border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-          />
-          <button
-            onClick={() => removeChoice(index)}
-            className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
-          >
-            <Icons.Trash />
-          </button>
-        </div>
-      ))}
+      {value.map((choice, index) => {
+        const choiceValue = typeof choice === 'string' ? choice : choice.value;
+        const choiceScore = typeof choice === 'object' && choice.score !== undefined ? choice.score : 0;
+
+        return (
+          <div key={index} className="flex items-center gap-2">
+            <input
+              type="text"
+              value={choiceValue}
+              onChange={(e) => updateChoice(index, e.target.value)}
+              className="flex-1 px-2 py-1.5 text-sm bg-background border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="Choice text"
+            />
+            {scoringEnabled && (
+              <input
+                type="number"
+                value={choiceScore}
+                onChange={(e) => updateChoiceScore(index, e.target.value)}
+                className="w-16 px-2 py-1.5 text-sm bg-background border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="Pts"
+                title="Points/Score for this choice"
+              />
+            )}
+            <button
+              onClick={() => removeChoice(index)}
+              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
+              title="Remove choice"
+            >
+              <Icons.Trash />
+            </button>
+          </div>
+        );
+      })}
       <div className="flex items-center gap-2">
         <input
           type="text"

@@ -213,41 +213,15 @@ const Icons = {
   ),
 };
 
-// Complete toolbox items configuration mapped to User's explicit 6 categories
+// Complete toolbox items configuration mapped to User's explicit core categories
 export const TOOLBOX_ITEMS: ToolboxItem[] = [
-  // 1. Structural & Informational Elements
-  {
-    type: 'html',
-    title: 'Title & Description / Policy',
-    description: 'Read-only text blocks for instructions or policies.',
-    icon: <Icons.TitleSettings />,
-    category: '1. Structural & Informational Elements',
-    defaultOptions: { html: '<h2>Section Title</h2><p>Describe this section or add policy text here...</p>' },
-  },
-  {
-    type: 'panel',
-    title: 'Panel',
-    description: 'Structural container to group related questions.',
-    icon: <Icons.Panel />,
-    category: '1. Structural & Informational Elements',
-    defaultOptions: { title: 'Panel Title' },
-  },
-  {
-    type: 'panel_dynamic',
-    title: 'Dynamic Panel',
-    description: 'Repeating container for multiple instances of questions.',
-    icon: <Icons.DynamicPanel />,
-    category: '1. Structural & Informational Elements',
-    defaultOptions: { panelCount: 1, minPanelCount: 1, maxPanelCount: 5 },
-  },
-
-  // 2. Selection & Choice Inputs
+  // 1. Selection & Choice Inputs
   {
     type: 'multiple_choice',
     title: 'Single Choice (Radio)',
     description: 'Mutually exclusive choices. Select exactly one.',
     icon: <Icons.RadioGroup />,
-    category: '2. Selection & Choice Inputs',
+    category: '1. Selection & Choice',
     defaultOptions: { choices: ['Option 1', 'Option 2', 'Option 3'] },
   },
   {
@@ -255,7 +229,7 @@ export const TOOLBOX_ITEMS: ToolboxItem[] = [
     title: 'Multiple Choice (Checkboxes)',
     description: 'Select one, multiple, or all options.',
     icon: <Icons.Checkbox />,
-    category: '2. Selection & Choice Inputs',
+    category: '1. Selection & Choice',
     defaultOptions: { choices: ['Option 1', 'Option 2', 'Option 3'] },
   },
   {
@@ -263,32 +237,34 @@ export const TOOLBOX_ITEMS: ToolboxItem[] = [
     title: 'Dropdown',
     description: 'Space-saving menu. Select exactly one.',
     icon: <Icons.Dropdown />,
-    category: '2. Selection & Choice Inputs',
+    category: '1. Selection & Choice',
     defaultOptions: { choices: ['Option 1', 'Option 2', 'Option 3'] },
-  },
-  {
-    type: 'multiselect_dropdown',
-    title: 'Multiselect Dropdown',
-    description: 'Pick multiple items from a compact list.',
-    icon: <Icons.MultiSelect />,
-    category: '2. Selection & Choice Inputs',
-    defaultOptions: { choices: ['Option 1', 'Option 2', 'Option 3'], multiSelect: true },
   },
   {
     type: 'boolean',
     title: 'Yes/No',
     description: 'Simple binary toggle for absolute questions.',
     icon: <Icons.YesNo />,
-    category: '2. Selection & Choice Inputs',
+    category: '1. Selection & Choice',
     defaultOptions: { labelTrue: 'Yes', labelFalse: 'No' },
   },
+
+  // 2. Text & Open-Ended Inputs
   {
-    type: 'image_picker',
-    title: 'Image Picker',
-    description: 'Click on images to make a selection.',
-    icon: <Icons.ImagePicker />,
-    category: '2. Selection & Choice Inputs',
-    defaultOptions: { choices: [], showLabel: true },
+    type: 'text_short',
+    title: 'Short Answer',
+    description: 'Single-line text box for brief responses.',
+    icon: <Icons.TextShort />,
+    category: '2. Text Input',
+    defaultOptions: { inputType: 'text' },
+  },
+  {
+    type: 'text_long',
+    title: 'Paragraph / Comment',
+    description: 'Multi-line area for open-ended feedback.',
+    icon: <Icons.TextLong />,
+    category: '2. Text Input',
+    defaultOptions: { rows: 4 },
   },
 
   // 3. Rating & Evaluation
@@ -297,135 +273,19 @@ export const TOOLBOX_ITEMS: ToolboxItem[] = [
     title: 'Rating Scale',
     description: 'Measure satisfaction or agreement linearly.',
     icon: <Icons.Rating />,
-    category: '3. Rating & Evaluation',
+    category: '3. Rating & Grid',
     defaultOptions: { rateMin: 1, rateMax: 5, rateType: 'stars' },
   },
-  {
-    type: 'slider',
-    title: 'Slider',
-    description: 'Dragable handle for granular values within a range.',
-    icon: <Icons.Slider />,
-    category: '3. Rating & Evaluation',
-    defaultOptions: { min: 0, max: 100, step: 1 },
-  },
-  {
-    type: 'ranking',
-    title: 'Ranking',
-    description: 'Reorder a list of items based on priority.',
-    icon: <Icons.Ranking />,
-    category: '3. Rating & Evaluation',
-    defaultOptions: { choices: ['Item 1', 'Item 2', 'Item 3'] },
-  },
-
-  // 4. Text & Open-Ended Inputs
-  {
-    type: 'text_short',
-    title: 'Short Answer',
-    description: 'Single-line text box for brief responses.',
-    icon: <Icons.TextShort />,
-    category: '4. Text & Open-Ended Inputs',
-    defaultOptions: { inputType: 'text' },
-  },
-  {
-    type: 'text_long',
-    title: 'Paragraph',
-    description: 'Multi-line area for open-ended feedback.',
-    icon: <Icons.TextLong />,
-    category: '4. Text & Open-Ended Inputs',
-    defaultOptions: { rows: 4 },
-  },
-  {
-    type: 'multiple_textboxes',
-    title: 'Multiple Textboxes',
-    description: 'Group several short answer fields together.',
-    icon: <Icons.MultipleTextboxes />,
-    category: '4. Text & Open-Ended Inputs',
-    defaultOptions: { items: [{ name: 'item1', title: 'Item 1' }, { name: 'item2', title: 'Item 2' }] },
-  },
-  {
-    type: 'date',
-    title: 'Date / Calendar',
-    description: 'Standard date picker field for collecting dates.',
-    icon: <Icons.Calendar />,
-    category: '4. Text & Open-Ended Inputs',
-    defaultOptions: { dateFormat: 'yyyy-mm-dd' },
-  },
-
-  // 5. Matrix / Grid Inputs
   {
     type: 'matrix',
     title: 'Single Select Matrix',
     description: 'Grid evaluating items on a shared scale. Pick one per row.',
     icon: <Icons.MatrixSingle />,
-    category: '5. Matrix / Grid Inputs',
+    category: '3. Rating & Grid',
     defaultOptions: {
       rows: ['Row 1', 'Row 2', 'Row 3'],
       columns: ['Column 1', 'Column 2', 'Column 3'],
     },
-  },
-  {
-    type: 'matrix_dropdown',
-    title: 'Multi Select Matrix',
-    description: 'Grid allowing multiple selections per row via dropdowns.',
-    icon: <Icons.MatrixMulti />,
-    category: '5. Matrix / Grid Inputs',
-    defaultOptions: {
-      rows: ['Row 1', 'Row 2'],
-      columns: [{ name: 'col1', title: 'Column 1', cellType: 'dropdown', choices: ['A', 'B', 'C'] }],
-    },
-  },
-  {
-    type: 'matrix_dynamic',
-    title: 'Dynamic Matrix',
-    description: 'Grid where respondents can add/remove rows on the fly.',
-    icon: <Icons.MatrixDynamic />,
-    category: '5. Matrix / Grid Inputs',
-    defaultOptions: {
-      columns: [{ name: 'col1', title: 'Column 1' }],
-      rowCount: 2,
-    },
-  },
-
-  // 6. Advanced & Media Elements
-  {
-    type: 'expression',
-    title: 'fx Expression',
-    description: 'Calculated, read-only field using logical formulas.',
-    icon: <Icons.Expression />,
-    category: '6. Advanced & Media Elements',
-    defaultOptions: { expression: '', displayStyle: 'none' },
-  },
-  {
-    type: 'image',
-    title: 'Image',
-    description: 'Insert a static, non-interactive visual element.',
-    icon: <Icons.Image />,
-    category: '6. Advanced & Media Elements',
-    defaultOptions: { imageLink: '', imageHeight: '150px', imageWidth: 'auto' },
-  },
-  {
-    type: 'signature_pad',
-    title: 'Signature',
-    description: 'Digital canvas pad for physical signatures.',
-    icon: <Icons.Signature />,
-    category: '6. Advanced & Media Elements',
-    defaultOptions: { signatureWidth: 400, signatureHeight: 200 },
-  },
-  {
-    type: 'nps',
-    title: 'Net Promoter Score (NPS)',
-    description: 'Standard 0-10 NPS scale for loyalty measurement.',
-    icon: <Icons.NPS />,
-    category: '3. Rating & Evaluation',
-    defaultOptions: { npsMin: 0, npsMax: 10 },
-  },
-  {
-    type: 'file_upload',
-    title: 'File Upload',
-    description: 'Let respondents upload documents or images.',
-    icon: <Icons.FileUpload />,
-    category: '6. Advanced & Media Elements',
-    defaultOptions: { allowMultiple: false, maxSize: 10485760, acceptedTypes: 'image/*,.pdf,.doc,.docx' },
   },
 ];
 

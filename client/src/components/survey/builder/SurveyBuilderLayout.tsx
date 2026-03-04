@@ -83,6 +83,7 @@ const SurveyBuilderLayout: React.FC<SurveyBuilderLayoutProps> = ({
             {/* Configuration Panel - Right Sidebar */}
             <ConfigurationPanel
               question={selectedQuestion}
+              surveySettings={survey?.settings || {}}
               onUpdate={onUpdateQuestion}
               collapsed={configCollapsed}
               onToggleCollapse={() => setConfigCollapsed(!configCollapsed)}

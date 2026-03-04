@@ -127,6 +127,8 @@ export interface Question {
   orderIndex: number;
   createdAt: string;
   updatedAt: string;
+  categoryId?: string;
+  dimensionId?: string;
 }
 
 export interface QuestionTranslation {
