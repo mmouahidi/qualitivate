@@ -26,6 +26,8 @@ jobs:
             APP_DIR="${{ secrets.APP_DIR }}"
             cd "$APP_DIR"
             git config --global --add safe.directory "$APP_DIR"
+            git reset --hard HEAD
+            git clean -fd
             git pull
 
             # Install all workspace dependencies
