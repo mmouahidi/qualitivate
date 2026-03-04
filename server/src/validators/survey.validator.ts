@@ -78,8 +78,10 @@ export const updateSurveySchema: ValidationSchema = {
 // Get/Delete survey schema
 export const surveyIdSchema: ValidationSchema = {
     params: Joi.object({
-        id: Joi.string().uuid().required().messages({
-            'string.guid': 'Invalid survey ID format'
+        id: Joi.string().trim().uuid().required().messages({
+            'string.guid': 'Invalid survey ID format',
+            'string.uuid': 'Invalid survey ID format',
+            'any.required': 'Survey ID is required'
         })
     })
 };

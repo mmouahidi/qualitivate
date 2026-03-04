@@ -102,7 +102,8 @@ const SurveyEditor: React.FC = () => {
 
   const { data: survey } = useQuery({
     queryKey: ['survey', id],
-    queryFn: () => surveyService.get(id!)
+    queryFn: () => surveyService.get(id!),
+    enabled: !!id,
   });
 
   // Load survey settings when survey data loads
