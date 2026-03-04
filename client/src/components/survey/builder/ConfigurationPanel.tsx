@@ -212,18 +212,41 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   // Sync local values with question prop
   useEffect(() => {
     if (question) {
-      setLocalValues({
-        title: question.content || question.title || '',
-        description: question.description || '',
-        name: question.name || `question_${question.id?.slice(0, 8) || 'new'}`,
-        isRequired: question.is_required ?? question.isRequired ?? false,
-        visible: question.visible ?? true,
-        visibleIf: question.visibleIf || '',
-        enableIf: question.enableIf || '',
-        requiredIf: question.requiredIf || '',
-        categoryId: (question as any).category_id || (question as any).categoryId || '',
-        dimensionId: (question as any).dimension_id || (question as any).dimensionId || '',
-        ...question.options,
+      setLocalValues(prev => {
+        const title = question.content || question.title || '';
+        const description = question.description || '';
+        const name = question.name || `question_${question.id?.slice(0, 8) || 'new'}`;
+        const isRequired = question.is_required ?? question.isRequired ?? false;
+        const visible = question.visible ?? true;
+        const visibleIf = question.visibleIf || '';
+        const enableIf = question.enableIf || '';
+        const requiredIf = question.requiredIf || '';
+        const categoryId = (question as any).category_id || (question as any).categoryId || '';
+        const dimensionId = (question as any).dimension_id || (question as any).dimensionId || '';
+
+        const nextValues = {
+          title,
+          description,
+          name,
+          isRequired,
+          visible,
+          visibleIf,
+          enableIf,
+          requiredIf,
+          categoryId,
+          dimensionId,
+          ...question.options,
+        };
+
+        // Simple shallow compare to prevent infinite loops if options object is identical in content
+        const prevKeys = Object.keys(prev);
+        const nextKeys = Object.keys(nextValues);
+
+        if (prevKeys.length === nextKeys.length && prevKeys.every(k => prev[k] === nextValues[k])) {
+          return prev;
+        }
+
+        return nextValues;
       });
     }
   }, [question]);

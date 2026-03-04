@@ -77,11 +77,26 @@ const SurveyBuilder: React.FC = () => {
 
     React.useEffect(() => {
         if (survey?.settings) {
-            setSurveySettings({
-                welcomeMessage: survey.settings.welcomeMessage || '',
-                thankYouTitle: survey.settings.thankYouTitle || '',
-                thankYouMessage: survey.settings.thankYouMessage || '',
-                scoringMethod: survey.settings.scoringMethod || 'none',
+            setSurveySettings(prev => {
+                const welcomeMessage = survey.settings.welcomeMessage || '';
+                const thankYouTitle = survey.settings.thankYouTitle || '';
+                const thankYouMessage = survey.settings.thankYouMessage || '';
+                const scoringMethod = survey.settings.scoringMethod || 'none';
+
+                // Only update if values actually changed to prevent infinite loops
+                if (prev.welcomeMessage === welcomeMessage &&
+                    prev.thankYouTitle === thankYouTitle &&
+                    prev.thankYouMessage === thankYouMessage &&
+                    prev.scoringMethod === scoringMethod) {
+                    return prev;
+                }
+
+                return {
+                    welcomeMessage,
+                    thankYouTitle,
+                    thankYouMessage,
+                    scoringMethod
+                };
             });
         }
         if (survey) {
@@ -92,7 +107,17 @@ const SurveyBuilder: React.FC = () => {
             const emails = (survey as any).notification_emails || (survey as any).notificationEmails || [];
             setLocalNotificationEmails(Array.isArray(emails) ? emails.join(', ') : '');
         }
-    }, [survey?.settings, survey?.isAnonymous, survey?.isPublic, survey?.companyId]);
+    }, [
+        survey?.settings,
+        survey?.isAnonymous,
+        (survey as any)?.is_anonymous,
+        survey?.isPublic,
+        (survey as any)?.is_public,
+        survey?.companyId,
+        (survey as any)?.company_id,
+        (survey as any)?.notification_emails,
+        (survey as any)?.notificationEmails
+    ]);
 
     // Mutations
     const updateSurveyMutation = useMutation({
