@@ -18,9 +18,9 @@ export const validate = (schema: ValidationSchema) => {
     return (req: Request, res: Response, next: NextFunction) => {
         const errors: string[] = [];
 
-        // Validate body
+        // Validate body — allowUnknown so controllers decide which fields to use
         if (schema.body) {
-            const { error } = schema.body.validate(req.body, { abortEarly: false });
+            const { error } = schema.body.validate(req.body, { abortEarly: false, allowUnknown: true });
             if (error) {
                 errors.push(...error.details.map(d => d.message));
             }
