@@ -839,7 +839,6 @@ const TakeSurvey: React.FC = () => {
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('survey.error')}</h2>
           <p className="text-gray-600 mb-6">{t('survey.questionNotFound')}</p>
-          <p className="text-xs text-gray-400 mb-4">Debug: Index {currentQuestionIndex} of {survey?.questions?.length || 0} questions</p>
           <button
             onClick={() => {
               setCurrentQuestionIndex(0);
