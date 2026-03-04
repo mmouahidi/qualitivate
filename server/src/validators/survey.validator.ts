@@ -59,7 +59,9 @@ export const updateSurveySchema: ValidationSchema = {
         // Backward-compat alias
         allowAnonymous: Joi.boolean().optional(),
         defaultLanguage: Joi.string().min(2).max(5).optional(),
+        companyId: Joi.string().uuid().allow(null, '').optional(),
         settings: Joi.object().unknown(true).optional(),
+        notificationEmails: Joi.array().items(Joi.string().trim().min(1)).allow(null).optional(),
         startsAt: Joi.date().iso().allow(null).optional(),
         endsAt: Joi.date().iso().allow(null).optional(),
         schema: Joi.object().unknown(true).optional(),
