@@ -44,7 +44,7 @@ export const listQuestions = async (req: AuthRequest, res: Response) => {
 export const createQuestion = async (req: AuthRequest, res: Response) => {
   try {
     const { surveyId } = req.params;
-    const { type, content, options = {}, isRequired = false } = req.body;
+    const { type, content, options = {}, isRequired = false, categoryId, dimensionId } = req.body;
     const user = req.user!;
 
     // Validate required fields
@@ -97,7 +97,9 @@ export const createQuestion = async (req: AuthRequest, res: Response) => {
         content,
         options,
         is_required: isRequired,
-        order_index: orderIndex
+        order_index: orderIndex,
+        category_id: categoryId || null,
+        dimension_id: dimensionId || null,
       })
       .returning('*');
 
@@ -114,7 +116,7 @@ export const createQuestion = async (req: AuthRequest, res: Response) => {
 export const updateQuestion = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { type, content, options, isRequired } = req.body;
+    const { type, content, options, isRequired, categoryId, dimensionId } = req.body;
     const user = req.user!;
 
     const question = await db('questions')
@@ -170,6 +172,10 @@ export const updateQuestion = async (req: AuthRequest, res: Response) => {
       }
       updateData.options = options;
     }
+
+    // Taxonomy classification
+    if (categoryId !== undefined) updateData.category_id = categoryId || null;
+    if (dimensionId !== undefined) updateData.dimension_id = dimensionId || null;
 
     const [updatedQuestion] = await db('questions')
       .where({ id })

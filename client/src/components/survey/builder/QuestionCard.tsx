@@ -19,6 +19,7 @@ interface QuestionCardProps {
     onDelete: () => void;
     onDuplicate: () => void;
     availableTargets?: Array<{ id: string; content: string; orderIndex: number }>;
+    scoringMethod?: string;
 }
 
 const QuestionTypeIcons: Record<QuestionType, { icon: string; label: string; color: string }> = {
@@ -66,6 +67,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     onDelete,
     onDuplicate,
     availableTargets = [],
+    scoringMethod,
 }) => {
     const [localContent, setLocalContent] = useState(question.content || '');
     const [localRequired, setLocalRequired] = useState(question.is_required);
@@ -96,13 +98,32 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         setLocalLogicRules(question.options?.logicRules || []);
     }, [question.id]);
 
-    // Handle click outside to save and deactivate
+    // State-based toggle: panel stays open until explicit close action
+    // Only deactivate when clicking on the empty canvas (outside card, config panel, toolbox, modals)
     useEffect(() => {
+        if (!isActive) return;
+
         const handleClickOutside = (event: MouseEvent) => {
-            if (isActive && cardRef.current && !cardRef.current.contains(event.target as Node)) {
-                handleSave();
-                onDeactivate();
-            }
+            const target = event.target as HTMLElement;
+
+            // Keep active: click inside this card
+            if (cardRef.current && cardRef.current.contains(target)) return;
+
+            // Keep active: click inside configuration panel
+            if (target.closest('[data-config-panel]')) return;
+
+            // Keep active: click inside toolbox
+            if (target.closest('[data-toolbox]')) return;
+
+            // Keep active: click inside any modal overlay or dialog
+            if (target.closest('.modal-overlay') || target.closest('[role="dialog"]')) return;
+
+            // Keep active: click on another QuestionCard (the other card's onActivate will switch activeQuestionId)
+            if (target.closest('[data-question-card]')) return;
+
+            // Explicit close: clicking on empty canvas area — save and deactivate
+            handleSave();
+            onDeactivate();
         };
 
         document.addEventListener('mousedown', handleClickOutside);
@@ -426,6 +447,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
             }}
             style={style}
+            data-question-card="true"
             className={`
         bg-surface rounded-xl border-2 transition-all duration-200 mb-4
         ${isActive

@@ -6,7 +6,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { ExtendedQuestionType, Validator, ValidatorType } from '../../../types';
+import { taxonomyService } from '../../../services/taxonomy.service';
 
 interface ConfigurationPanelProps {
   question: any | null;
@@ -17,7 +19,7 @@ interface ConfigurationPanelProps {
 }
 
 // Section collapse state
-type SectionName = 'general' | 'settings' | 'conditions' | 'validation';
+type SectionName = 'general' | 'settings' | 'classification' | 'conditions' | 'validation';
 
 // Icons
 const Icons = {
@@ -219,6 +221,8 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
         visibleIf: question.visibleIf || '',
         enableIf: question.enableIf || '',
         requiredIf: question.requiredIf || '',
+        categoryId: (question as any).category_id || (question as any).categoryId || '',
+        dimensionId: (question as any).dimension_id || (question as any).dimensionId || '',
         ...question.options,
       });
     }
@@ -251,6 +255,10 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
         onUpdate({ content: value });
       } else if (key === 'isRequired') {
         onUpdate({ isRequired: value });
+      } else if (key === 'categoryId') {
+        onUpdate({ categoryId: value || null });
+      } else if (key === 'dimensionId') {
+        onUpdate({ dimensionId: value || null });
       } else if (['visibleIf', 'enableIf', 'requiredIf', 'description', 'name', 'visible'].includes(key)) {
         onUpdate({ [key]: value });
       } else {
@@ -263,7 +271,7 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   // Collapsed view
   if (collapsed) {
     return (
-      <div className={`w-12 bg-surface border-l border-border flex flex-col items-center py-4 ${className}`}>
+      <div data-config-panel="true" className={`w-12 bg-surface border-l border-border flex flex-col items-center py-4 ${className}`}>
         <button
           onClick={onToggleCollapse}
           className="p-2 text-text-muted hover:text-text-primary rounded hover:bg-surface-hover"
@@ -281,7 +289,7 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   // Empty state
   if (!question) {
     return (
-      <div className={`w-72 bg-surface border-l border-border flex flex-col ${className}`}>
+      <div data-config-panel="true" className={`w-72 bg-surface border-l border-border flex flex-col ${className}`}>
         <div className="p-3 border-b border-border flex items-center justify-between">
           <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Configuration</span>
           {onToggleCollapse && (
@@ -307,6 +315,17 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   }
 
   const typeSettings = TYPE_SETTINGS[question.type] || [];
+
+  // Fetch taxonomy categories for classification dropdown
+  const { data: taxonomyData } = useQuery({
+    queryKey: ['taxonomy-categories'],
+    queryFn: () => taxonomyService.listCategories(),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const categories = taxonomyData?.data || [];
+  const selectedCategory = categories.find((c: any) => c.id === localValues.categoryId);
+  const availableDimensions = selectedCategory?.dimensions || [];
 
   const renderSectionHeader = (section: SectionName, label: string) => (
     <button
@@ -389,7 +408,7 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   };
 
   return (
-    <div className={`w-72 bg-surface border-l border-border flex flex-col ${className}`}>
+    <div data-config-panel="true" className={`w-80 bg-surface border-l border-border flex flex-col h-full ${className}`}>
       {/* Header */}
       <div className="p-3 border-b border-border flex items-center justify-between">
         <div>
@@ -443,6 +462,51 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
               </div>
             )}
           </>
+        )}
+
+        {/* Classification Section */}
+        {renderSectionHeader('classification', '🏷️ Classification')}
+        {expandedSections.includes('classification') && (
+          <div className="px-4 py-3 border-b border-border">
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">Category</label>
+              <select
+                value={localValues.categoryId || ''}
+                onChange={(e) => {
+                  handleChange('categoryId', e.target.value);
+                  // Reset dimension when category changes
+                  handleChange('dimensionId', '');
+                }}
+                className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">No category</option>
+                {categories.map((cat: any) => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+            {localValues.categoryId && (
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">Dimension</label>
+                <select
+                  value={localValues.dimensionId || ''}
+                  onChange={(e) => handleChange('dimensionId', e.target.value)}
+                  className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">No dimension</option>
+                  {availableDimensions.map((dim: any) => (
+                    <option key={dim.id} value={dim.id}>{dim.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {localValues.categoryId && localValues.dimensionId && (
+              <p className="text-xs text-text-muted flex items-center gap-1">
+                <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
+                {selectedCategory?.name} → {availableDimensions.find((d: any) => d.id === localValues.dimensionId)?.name}
+              </p>
+            )}
+          </div>
         )}
 
         {/* Conditions Section */}

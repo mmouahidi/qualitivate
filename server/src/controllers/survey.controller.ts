@@ -235,7 +235,9 @@ export const updateSurvey = async (req: AuthRequest, res: Response) => {
       defaultLanguage,
       settings,
       startsAt,
-      endsAt
+      endsAt,
+      notificationEmails,
+      companyId
     } = req.body;
 
     const user = req.user!;
@@ -303,6 +305,18 @@ export const updateSurvey = async (req: AuthRequest, res: Response) => {
     }
     if (startsAt !== undefined) updateData.starts_at = startsAt;
     if (endsAt !== undefined) updateData.ends_at = endsAt;
+
+    // Notification emails
+    if (notificationEmails !== undefined) {
+      if (Array.isArray(notificationEmails)) {
+        updateData.notification_emails = JSON.stringify(notificationEmails);
+      }
+    }
+
+    // Company targeting (super_admin only)
+    if (companyId !== undefined && user.role === 'super_admin') {
+      updateData.company_id = companyId || null;
+    }
 
     const [updatedSurvey] = await db('surveys')
       .where({ id })

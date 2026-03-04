@@ -187,6 +187,14 @@ const Icons = {
       <line x1="18" y1="8" x2="18" y2="16" />
     </svg>
   ),
+  Calendar: () => (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  ),
   Search: () => (
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="11" cy="11" r="8" />
@@ -334,6 +342,14 @@ export const TOOLBOX_ITEMS: ToolboxItem[] = [
     category: '4. Text & Open-Ended Inputs',
     defaultOptions: { items: [{ name: 'item1', title: 'Item 1' }, { name: 'item2', title: 'Item 2' }] },
   },
+  {
+    type: 'date',
+    title: 'Date / Calendar',
+    description: 'Standard date picker field for collecting dates.',
+    icon: <Icons.Calendar />,
+    category: '4. Text & Open-Ended Inputs',
+    defaultOptions: { dateFormat: 'yyyy-mm-dd' },
+  },
 
   // 5. Matrix / Grid Inputs
   {
@@ -395,6 +411,22 @@ export const TOOLBOX_ITEMS: ToolboxItem[] = [
     category: '6. Advanced & Media Elements',
     defaultOptions: { signatureWidth: 400, signatureHeight: 200 },
   },
+  {
+    type: 'nps',
+    title: 'Net Promoter Score (NPS)',
+    description: 'Standard 0-10 NPS scale for loyalty measurement.',
+    icon: <Icons.NPS />,
+    category: '3. Rating & Evaluation',
+    defaultOptions: { npsMin: 0, npsMax: 10 },
+  },
+  {
+    type: 'file_upload',
+    title: 'File Upload',
+    description: 'Let respondents upload documents or images.',
+    icon: <Icons.FileUpload />,
+    category: '6. Advanced & Media Elements',
+    defaultOptions: { allowMultiple: false, maxSize: 10485760, acceptedTypes: 'image/*,.pdf,.doc,.docx' },
+  },
 ];
 
 const EnhancedToolbox: React.FC<EnhancedToolboxProps> = ({
@@ -420,7 +452,7 @@ const EnhancedToolbox: React.FC<EnhancedToolboxProps> = ({
   // Collapsed view - just icons
   if (collapsed) {
     return (
-      <div className={`w-14 bg-surface border-r border-border flex flex-col ${className}`}>
+      <div data-toolbox="true" className={`w-14 bg-surface border-r border-border flex flex-col ${className}`}>
         <button
           onClick={onToggleCollapse}
           className="p-3 border-b border-border hover:bg-surface-hover flex justify-center"
@@ -445,7 +477,7 @@ const EnhancedToolbox: React.FC<EnhancedToolboxProps> = ({
   }
 
   return (
-    <div className={`w-64 bg-surface border-r border-border flex flex-col ${className}`}>
+    <div data-toolbox="true" className={`w-64 bg-surface border-r border-border flex flex-col ${className}`}>
       {/* Header with search */}
       <div className="p-3 border-b border-border">
         <div className="flex items-center justify-between mb-3">
@@ -525,7 +557,7 @@ const EnhancedToolbox: React.FC<EnhancedToolboxProps> = ({
       {/* Footer tip */}
       <div className="p-3 border-t border-border bg-background/50">
         <p className="text-xs text-text-muted">
-          💡 Click to add or drag to canvas
+          💡 Click to add to canvas
         </p>
       </div>
     </div>

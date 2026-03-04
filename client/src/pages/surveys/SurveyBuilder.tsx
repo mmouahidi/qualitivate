@@ -39,12 +39,14 @@ const SurveyBuilder: React.FC = () => {
     const [surveySettings, setSurveySettings] = useState({
         welcomeMessage: '',
         thankYouTitle: '',
-        thankYouMessage: ''
+        thankYouMessage: '',
+        scoringMethod: 'none',
     });
     const [localIsAnonymous, setLocalIsAnonymous] = useState(false);
     const [localIsPublic, setLocalIsPublic] = useState(false);
     const [localCompanyId, setLocalCompanyId] = useState('');
     const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
+    const [localNotificationEmails, setLocalNotificationEmails] = useState('');
 
     // Fetch companies for targeting (super_admin only)
     const { data: companiesData } = useQuery({
@@ -78,13 +80,17 @@ const SurveyBuilder: React.FC = () => {
             setSurveySettings({
                 welcomeMessage: survey.settings.welcomeMessage || '',
                 thankYouTitle: survey.settings.thankYouTitle || '',
-                thankYouMessage: survey.settings.thankYouMessage || ''
+                thankYouMessage: survey.settings.thankYouMessage || '',
+                scoringMethod: survey.settings.scoringMethod || 'none',
             });
         }
         if (survey) {
-            setLocalIsAnonymous(survey.isAnonymous ?? false);
-            setLocalIsPublic(survey.isPublic ?? false);
-            setLocalCompanyId(survey.companyId || '');
+            setLocalIsAnonymous(survey.isAnonymous ?? (survey as any).is_anonymous ?? false);
+            setLocalIsPublic(survey.isPublic ?? (survey as any).is_public ?? false);
+            setLocalCompanyId(survey.companyId || (survey as any).company_id || '');
+            // Parse notification_emails from survey data
+            const emails = (survey as any).notification_emails || (survey as any).notificationEmails || [];
+            setLocalNotificationEmails(Array.isArray(emails) ? emails.join(', ') : '');
         }
     }, [survey?.settings, survey?.isAnonymous, survey?.isPublic, survey?.companyId]);
 
@@ -224,6 +230,10 @@ const SurveyBuilder: React.FC = () => {
             settings: surveySettings,
             isAnonymous: localIsAnonymous,
             isPublic: localIsPublic,
+            notificationEmails: localNotificationEmails
+                .split(/[,;\n]+/)
+                .map((e: string) => e.trim())
+                .filter((e: string) => e.length > 0 && e.includes('@')),
         };
         if (isSuperAdmin) {
             payload.companyId = localCompanyId || null;
@@ -324,6 +334,7 @@ const SurveyBuilder: React.FC = () => {
                             onDelete={() => handleDeleteQuestion(question.id)}
                             onDuplicate={() => handleDuplicateQuestion(question)}
                             availableTargets={availableTargets}
+                            scoringMethod={surveySettings.scoringMethod}
                         />
                     ))}
                 </SortableContext>
@@ -661,6 +672,49 @@ const SurveyBuilder: React.FC = () => {
                                     className="textarea-soft"
                                     placeholder="Your response has been submitted successfully."
                                 />
+                            </div>
+
+                            {/* Notification Settings */}
+                            <div className="mb-6 p-4 bg-surface rounded-lg border border-border">
+                                <h3 className="text-sm font-semibold text-text-primary mb-2">📬 Notification Settings</h3>
+                                <p className="text-xs text-text-muted mb-3">Enter email addresses to receive full response data when someone completes this survey.</p>
+                                <textarea
+                                    value={localNotificationEmails}
+                                    onChange={(e) => setLocalNotificationEmails(e.target.value)}
+                                    rows={3}
+                                    className="textarea-soft"
+                                    placeholder="admin@company.com, qa@company.com"
+                                />
+                                <p className="text-xs text-text-muted mt-1">Separate multiple emails with commas, semicolons, or new lines.</p>
+                            </div>
+
+                            {/* Scoring Method */}
+                            <div className="mb-6 p-4 bg-surface rounded-lg border border-border">
+                                <h3 className="text-sm font-semibold text-text-primary mb-2">🎯 Scoring Method</h3>
+                                <p className="text-xs text-text-muted mb-3">This scoring method applies uniformly to all questions in this survey.</p>
+                                <div className="space-y-2">
+                                    {[
+                                        { value: 'none', label: 'None', desc: 'No scoring' },
+                                        { value: 'note', label: 'Note (1-10)', desc: 'Numeric score out of 10' },
+                                        { value: 'percent', label: 'Percent (0-100%)', desc: 'Percentage-based scoring' },
+                                        { value: 'abc', label: 'A / B / C Grades', desc: 'Letter grade classification' },
+                                    ].map((opt) => (
+                                        <label key={opt.value} className="flex items-start gap-3 p-2 rounded-lg hover:bg-surface-hover cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="scoringMethod"
+                                                value={opt.value}
+                                                checked={surveySettings.scoringMethod === opt.value}
+                                                onChange={(e) => setSurveySettings(prev => ({ ...prev, scoringMethod: e.target.value }))}
+                                                className="mt-0.5 w-4 h-4 text-primary-600 border-border focus:ring-primary-500"
+                                            />
+                                            <div>
+                                                <span className="text-sm font-medium text-text-primary">{opt.label}</span>
+                                                <p className="text-xs text-text-muted">{opt.desc}</p>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
                             </div>
                             <div className="flex justify-end gap-3 mt-6">
                                 <button

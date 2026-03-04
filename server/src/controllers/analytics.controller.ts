@@ -514,6 +514,46 @@ export const getSurveyAnalytics = async (req: AuthRequest, res: Response) => {
       ? Math.round((completedResponses / totalResponses) * 100)
       : 0;
 
+    // Calculate survey-level scoring if configured
+    let scoringStats = null;
+    const scoringMethod = survey.settings?.scoringMethod;
+    if (scoringMethod && scoringMethod !== 'none') {
+      const allAnswers = await db('answers')
+        .join('responses', 'answers.response_id', 'responses.id')
+        .where('responses.survey_id', surveyId)
+        .where('responses.status', 'completed')
+        .select('answers.value');
+
+      const numericScores = allAnswers
+        .map((a: any) => getNumericAnswer(a.value))
+        .filter((v): v is number => v !== null);
+
+      if (numericScores.length > 0) {
+        const sum = numericScores.reduce((a: number, b: number) => a + b, 0);
+        const average = Math.round((sum / numericScores.length) * 100) / 100;
+
+        let formattedScore = String(average);
+        if (scoringMethod === 'percent') {
+          formattedScore = `${average}%`;
+        } else if (scoringMethod === 'note') {
+          formattedScore = `${average}/10`;
+        } else if (scoringMethod === 'abc') {
+          if (average >= 90) formattedScore = 'A';
+          else if (average >= 80) formattedScore = 'B';
+          else if (average >= 70) formattedScore = 'C';
+          else if (average >= 60) formattedScore = 'D';
+          else formattedScore = 'F';
+        }
+
+        scoringStats = {
+          method: scoringMethod,
+          average,
+          formatted: formattedScore,
+          dataPoints: numericScores.length
+        };
+      }
+    }
+
     res.json({
       survey: {
         id: survey.id,
@@ -531,7 +571,8 @@ export const getSurveyAnalytics = async (req: AuthRequest, res: Response) => {
         completionRate,
         avgCompletionTimeSeconds: Math.round(avgCompletionTime?.avg_seconds || 0),
         firstResponseAt: responseStats?.first_response,
-        lastResponseAt: responseStats?.last_response
+        lastResponseAt: responseStats?.last_response,
+        scoring: scoringStats
       },
       nps: npsData,
       trend: responseTrend,
@@ -1092,9 +1133,9 @@ export const getCompanyAnalytics = async (req: AuthRequest, res: Response) => {
 
     let overallNps = null;
     if (npsAnswers.length > 0) {
-    const scores = npsAnswers
-      .map((a: any) => getNumericAnswer(a.value))
-      .filter((s): s is number => s !== null);
+      const scores = npsAnswers
+        .map((a: any) => getNumericAnswer(a.value))
+        .filter((s): s is number => s !== null);
 
       if (scores.length > 0) {
         const promoters = scores.filter((s: number) => s >= 9).length;

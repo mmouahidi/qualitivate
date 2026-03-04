@@ -4,6 +4,49 @@ import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import logger from '../config/logger';
 import { UAParser } from 'ua-parser-js';
+import { sendResponseNotification } from '../services/email.service';
+
+// Fire-and-forget: send notification emails after a response is completed
+const triggerResponseNotification = async (surveyId: string, responseId: string) => {
+  try {
+    const survey = await db('surveys').where({ id: surveyId }).select('title', 'notification_emails', 'is_anonymous').first();
+    if (!survey) return;
+
+    const emails: string[] = Array.isArray(survey.notification_emails) ? survey.notification_emails : [];
+    if (emails.length === 0) return;
+
+    // Fetch respondent info
+    const response = await db('responses').where({ id: responseId }).first();
+    let respondentInfo = 'Anonymous';
+    if (!survey.is_anonymous && response?.respondent_id) {
+      const user = await db('users').where({ id: response.respondent_id }).select('email', 'first_name', 'last_name').first();
+      if (user) respondentInfo = `${user.first_name} ${user.last_name} (${user.email})`;
+    }
+
+    // Fetch all answers with question content
+    const answersData = await db('answers')
+      .join('questions', 'answers.question_id', 'questions.id')
+      .where({ 'answers.response_id': responseId })
+      .select('questions.content as question', 'answers.value')
+      .orderBy('questions.order_index', 'asc');
+
+    const formattedAnswers = answersData.map((a: any) => {
+      let parsed = a.value;
+      try { parsed = JSON.parse(a.value); } catch { /* keep raw */ }
+      return { question: a.question, answer: Array.isArray(parsed) ? parsed.join(', ') : String(parsed) };
+    });
+
+    await sendResponseNotification({
+      to: emails,
+      surveyTitle: survey.title,
+      respondentInfo,
+      answers: formattedAnswers,
+      submittedAt: new Date().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }),
+    });
+  } catch (err) {
+    logger.error('Response notification email failed (non-blocking):', { error: err });
+  }
+};
 
 // Get public survey for responding
 // Public surveys: no auth required
@@ -291,6 +334,9 @@ export const submitAnswers = async (req: Request, res: Response) => {
         });
     });
 
+    // Fire-and-forget email notification
+    triggerResponseNotification(response.survey_id, responseId);
+
     res.json({ message: 'Survey submitted successfully' });
   } catch (error) {
     logger.error('Submit answers error:', { error });
@@ -338,6 +384,9 @@ export const completeResponse = async (req: Request, res: Response) => {
         status: 'completed',
         completed_at: new Date()
       });
+
+    // Fire-and-forget email notification
+    triggerResponseNotification(response.survey_id, responseId);
 
     res.json({ message: 'Survey completed successfully' });
   } catch (error) {
