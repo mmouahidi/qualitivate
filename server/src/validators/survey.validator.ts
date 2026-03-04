@@ -59,10 +59,10 @@ export const updateSurveySchema: ValidationSchema = {
         // Backward-compat alias
         allowAnonymous: Joi.boolean().optional(),
         defaultLanguage: Joi.string().min(2).max(5).optional(),
-        settings: Joi.object().optional(),
+        settings: Joi.object().unknown(true).optional(),
         startsAt: Joi.date().iso().allow(null).optional(),
         endsAt: Joi.date().iso().allow(null).optional(),
-        schema: Joi.object().optional(),
+        schema: Joi.object().unknown(true).optional(),
     }).custom((value, helpers) => {
         if (value.startsAt && value.endsAt) {
             if (new Date(value.endsAt) <= new Date(value.startsAt)) {
