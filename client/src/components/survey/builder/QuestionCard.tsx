@@ -96,7 +96,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         setLocalCorrectAnswers(question.options?.correctAnswers || []);
         setLocalQuizMode(!!(question.options?.correctAnswers && question.options.correctAnswers.length > 0));
         setLocalLogicRules(question.options?.logicRules || []);
-    }, [question.id]);
+    }, [question.id, question.content, question.is_required, question.options]);
 
     // State-based toggle: panel stays open until explicit close action
     // Only deactivate when clicking on the empty canvas (outside card, config panel, toolbox, modals)
@@ -135,25 +135,18 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         if (sanitizedContent !== localContent) {
             setLocalContent(sanitizedContent);
         }
-        const nextOptions: Record<string, any> = { ...(question.options || {}) };
-        if (hasChoices(question.type)) {
-            nextOptions.choices = localChoices;
-            if (localQuizMode) {
-                nextOptions.correctAnswers = localCorrectAnswers;
-            } else {
-                delete nextOptions.correctAnswers;
-            }
-        }
-        if (localLogicRules.length > 0) {
-            nextOptions.logicRules = localLogicRules;
-        } else if ('logicRules' in nextOptions) {
-            delete nextOptions.logicRules;
-        }
-        onUpdate({
+        const updates: Record<string, any> = {
             content: sanitizedContent,
             isRequired: localRequired,
-            options: nextOptions,
-        });
+        };
+        if (localLogicRules.length > 0) {
+            updates.options = { ...(question.options || {}), logicRules: localLogicRules };
+        } else if (question.options?.logicRules) {
+            const opts = { ...(question.options || {}) };
+            delete opts.logicRules;
+            updates.options = opts;
+        }
+        onUpdate(updates);
     };
 
     const handleAddChoice = () => {

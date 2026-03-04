@@ -160,51 +160,23 @@ const SurveyRespond: React.FC = () => {
 
       case 'multiple_choice':
         const multiChoices = getChoices(question.options);
-        if (multiChoices.length === 0) {
-          // Fallback: render as single_choice with Yes/No/Don't know for questions without choices
-          const defaultChoices = ['Oui / نعم', 'Non / لا', 'Je ne sais pas / لا أعرف'];
-          return (
-            <div className="space-y-3">
-              {defaultChoices.map((option, idx) => (
-                <label
-                  key={idx}
-                  className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${value === option ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                >
-                  <input
-                    type="radio"
-                    name={question.id}
-                    value={option}
-                    checked={value === option}
-                    onChange={() => handleAnswer(option)}
-                    className="w-5 h-5 text-primary-600"
-                  />
-                  <span className="ml-3 text-lg">{option}</span>
-                </label>
-              ))}
-            </div>
-          );
-        }
+        const mcChoices = multiChoices.length > 0
+          ? multiChoices
+          : ['Oui / نعم', 'Non / لا', 'Je ne sais pas / لا أعرف'];
         return (
           <div className="space-y-3">
-            {multiChoices.map((option, idx) => (
+            {mcChoices.map((option, idx) => (
               <label
                 key={idx}
-                className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${(value || []).includes(option) ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-gray-400'
+                className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${value === option ? 'border-primary-500 bg-primary-50' : 'border-gray-300 hover:border-gray-400'
                   }`}
               >
                 <input
-                  type="checkbox"
+                  type="radio"
+                  name={question.id}
                   value={option}
-                  checked={(value || []).includes(option)}
-                  onChange={(e) => {
-                    const current = value || [];
-                    if (e.target.checked) {
-                      handleAnswer([...current, option]);
-                    } else {
-                      handleAnswer(current.filter((v: string) => v !== option));
-                    }
-                  }}
+                  checked={value === option}
+                  onChange={() => handleAnswer(option)}
                   className="w-5 h-5 text-primary-600"
                 />
                 <span className="ml-3 text-lg">{option}</span>

@@ -427,7 +427,6 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
         {type === 'choices' && (
           <ChoicesEditor
             value={value || []}
-            scoringEnabled={surveySettings?.scoringMethod && surveySettings.scoringMethod !== 'none'}
             onChange={(newChoices) => handleChange(key, newChoices)}
           />
         )}
@@ -465,9 +464,7 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
             {renderField('Name', 'text', 'name', { placeholder: 'question_name' })}
             {renderField('Required', 'boolean', 'isRequired')}
             {renderField('Visible', 'boolean', 'visible')}
-            {surveySettings?.scoringMethod && surveySettings.scoringMethod !== 'none' && (
-              renderField('Max Score / Weight', 'number', 'maxScore')
-            )}
+            {renderField('Max Score / Weight', 'number', 'maxScore')}
           </div>
         )}
 
@@ -570,15 +567,20 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
 
 // Choices Editor Sub-component
 const ChoicesEditor: React.FC<{
-  value: (string | { value: string; text?: string; score?: number })[];
+  value: (string | { value: string; text?: string; description?: string; score?: number })[];
   scoringEnabled?: boolean;
   onChange: (value: any[]) => void;
-}> = ({ value, scoringEnabled, onChange }) => {
+}> = ({ value, onChange }) => {
   const [newChoice, setNewChoice] = useState('');
+
+  const toObj = (c: any): { value: string; description?: string; score?: number } => {
+    if (typeof c === 'string') return { value: c };
+    return c;
+  };
 
   const addChoice = () => {
     if (newChoice.trim()) {
-      onChange([...value, scoringEnabled ? { value: newChoice.trim(), score: 0 } : newChoice.trim()]);
+      onChange([...value, { value: newChoice.trim(), score: 0 }]);
       setNewChoice('');
     }
   };
@@ -587,61 +589,51 @@ const ChoicesEditor: React.FC<{
     onChange(value.filter((_, i) => i !== index));
   };
 
-  const updateChoice = (index: number, newValue: string) => {
+  const updateField = (index: number, field: string, val: any) => {
     const updated = [...value];
-    const current = updated[index];
-    if (typeof current === 'object' && current !== null) {
-      updated[index] = { ...current, value: newValue };
-    } else {
-      updated[index] = newValue;
-    }
-    onChange(updated);
-  };
-
-  const updateChoiceScore = (index: number, scoreStr: string) => {
-    const score = parseFloat(scoreStr) || 0;
-    const updated = [...value];
-    const current = updated[index];
-    if (typeof current === 'string') {
-      updated[index] = { value: current, score };
-    } else {
-      updated[index] = { ...current, score };
-    }
+    const obj = toObj(updated[index]);
+    updated[index] = { ...obj, [field]: val };
     onChange(updated);
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {value.map((choice, index) => {
-        const choiceValue = typeof choice === 'string' ? choice : choice.value;
-        const choiceScore = typeof choice === 'object' && choice.score !== undefined ? choice.score : 0;
+        const obj = toObj(choice);
 
         return (
-          <div key={index} className="flex items-center gap-2">
-            <input
-              type="text"
-              value={choiceValue}
-              onChange={(e) => updateChoice(index, e.target.value)}
-              className="flex-1 px-2 py-1.5 text-sm bg-background border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="Choice text"
-            />
-            {scoringEnabled && (
+          <div key={index} className="p-2 bg-background rounded-lg border border-border space-y-1.5">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={obj.value}
+                onChange={(e) => updateField(index, 'value', e.target.value)}
+                className="flex-1 px-2 py-1.5 text-sm bg-surface border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="Choice text"
+              />
               <input
                 type="number"
-                value={choiceScore}
-                onChange={(e) => updateChoiceScore(index, e.target.value)}
-                className="w-16 px-2 py-1.5 text-sm bg-background border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                value={obj.score ?? 0}
+                onChange={(e) => updateField(index, 'score', parseFloat(e.target.value) || 0)}
+                className="w-16 px-2 py-1.5 text-sm bg-surface border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="Pts"
-                title="Points/Score for this choice"
+                title="Score / Note"
               />
-            )}
-            <button
-              onClick={() => removeChoice(index)}
-              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
-              title="Remove choice"
-            >
-              <Icons.Trash />
-            </button>
+              <button
+                onClick={() => removeChoice(index)}
+                className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
+                title="Remove choice"
+              >
+                <Icons.Trash />
+              </button>
+            </div>
+            <input
+              type="text"
+              value={obj.description || ''}
+              onChange={(e) => updateField(index, 'description', e.target.value)}
+              className="w-full px-2 py-1 text-xs bg-surface border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary-500 text-text-muted"
+              placeholder="Answer description (optional)"
+            />
           </div>
         );
       })}

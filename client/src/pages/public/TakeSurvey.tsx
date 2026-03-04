@@ -416,38 +416,28 @@ const TakeSurvey: React.FC = () => {
         const multiChoices = getChoices(question.options);
         return (
           <div className="space-y-3">
-            {multiChoices.map((option, idx) => {
-              const isSelected = (value || []).includes(option);
-              return (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    const current = value || [];
-                    if (isSelected) {
-                      handleAnswer(current.filter((v: string) => v !== option));
-                    } else {
-                      handleAnswer([...current, option]);
-                    }
-                  }}
-                  className={`w-full text-left p-4 border-2 rounded-xl transition-all ${isSelected
-                    ? 'border-primary-500 bg-primary-50 shadow-md'
-                    : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50'
-                    }`}
-                >
-                  <div className="flex items-center">
-                    <div className={`w-6 h-6 rounded border-2 flex items-center justify-center mr-4 ${isSelected ? 'border-primary-500 bg-primary-500' : 'border-gray-300'
-                      }`}>
-                      {isSelected && (
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
-                    <span className="text-lg text-gray-800">{option}</span>
+            {multiChoices.map((option, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleAnswer(option)}
+                className={`w-full text-left p-4 border-2 rounded-xl transition-all ${value === option
+                  ? 'border-primary-500 bg-primary-50 shadow-md'
+                  : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50'
+                  }`}
+              >
+                <div className="flex items-center">
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 ${value === option ? 'border-primary-500 bg-primary-500' : 'border-gray-300'
+                    }`}>
+                    {value === option && (
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
                   </div>
-                </button>
-              );
-            })}
+                  <span className="text-lg text-gray-800">{option}</span>
+                </div>
+              </button>
+            ))}
           </div>
         );
 
