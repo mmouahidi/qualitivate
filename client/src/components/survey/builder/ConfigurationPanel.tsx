@@ -211,6 +211,13 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   const [expandedSections, setExpandedSections] = useState<SectionName[]>(['general', 'settings']);
   const [localValues, setLocalValues] = useState<Record<string, any>>({});
 
+  // Fetch taxonomy categories (must be before any early returns to satisfy Rules of Hooks)
+  const { data: taxonomyData } = useQuery({
+    queryKey: ['taxonomy-categories'],
+    queryFn: () => taxonomyService.listCategories(),
+    staleTime: 10 * 60 * 1000,
+  });
+
   // Sync local values with question prop
   useEffect(() => {
     if (question) {
@@ -342,13 +349,6 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   }
 
   const typeSettings = TYPE_SETTINGS[question.type] || [];
-
-  // Fetch taxonomy categories for classification dropdown
-  const { data: taxonomyData } = useQuery({
-    queryKey: ['taxonomy-categories'],
-    queryFn: () => taxonomyService.listCategories(),
-    staleTime: 10 * 60 * 1000,
-  });
 
   const categories = taxonomyData?.data || [];
   const selectedCategory = categories.find((c: any) => c.id === localValues.categoryId);
