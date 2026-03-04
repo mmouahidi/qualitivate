@@ -55,6 +55,9 @@ const QuestionTypeIcons: Record<QuestionType, { icon: string; label: string; col
 const hasChoices = (type: QuestionType) =>
     ['multiple_choice', 'dropdown', 'yes_no', 'ranking', 'image_choice', 'checkbox', 'image_picker', 'multiselect_dropdown'].includes(type);
 
+const choiceLabel = (c: any): string =>
+    typeof c === 'object' && c !== null ? (c.value ?? c.text ?? '') : String(c ?? '');
+
 const supportsLogicRules = (type: QuestionType) =>
     ['nps', 'multiple_choice', 'rating_scale', 'text_short', 'text_long', 'matrix', 'checkbox', 'dropdown', 'slider'].includes(type);
 
@@ -209,10 +212,10 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             case 'multiple_choice':
                 return (
                     <div className="space-y-2">
-                        {(opts.choices || localChoices || ['Option 1', 'Option 2', 'Option 3']).map((c: string, i: number) => (
+                        {(opts.choices || localChoices || ['Option 1', 'Option 2', 'Option 3']).map((c: any, i: number) => (
                             <label key={i} className="flex items-center gap-2 opacity-70">
                                 <input type="radio" disabled className="w-4 h-4 text-primary-600" />
-                                <span className="text-sm text-text-secondary">{c}</span>
+                                <span className="text-sm text-text-secondary">{choiceLabel(c)}</span>
                             </label>
                         ))}
                     </div>
@@ -221,10 +224,10 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             case 'checkbox':
                 return (
                     <div className="space-y-2">
-                        {(opts.choices || localChoices || ['Option 1', 'Option 2', 'Option 3']).map((c: string, i: number) => (
+                        {(opts.choices || localChoices || ['Option 1', 'Option 2', 'Option 3']).map((c: any, i: number) => (
                             <label key={i} className="flex items-center gap-2 opacity-70">
                                 <input type="checkbox" disabled className="w-4 h-4 rounded text-primary-600" />
-                                <span className="text-sm text-text-secondary">{c}</span>
+                                <span className="text-sm text-text-secondary">{choiceLabel(c)}</span>
                             </label>
                         ))}
                     </div>
@@ -319,11 +322,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             case 'ranking':
                 return (
                     <div className="space-y-2 opacity-80">
-                        {(opts.choices || localChoices || ['Item 1', 'Item 2', 'Item 3']).map((c: string, i: number) => (
+                        {(opts.choices || localChoices || ['Item 1', 'Item 2', 'Item 3']).map((c: any, i: number) => (
                             <div key={i} className="flex items-center gap-3 p-3 bg-surface border border-border rounded-lg">
                                 <svg className="w-5 h-5 text-text-muted opacity-50 cursor-grab" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                                 <span className="font-medium text-text-secondary w-5 text-center">{i + 1}.</span>
-                                <span className="text-sm text-text-primary">{c}</span>
+                                <span className="text-sm text-text-primary">{choiceLabel(c)}</span>
                             </div>
                         ))}
                     </div>

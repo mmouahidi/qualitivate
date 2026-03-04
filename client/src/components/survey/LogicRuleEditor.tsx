@@ -49,7 +49,10 @@ const LogicRuleEditor: React.FC<LogicRuleEditorProps> = ({
   onRulesChange,
 }) => {
   const availableOperators = operatorsByQuestionType[questionType] || ['is_answered', 'is_not_answered'];
-  const choices = questionOptions?.choices || [];
+  const rawChoices = questionOptions?.choices || [];
+  const choices: string[] = rawChoices.map((c: any) =>
+    typeof c === 'object' && c !== null ? (c.value ?? c.text ?? String(c)) : String(c)
+  );
   const sortedTargets = [...availableTargets].sort((a, b) => a.orderIndex - b.orderIndex);
 
   const addRule = () => {

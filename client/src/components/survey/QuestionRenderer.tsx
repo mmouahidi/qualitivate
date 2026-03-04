@@ -93,15 +93,17 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     title: question.title || question.content,
   } as any;
 
-  // Normalize options - handle both array and object formats
+  const normalizeChoice = (c: any): string =>
+    typeof c === 'object' && c !== null ? (c.value ?? c.text ?? String(c)) : String(c);
+
   const getChoices = (): string[] => {
+    let raw: any[] = [];
     if (Array.isArray(question.options)) {
-      return question.options;
+      raw = question.options;
+    } else if (question.options && 'choices' in question.options) {
+      raw = question.options.choices || [];
     }
-    if (question.options && 'choices' in question.options) {
-      return question.options.choices || [];
-    }
-    return [];
+    return raw.map(normalizeChoice);
   };
 
   const choices = getChoices();

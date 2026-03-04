@@ -336,23 +336,25 @@ const TakeSurvey: React.FC = () => {
     alert(t('survey.resumeLinkCopied'));
   };
 
-  // Helper function to get choices from options (handles both array and object formats)
+  const normalizeChoice = (c: any): string =>
+    typeof c === 'object' && c !== null ? (c.value ?? c.text ?? String(c)) : String(c);
+
   const getChoices = (options: any): string[] => {
+    let raw: any[] = [];
     if (!options) return [];
-    if (Array.isArray(options)) return options;
-    if (typeof options === 'string') {
+    if (Array.isArray(options)) { raw = options; }
+    else if (typeof options === 'string') {
       try {
         const parsed = JSON.parse(options);
-        if (Array.isArray(parsed)) return parsed;
-        if (parsed.choices && Array.isArray(parsed.choices)) return parsed.choices;
+        if (Array.isArray(parsed)) raw = parsed;
+        else if (parsed.choices && Array.isArray(parsed.choices)) raw = parsed.choices;
       } catch (e) {
         return [];
       }
+    } else if (typeof options === 'object' && options.choices) {
+      raw = Array.isArray(options.choices) ? options.choices : [];
     }
-    if (typeof options === 'object' && options.choices) {
-      return Array.isArray(options.choices) ? options.choices : [];
-    }
-    return [];
+    return raw.map(normalizeChoice);
   };
 
   const renderQuestion = (question: Question) => {
@@ -674,7 +676,7 @@ const TakeSurvey: React.FC = () => {
 
       case 'dropdown':
         // Dropdown/select question type
-        const dropdownOptions = Array.isArray(question.options) ? question.options : [];
+        const dropdownOptions = getChoices(question.options);
         return (
           <select
             value={value || ''}

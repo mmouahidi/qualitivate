@@ -368,20 +368,26 @@ const SurveyEditor: React.FC = () => {
                 {questionForm.type === 'multiple_choice' && (
                   <div>
                     <label className="label-soft">Choices</label>
-                    {(questionForm.options.choices || []).map((choice: string, index: number) => (
-                      <input
-                        key={index}
-                        type="text"
-                        value={choice}
-                        onChange={(e) => {
-                          const newChoices = [...(questionForm.options.choices || [])];
-                          newChoices[index] = e.target.value;
-                          setQuestionForm({ ...questionForm, options: { ...questionForm.options, choices: newChoices } });
-                        }}
-                        className="input-soft mb-2"
-                        placeholder={`Choice ${index + 1}`}
-                      />
-                    ))}
+                    {(questionForm.options.choices || []).map((choice: any, index: number) => {
+                      const choiceText = typeof choice === 'object' && choice !== null ? (choice.value ?? choice.text ?? '') : String(choice ?? '');
+                      return (
+                        <input
+                          key={index}
+                          type="text"
+                          value={choiceText}
+                          onChange={(e) => {
+                            const newChoices = [...(questionForm.options.choices || [])];
+                            const cur = newChoices[index];
+                            newChoices[index] = typeof cur === 'object' && cur !== null
+                              ? { ...cur, value: e.target.value }
+                              : e.target.value;
+                            setQuestionForm({ ...questionForm, options: { ...questionForm.options, choices: newChoices } });
+                          }}
+                          className="input-soft mb-2"
+                          placeholder={`Choice ${index + 1}`}
+                        />
+                      );
+                    })}
                     <button
                       onClick={() => setQuestionForm({
                         ...questionForm,
