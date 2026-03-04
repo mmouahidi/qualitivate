@@ -377,10 +377,7 @@ const SurveyEditor: React.FC = () => {
                           value={choiceText}
                           onChange={(e) => {
                             const newChoices = [...(questionForm.options.choices || [])];
-                            const cur = newChoices[index];
-                            newChoices[index] = typeof cur === 'object' && cur !== null
-                              ? { ...cur, value: e.target.value }
-                              : e.target.value;
+                            newChoices[index] = e.target.value;
                             setQuestionForm({ ...questionForm, options: { ...questionForm.options, choices: newChoices } });
                           }}
                           className="input-soft mb-2"
