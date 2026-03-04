@@ -162,14 +162,6 @@ export const login = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     logger.error('Login error:', { error });
-    // In development, return the actual error to help debugging
-    if (env.NODE_ENV !== 'production') {
-      return res.status(500).json({
-        error: 'Failed to login',
-        details: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    }
     res.status(500).json({ error: 'Failed to login' });
   }
 };
@@ -224,8 +216,21 @@ export const logout = async (req: AuthRequest, res: Response) => {
   try {
     const { refreshToken } = req.body;
 
-    if (refreshToken) {
-      await db('refresh_tokens').where({ token: refreshToken }).delete();
+    if (refreshToken && typeof refreshToken === 'string' && refreshToken.length < 2048) {
+      let decoded: any;
+      try {
+        decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET);
+      } catch {
+        // Token invalid/expired — delete it anyway to clean up
+      }
+
+      if (decoded?.userId) {
+        await db('refresh_tokens')
+          .where({ token: refreshToken, user_id: decoded.userId })
+          .delete();
+      } else {
+        await db('refresh_tokens').where({ token: refreshToken }).delete();
+      }
     }
 
     res.json({ message: 'Logged out successfully' });
@@ -246,10 +251,27 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     const resolvedLastName = lastName !== undefined ? lastName : last_name;
     const resolvedAvatarStyle = avatarStyle !== undefined ? avatarStyle : avatar_style;
 
+    const VALID_AVATAR_STYLES = ['adventurer', 'avataaars', 'bottts', 'fun-emoji', 'lorelei', 'notionists', 'pixel-art', 'thumbs', 'initials'];
+
     const updateData: Record<string, any> = {};
-    if (resolvedFirstName !== undefined) updateData.first_name = resolvedFirstName;
-    if (resolvedLastName !== undefined) updateData.last_name = resolvedLastName;
-    if (resolvedAvatarStyle !== undefined) updateData.avatar_style = resolvedAvatarStyle;
+    if (resolvedFirstName !== undefined) {
+      if (typeof resolvedFirstName !== 'string' || resolvedFirstName.length > 100) {
+        return res.status(400).json({ error: 'Invalid first name' });
+      }
+      updateData.first_name = resolvedFirstName;
+    }
+    if (resolvedLastName !== undefined) {
+      if (typeof resolvedLastName !== 'string' || resolvedLastName.length > 100) {
+        return res.status(400).json({ error: 'Invalid last name' });
+      }
+      updateData.last_name = resolvedLastName;
+    }
+    if (resolvedAvatarStyle !== undefined) {
+      if (typeof resolvedAvatarStyle !== 'string' || !VALID_AVATAR_STYLES.includes(resolvedAvatarStyle)) {
+        return res.status(400).json({ error: 'Invalid avatar style' });
+      }
+      updateData.avatar_style = resolvedAvatarStyle;
+    }
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: 'No fields to update' });

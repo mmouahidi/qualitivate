@@ -4,8 +4,8 @@ import fetch from 'node-fetch'; // Requires node-fetch or native fetch in node 1
 async function testApiLogin() {
     try {
         console.log('--- Testing API Login ---');
-        const email = 'test@qualitivate.io';
-        const password = 'password123';
+        const email = process.env.TEST_EMAIL || 'test@qualitivate.io';
+        const password = process.env.TEST_PASSWORD || '';
 
         console.log(`Sending POST to http://localhost:5000/api/auth/login`);
 

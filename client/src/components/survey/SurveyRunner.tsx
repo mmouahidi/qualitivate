@@ -6,6 +6,7 @@
  */
 
 import React, { useCallback } from 'react';
+import DOMPurify from 'dompurify';
 import QuestionRenderer from './QuestionRenderer';
 import { useSurveyRunner, type UseSurveyRunnerOptions } from '../../hooks/useSurveyRunner';
 import type { SurveySchema, SurveyElement, SurveyResultData } from '../../types';
@@ -160,7 +161,7 @@ const SurveyRunner: React.FC<SurveyRunnerProps> = ({
           {schema.completedHtml ? (
             <div 
               className="prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: schema.completedHtml }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(schema.completedHtml) }}
             />
           ) : (
             <p className="text-gray-600">Your response has been submitted successfully.</p>

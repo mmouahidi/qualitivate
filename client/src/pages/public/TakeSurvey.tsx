@@ -248,14 +248,6 @@ const TakeSurvey: React.FC = () => {
       answers
     );
 
-    console.log('Navigation debug:', {
-      currentIdx,
-      currentQuestionId: currentQuestion.id,
-      nextQuestionIndex: result.nextQuestionIndex,
-      totalQuestions: questions.length,
-      answerValue
-    });
-
     if (result.nextQuestionIndex === 'end' || result.nextQuestionIndex >= questions.length) {
       handleSubmit();
     } else if (typeof result.nextQuestionIndex === 'number' && result.nextQuestionIndex >= 0 && result.nextQuestionIndex < questions.length) {

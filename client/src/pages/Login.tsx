@@ -105,9 +105,9 @@ const Login: React.FC = () => {
                 </label>
               </div>
               <div className="text-sm">
-                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
+                <span className="font-medium text-gray-400 cursor-not-allowed" title="Coming soon">
                   {t('login.forgotPassword')}
-                </a>
+                </span>
               </div>
             </div>
 

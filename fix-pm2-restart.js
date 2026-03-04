@@ -1,7 +1,16 @@
 const { Client } = require('ssh2');
 
+const VPS_HOST = process.env.VPS_HOST || '161.97.88.40';
+const VPS_USER = process.env.VPS_USER || 'root';
+const VPS_PASSWORD = process.env.VPS_PASSWORD;
+
+if (!VPS_PASSWORD) {
+    console.error('ERROR: VPS_PASSWORD environment variable is required.');
+    process.exit(1);
+}
+
 const conn = new Client();
-console.log('Connecting to VPS: 161.97.88.40');
+console.log(`Connecting to VPS: ${VPS_HOST}`);
 
 conn.on('ready', () => {
     const setupCommands = `
@@ -27,8 +36,8 @@ pm2 save
         });
     });
 }).connect({
-    host: '161.97.88.40',
+    host: VPS_HOST,
     port: 22,
-    username: 'root',
-    password: 'afflatusing'
+    username: VPS_USER,
+    password: VPS_PASSWORD
 });

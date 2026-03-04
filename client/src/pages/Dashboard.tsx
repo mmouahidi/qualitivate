@@ -236,7 +236,7 @@ const Dashboard: React.FC = () => {
                                         {dashboardData.topSurveys.map((survey) => (
                                             <Link
                                                 key={survey.id}
-                                                to={`/analytics/survey/${survey.id}`}
+                                                to={`/analytics/surveys/${survey.id}`}
                                                 className="flex items-center justify-between p-3 bg-surface-hover dark:bg-surface rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                                             >
                                                 <div>

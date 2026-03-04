@@ -26,8 +26,8 @@ async function debugLogin() {
         console.log('JWT_EXPIRES_IN:', process.env.JWT_EXPIRES_IN);
         console.log('JWT_REFRESH_EXPIRES_IN:', process.env.JWT_REFRESH_EXPIRES_IN);
 
-        const email = 'superadmin@qualitivate.io'; // Using a known user from previous run
-        const password = 'password';
+        const email = process.env.DEBUG_EMAIL || 'superadmin@qualitivate.io';
+        const password = process.env.DEBUG_PASSWORD || '';
 
         console.log(`\nAttempting login simulation for: ${email}`);
 

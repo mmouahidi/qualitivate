@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import logger from '../config/logger';
+import { escapeIlike } from '../utils/pagination.util';
 
 export const listDepartments = async (req: AuthRequest, res: Response) => {
   try {
@@ -32,7 +33,8 @@ export const listDepartments = async (req: AuthRequest, res: Response) => {
     }
 
     if (search) {
-      query = query.where('departments.name', 'ilike', `%${search}%`);
+      const escaped = escapeIlike(String(search));
+      query = query.where('departments.name', 'ilike', `%${escaped}%`);
     }
 
     const departments = await query
@@ -54,7 +56,8 @@ export const listDepartments = async (req: AuthRequest, res: Response) => {
           builder.where('departments.site_id', siteId);
         }
         if (search) {
-          builder.where('departments.name', 'ilike', `%${search}%`);
+          const escaped = escapeIlike(String(search));
+          builder.where('departments.name', 'ilike', `%${escaped}%`);
         }
       });
 
@@ -118,6 +121,10 @@ export const createDepartment = async (req: AuthRequest, res: Response) => {
   try {
     const { name, siteId } = req.body;
     const user = req.user!;
+
+    if (!name || typeof name !== 'string' || name.trim().length === 0 || name.length > 255) {
+      return res.status(400).json({ error: 'Department name is required and must be under 255 characters' });
+    }
 
     let targetSiteId = siteId;
 

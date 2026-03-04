@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import logger from '../config/logger';
+import { escapeIlike } from '../utils/pagination.util';
 import {
   VALID_SURVEY_TYPES,
   SurveyType,
@@ -50,10 +51,11 @@ export const listSurveys = async (req: AuthRequest, res: Response) => {
     }
 
     if (search) {
+      const escaped = escapeIlike(String(search));
       query = query.where((builder) => {
         builder
-          .where('surveys.title', 'ilike', `%${search}%`)
-          .orWhere('surveys.description', 'ilike', `%${search}%`);
+          .where('surveys.title', 'ilike', `%${escaped}%`)
+          .orWhere('surveys.description', 'ilike', `%${escaped}%`);
       });
     }
 
@@ -79,11 +81,11 @@ export const listSurveys = async (req: AuthRequest, res: Response) => {
             builder.where('company_id', companyId);
           }
         }
-        // Include search filter in count query
         if (search) {
+          const escaped = escapeIlike(String(search));
           builder.where((qb) => {
-            qb.where('title', 'ilike', `%${search}%`)
-              .orWhere('description', 'ilike', `%${search}%`);
+            qb.where('title', 'ilike', `%${escaped}%`)
+              .orWhere('description', 'ilike', `%${escaped}%`);
           });
         }
         if (type) builder.where('type', type);
@@ -138,7 +140,7 @@ export const getSurvey = async (req: AuthRequest, res: Response) => {
       }))
     });
   } catch (error) {
-    console.error('Error fetching survey:', error);
+    logger.error('Error fetching survey:', { error });
     return res.status(500).json({ error: 'Failed to fetch survey' });
   }
 };

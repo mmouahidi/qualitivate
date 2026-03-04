@@ -1,7 +1,14 @@
 /**
- * Pagination utility
+ * Pagination and query utility
  * Provides helpers for parsing pagination params and building paginated responses
  */
+
+/**
+ * Escape special ILIKE/LIKE pattern characters (%, _) in user-provided search strings
+ */
+export function escapeIlike(search: string): string {
+    return search.replace(/[%_\\]/g, '\\$&');
+}
 
 export interface PaginationParams {
     page: number;

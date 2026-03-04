@@ -9,13 +9,26 @@ import logger from '../config/logger';
 
 const FRONTEND_URL = env.FRONTEND_URL;
 
+const verifySurveyAccess = async (req: AuthRequest, surveyId: string) => {
+  const survey = await db('surveys').where({ id: surveyId }).first();
+  if (!survey) return null;
+
+  const user = req.user;
+  if (!user) return null;
+
+  if (user.role === 'super_admin') return survey;
+  if (survey.company_id && user.companyId && survey.company_id === user.companyId) return survey;
+  if (survey.created_by === user.id) return survey;
+
+  return null;
+};
+
 // List distributions for a survey
 export const listDistributions = async (req: AuthRequest, res: Response) => {
   try {
     const { surveyId } = req.params;
 
-    // Check survey access
-    const survey = await db('surveys').where({ id: surveyId }).first();
+    const survey = await verifySurveyAccess(req, surveyId);
     if (!survey) {
       return res.status(404).json({ error: 'Survey not found' });
     }
@@ -36,7 +49,7 @@ export const createLinkDistribution = async (req: AuthRequest, res: Response) =>
   try {
     const { surveyId } = req.params;
 
-    const survey = await db('surveys').where({ id: surveyId }).first();
+    const survey = await verifySurveyAccess(req, surveyId);
     if (!survey) {
       return res.status(404).json({ error: 'Survey not found' });
     }
@@ -65,7 +78,7 @@ export const createQRDistribution = async (req: AuthRequest, res: Response) => {
   try {
     const { surveyId } = req.params;
 
-    const survey = await db('surveys').where({ id: surveyId }).first();
+    const survey = await verifySurveyAccess(req, surveyId);
     if (!survey) {
       return res.status(404).json({ error: 'Survey not found' });
     }
@@ -106,7 +119,13 @@ export const createEmbedDistribution = async (req: AuthRequest, res: Response) =
     const { surveyId } = req.params;
     const { width = '100%', height = '600px' } = req.body;
 
-    const survey = await db('surveys').where({ id: surveyId }).first();
+    // Validate embed dimensions to prevent XSS via malicious width/height values
+    const dimensionPattern = /^(\d+(%|px|em|rem|vh|vw)?)$/;
+    if (!dimensionPattern.test(String(width)) || !dimensionPattern.test(String(height))) {
+      return res.status(400).json({ error: 'Invalid width or height format' });
+    }
+
+    const survey = await verifySurveyAccess(req, surveyId);
     if (!survey) {
       return res.status(404).json({ error: 'Survey not found' });
     }
@@ -148,10 +167,7 @@ export const createEmailDistribution = async (req: AuthRequest, res: Response) =
       return res.status(400).json({ error: 'Email list is required' });
     }
 
-    const survey = await db('surveys')
-      .where({ id: surveyId })
-      .first();
-
+    const survey = await verifySurveyAccess(req, surveyId);
     if (!survey) {
       return res.status(404).json({ error: 'Survey not found' });
     }
@@ -206,7 +222,7 @@ export const sendToGroup = async (req: AuthRequest, res: Response) => {
     const { surveyId } = req.params;
     const { departmentId, siteId, companyId, subject, message } = req.body;
 
-    const survey = await db('surveys').where({ id: surveyId }).first();
+    const survey = await verifySurveyAccess(req, surveyId);
     if (!survey) {
       return res.status(404).json({ error: 'Survey not found' });
     }
@@ -254,6 +270,11 @@ export const getDistributionStats = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Distribution not found' });
     }
 
+    const survey = await verifySurveyAccess(req, distribution.survey_id);
+    if (!survey) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
     // Count responses from this distribution
     const [stats] = await db('responses')
       .where({ survey_id: distribution.survey_id })
@@ -285,13 +306,20 @@ export const deleteDistribution = async (req: AuthRequest, res: Response) => {
   try {
     const { distributionId } = req.params;
 
-    const deleted = await db('survey_distributions')
+    const distribution = await db('survey_distributions')
       .where({ id: distributionId })
-      .delete();
+      .first();
 
-    if (!deleted) {
+    if (!distribution) {
       return res.status(404).json({ error: 'Distribution not found' });
     }
+
+    const survey = await verifySurveyAccess(req, distribution.survey_id);
+    if (!survey) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    await db('survey_distributions').where({ id: distributionId }).delete();
 
     res.json({ message: 'Distribution deleted successfully' });
   } catch (error) {

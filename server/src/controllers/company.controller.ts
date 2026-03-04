@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import logger from '../config/logger';
+import { escapeIlike } from '../utils/pagination.util';
 
 export const listCompanies = async (req: AuthRequest, res: Response) => {
   try {
@@ -17,10 +18,11 @@ export const listCompanies = async (req: AuthRequest, res: Response) => {
     }
 
     if (search) {
+      const escaped = escapeIlike(String(search));
       query = query.where((builder) => {
         builder
-          .where('name', 'ilike', `%${search}%`)
-          .orWhere('slug', 'ilike', `%${search}%`);
+          .where('name', 'ilike', `%${escaped}%`)
+          .orWhere('slug', 'ilike', `%${escaped}%`);
       });
     }
 
@@ -36,9 +38,10 @@ export const listCompanies = async (req: AuthRequest, res: Response) => {
           builder.where('id', user.companyId!);
         }
         if (search) {
+          const escaped = escapeIlike(String(search));
           builder.where((qb) => {
-            qb.where('name', 'ilike', `%${search}%`)
-              .orWhere('slug', 'ilike', `%${search}%`);
+            qb.where('name', 'ilike', `%${escaped}%`)
+              .orWhere('slug', 'ilike', `%${escaped}%`);
           });
         }
       });
@@ -108,6 +111,13 @@ export const getCompany = async (req: AuthRequest, res: Response) => {
 export const createCompany = async (req: AuthRequest, res: Response) => {
   try {
     const { name, slug, activity, address, city, sites_count, employees_count, settings = {} } = req.body;
+
+    if (!name || typeof name !== 'string' || name.trim().length === 0 || name.length > 255) {
+      return res.status(400).json({ error: 'Company name is required and must be under 255 characters' });
+    }
+    if (!slug || typeof slug !== 'string' || !/^[a-z0-9-]+$/.test(slug) || slug.length > 100) {
+      return res.status(400).json({ error: 'Slug is required and must contain only lowercase letters, numbers, and hyphens' });
+    }
 
     const existingCompany = await db('companies').where({ slug }).first();
     if (existingCompany) {

@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import logger from '../config/logger';
+import { escapeIlike } from '../utils/pagination.util';
 
 export const listSites = async (req: AuthRequest, res: Response) => {
   try {
@@ -27,10 +28,11 @@ export const listSites = async (req: AuthRequest, res: Response) => {
     }
 
     if (search) {
+      const escaped = escapeIlike(String(search));
       query = query.where((builder) => {
         builder
-          .where('sites.name', 'ilike', `%${search}%`)
-          .orWhere('sites.location', 'ilike', `%${search}%`);
+          .where('sites.name', 'ilike', `%${escaped}%`)
+          .orWhere('sites.location', 'ilike', `%${escaped}%`);
       });
     }
 
@@ -50,9 +52,10 @@ export const listSites = async (req: AuthRequest, res: Response) => {
           builder.where('company_id', companyId);
         }
         if (search) {
+          const escaped = escapeIlike(String(search));
           builder.where((qb) => {
-            qb.where('name', 'ilike', `%${search}%`)
-              .orWhere('location', 'ilike', `%${search}%`);
+            qb.where('name', 'ilike', `%${escaped}%`)
+              .orWhere('location', 'ilike', `%${escaped}%`);
           });
         }
       });
@@ -116,6 +119,13 @@ export const createSite = async (req: AuthRequest, res: Response) => {
   try {
     const { name, location, companyId } = req.body;
     const user = req.user!;
+
+    if (!name || typeof name !== 'string' || name.trim().length === 0 || name.length > 255) {
+      return res.status(400).json({ error: 'Site name is required and must be under 255 characters' });
+    }
+    if (location && (typeof location !== 'string' || location.length > 500)) {
+      return res.status(400).json({ error: 'Location must be under 500 characters' });
+    }
 
     let targetCompanyId = companyId;
 

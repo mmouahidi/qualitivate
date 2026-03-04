@@ -116,6 +116,10 @@ app.use('/api', globalLimiter);
 // Apply stricter limits to auth routes
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/refresh', authLimiter);
+
+// Apply survey start limiter to prevent abuse
+app.use('/api/responses/survey', surveyStartLimiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/companies', companyRoutes);
@@ -197,9 +201,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 
   res.status(err.status || 500).json({
-    error: err.message || 'Internal Server Error',
+    error: isDevelopment ? (err.message || 'Internal Server Error') : 'Internal Server Error',
     correlationId: req.correlationId,
-    ...(isDevelopment && { stack: err.stack })
   });
 });
 

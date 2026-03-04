@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import db from '../config/database';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import logger from '../config/logger';
+import { escapeIlike } from '../utils/pagination.util';
 
 const SALT_ROUNDS = 10;
 
@@ -36,11 +37,12 @@ export const listUsers = async (req: AuthRequest, res: Response) => {
     }
 
     if (search) {
+      const escaped = escapeIlike(String(search));
       query = query.where((builder) => {
         builder
-          .where('email', 'ilike', `%${search}%`)
-          .orWhere('first_name', 'ilike', `%${search}%`)
-          .orWhere('last_name', 'ilike', `%${search}%`);
+          .where('email', 'ilike', `%${escaped}%`)
+          .orWhere('first_name', 'ilike', `%${escaped}%`)
+          .orWhere('last_name', 'ilike', `%${escaped}%`);
       });
     }
 

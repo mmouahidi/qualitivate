@@ -1,6 +1,15 @@
 import nodemailer from 'nodemailer';
 import { env } from '../config/env';
 
+const escapeHtml = (str: string): string => {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
+
 const transporter = nodemailer.createTransport({
   host: env.SMTP_HOST || 'smtp.gmail.com',
   port: env.SMTP_PORT || 587,
@@ -104,9 +113,9 @@ export const sendSurveyInvitation = async (params: SurveyInvitationParams): Prom
         <p style="margin: 5px 0 0 0; opacity: 0.9;">Survey Platform</p>
       </div>
       <div class="content">
-        <h2 class="survey-title">${surveyTitle}</h2>
-        ${surveyDescription ? `<p class="survey-description">${surveyDescription}</p>` : ''}
-        ${message ? `<div class="custom-message">${message}</div>` : ''}
+        <h2 class="survey-title">${escapeHtml(surveyTitle)}</h2>
+        ${surveyDescription ? `<p class="survey-description">${escapeHtml(surveyDescription)}</p>` : ''}
+        ${message ? `<div class="custom-message">${escapeHtml(message)}</div>` : ''}
         <p>You have been invited to participate in this survey. Your feedback is valuable to us!</p>
         <div style="text-align: center;">
           <a href="${surveyUrl}" class="cta-button">Take Survey</a>
@@ -164,7 +173,7 @@ export const sendResponseNotification = async (params: ResponseNotificationParam
   const answerRows = answers
     .map(
       (a) =>
-        `<tr><td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;color:#374151;font-weight:500;">${a.question}</td><td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;color:#6b7280;">${a.answer}</td></tr>`
+        `<tr><td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;color:#374151;font-weight:500;">${escapeHtml(a.question)}</td><td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;color:#6b7280;">${escapeHtml(a.answer)}</td></tr>`
     )
     .join('');
 
@@ -179,11 +188,11 @@ export const sendResponseNotification = async (params: ResponseNotificationParam
     <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.6;color:#333;max-width:650px;margin:0 auto;padding:20px;">
       <div style="background:linear-gradient(135deg,#0284c7 0%,#0369a1 100%);color:white;padding:24px 30px;border-radius:8px 8px 0 0;">
         <h1 style="margin:0;font-size:18px;">📬 New Response Received</h1>
-        <p style="margin:6px 0 0 0;opacity:0.9;font-size:14px;">${surveyTitle}</p>
+        <p style="margin:6px 0 0 0;opacity:0.9;font-size:14px;">${escapeHtml(surveyTitle)}</p>
       </div>
       <div style="background:#f9fafb;padding:24px 30px;border:1px solid #e5e7eb;border-top:none;">
-        <p style="margin:0 0 6px 0;font-size:13px;color:#6b7280;">Respondent: <strong style="color:#111827;">${respondentInfo}</strong></p>
-        <p style="margin:0 0 20px 0;font-size:13px;color:#6b7280;">Submitted: <strong style="color:#111827;">${submittedAt}</strong></p>
+        <p style="margin:0 0 6px 0;font-size:13px;color:#6b7280;">Respondent: <strong style="color:#111827;">${escapeHtml(respondentInfo)}</strong></p>
+        <p style="margin:0 0 20px 0;font-size:13px;color:#6b7280;">Submitted: <strong style="color:#111827;">${escapeHtml(submittedAt)}</strong></p>
         <table style="width:100%;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb;">
           <thead>
             <tr style="background:#f3f4f6;">
