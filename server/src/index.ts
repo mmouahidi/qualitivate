@@ -122,6 +122,12 @@ app.use('/api/auth/refresh', authLimiter);
 app.use('/api/responses/survey', surveyStartLimiter);
 
 app.use('/api/auth', authRoutes);
+
+// Public company endpoint must be registered before the authenticated company routes
+// to prevent route matching issues where /:id captures "public"
+import { getPublicCompanies } from './controllers/company.controller';
+app.get('/api/companies/public', getPublicCompanies);
+
 app.use('/api/companies', companyRoutes);
 app.use('/api/sites', siteRoutes);
 app.use('/api/departments', departmentRoutes);
