@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import db from '../config/database';
-import { AuthRequest } from '../middlewares/auth.middleware';
+import { AuthRequest, invalidatePermissionCache } from '../middlewares/auth.middleware';
 import logger from '../config/logger';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -74,13 +74,9 @@ export const updateRolePermissions = async (req: AuthRequest, res: Response) => 
             return res.status(400).json({ error: `Invalid permissions: ${invalidPerms.join(', ')}` });
         }
 
-        const trx = await db.transaction();
-
-        try {
-            // Remove all existing permissions for this role
+        await db.transaction(async (trx) => {
             await trx('role_permissions').where('role', role).delete();
 
-            // Insert new permissions
             if (permissions.length > 0) {
                 const rows = permissions.map((permission: string) => ({
                     id: uuidv4(),
@@ -89,18 +85,11 @@ export const updateRolePermissions = async (req: AuthRequest, res: Response) => 
                 }));
                 await trx('role_permissions').insert(rows);
             }
+        });
 
-            await trx.commit();
+        invalidatePermissionCache();
 
-            // Invalidate the permission cache
-            const { invalidatePermissionCache } = require('../middlewares/auth.middleware');
-            invalidatePermissionCache();
-
-            res.json({ message: `Permissions updated for role: ${role}`, role, permissions });
-        } catch (error) {
-            await trx.rollback();
-            throw error;
-        }
+        res.json({ message: `Permissions updated for role: ${role}`, role, permissions });
     } catch (error: any) {
         logger.error('Error updating role permissions:', { error });
         res.status(500).json({ error: 'Failed to update role permissions' });

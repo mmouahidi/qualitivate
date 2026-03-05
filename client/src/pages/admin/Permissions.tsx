@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -49,6 +49,8 @@ const Permissions: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [localMatrix, setLocalMatrix] = useState<Record<string, Set<string>>>({});
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const pendingFlush = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
     // Only super_admin can access
     if (user?.role !== 'super_admin') {
@@ -82,11 +84,21 @@ const Permissions: React.FC = () => {
             await api.put('/rbac/permissions', { role, permissions });
         },
         onSuccess: () => {
+            setSaveError(null);
+            queryClient.invalidateQueries({ queryKey: ['rbac-permissions'] });
+        },
+        onError: (err: any) => {
+            setSaveError(err.response?.data?.error || 'Failed to save permissions. Please try again.');
             queryClient.invalidateQueries({ queryKey: ['rbac-permissions'] });
         },
     });
 
+    const flushRole = useCallback((role: string, perms: Set<string>) => {
+        updateMutation.mutate({ role, permissions: Array.from(perms) });
+    }, [updateMutation]);
+
     const handleToggle = (role: string, permission: string) => {
+        setSaveError(null);
         setLocalMatrix((prev) => {
             const next = { ...prev };
             const rolePerms = new Set(next[role]);
@@ -99,8 +111,14 @@ const Permissions: React.FC = () => {
 
             next[role] = rolePerms;
 
-            // Persist immediately
-            updateMutation.mutate({ role, permissions: Array.from(rolePerms) });
+            // Debounce: batch rapid toggles for the same role into a single request
+            if (pendingFlush.current[role]) {
+                clearTimeout(pendingFlush.current[role]);
+            }
+            pendingFlush.current[role] = setTimeout(() => {
+                flushRole(role, rolePerms);
+                delete pendingFlush.current[role];
+            }, 400);
 
             return next;
         });
@@ -152,6 +170,19 @@ const Permissions: React.FC = () => {
 
             {/* Matrix */}
             <div className="max-w-7xl mx-auto p-6">
+                {saveError && (
+                    <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-3">
+                        <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <p className="text-sm text-red-700 dark:text-red-300 flex-1">{saveError}</p>
+                        <button onClick={() => setSaveError(null)} className="text-red-500 hover:text-red-700">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                )}
                 <div className="bg-surface rounded-xl border border-border overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full">
