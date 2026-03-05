@@ -308,16 +308,28 @@ export const updateSurvey = async (req: AuthRequest, res: Response) => {
     if (startsAt !== undefined) updateData.starts_at = startsAt;
     if (endsAt !== undefined) updateData.ends_at = endsAt;
 
-    // Notification emails
-    if (notificationEmails !== undefined) {
-      if (Array.isArray(notificationEmails)) {
-        updateData.notification_emails = JSON.stringify(notificationEmails);
+    // Notification emails – check both body root and inside settings
+    const resolvedNotificationEmails = notificationEmails !== undefined
+      ? notificationEmails
+      : (settings?.notificationEmails !== undefined ? settings.notificationEmails : undefined);
+    if (resolvedNotificationEmails !== undefined) {
+      if (Array.isArray(resolvedNotificationEmails)) {
+        updateData.notification_emails = JSON.stringify(resolvedNotificationEmails);
       }
     }
 
-    // Company targeting (super_admin only)
-    if (companyId !== undefined && user.role === 'super_admin') {
-      updateData.company_id = companyId || null;
+    // Company targeting (super_admin only) – check both body root and inside settings
+    const resolvedCompanyId = companyId !== undefined
+      ? companyId
+      : (settings?.companyId !== undefined ? settings.companyId : undefined);
+    if (resolvedCompanyId !== undefined && user.role === 'super_admin') {
+      updateData.company_id = resolvedCompanyId || null;
+    }
+
+    // Clean internal keys from persisted settings to avoid storing them in the JSON column
+    if (updateData.settings) {
+      const { notificationEmails: _ne, companyId: _ci, ...cleanSettings } = updateData.settings;
+      updateData.settings = cleanSettings;
     }
 
     const [updatedSurvey] = await db('surveys')

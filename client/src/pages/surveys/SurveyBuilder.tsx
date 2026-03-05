@@ -251,18 +251,19 @@ const SurveyBuilder: React.FC = () => {
 
     const handleSaveSettings = (e: React.FormEvent) => {
         e.preventDefault();
+        const notifEmails = localNotificationEmails
+            .split(/[,;\n]+/)
+            .map((e: string) => e.trim())
+            .filter((e: string) => e.length > 0 && e.includes('@'));
         const payload: any = {
-            settings: surveySettings,
+            settings: {
+                ...surveySettings,
+                notificationEmails: notifEmails,
+                ...(isSuperAdmin ? { companyId: localCompanyId || null } : {}),
+            },
             isAnonymous: localIsAnonymous,
             isPublic: localIsPublic,
-            notificationEmails: localNotificationEmails
-                .split(/[,;\n]+/)
-                .map((e: string) => e.trim())
-                .filter((e: string) => e.length > 0 && e.includes('@')),
         };
-        if (isSuperAdmin) {
-            payload.companyId = localCompanyId || null;
-        }
         updateSurveyMutation.mutate(payload, {
             onSuccess: () => {
                 setIsSettingsOpen(false);
