@@ -13,7 +13,7 @@ const escapeHtml = (str: string): string => {
 };
 
 const isSmtpConfigured = (): boolean => {
-  return !!(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS);
+  return !!(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS && env.SMTP_FROM);
 };
 
 let _transporter: Mail | null = null;
@@ -22,10 +22,10 @@ let _transporterVerified = false;
 const getTransporter = (): Mail => {
   if (_transporter) return _transporter;
 
-  const port = env.SMTP_PORT || 587;
+  const port = env.SMTP_PORT || 465;
 
   _transporter = nodemailer.createTransport({
-    host: env.SMTP_HOST || 'smtp.gmail.com',
+    host: env.SMTP_HOST!,
     port,
     secure: port === 465,
     auth: {
@@ -42,8 +42,10 @@ const getTransporter = (): Mail => {
 
 const ensureTransporter = async (): Promise<Mail> => {
   if (!isSmtpConfigured()) {
+    const missing = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM']
+      .filter((k) => !env[k as keyof typeof env]);
     throw new Error(
-      'SMTP is not configured. Set SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables to enable email delivery.'
+      `SMTP is not configured (missing: ${missing.join(', ')}). Set SMTP_HOST, SMTP_USER, SMTP_PASS, and SMTP_FROM environment variables to enable email delivery.`
     );
   }
 
@@ -195,7 +197,7 @@ This email was sent by Qualitivate.io
   const transporter = await ensureTransporter();
 
   await transporter.sendMail({
-    from: env.SMTP_FROM || env.SMTP_USER || 'noreply@qualitivate.io',
+    from: env.SMTP_FROM!,
     to,
     subject,
     text: textContent,
@@ -264,7 +266,7 @@ export const sendResponseNotification = async (params: ResponseNotificationParam
   const transporter = await ensureTransporter();
 
   await transporter.sendMail({
-    from: env.SMTP_FROM || env.SMTP_USER || 'noreply@qualitivate.io',
+    from: env.SMTP_FROM!,
     to: to.join(', '),
     subject: `📬 New Response: ${surveyTitle}`,
     text: textContent,
