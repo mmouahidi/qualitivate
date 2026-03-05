@@ -1,265 +1,427 @@
 /**
- * QR Code PDF Export Utility
+ * QR Code Export Utility
  *
- * Generates a branded A4 PDF flyer with the survey QR code,
- * company logo, survey title, and scan instructions.
+ * Generates branded assets for survey distribution:
+ * - Square PNG image (1200×1200)
+ * - A4 PDF flyer (210×297mm)
+ *
+ * Both include: Qualitivate logo, company logo, survey title,
+ * QR code, and qualitivate.io link.
  */
 import { jsPDF } from 'jspdf';
 
-export interface QrPdfOptions {
-    surveyTitle: string;
-    qrCodeUrl: string;
-    companyName?: string;
-    companyActivity?: string;
-    surveyUrl: string;
+export interface QrExportOptions {
+  surveyTitle: string;
+  qrCodeUrl: string;
+  surveyUrl: string;
+  companyName?: string;
+  companyLogoUrl?: string;
 }
 
-const BRAND_PRIMARY = '#2D2A6E';
-const BRAND_ACCENT = '#6B1D3A';
-const BRAND_GRAY = '#6B7280';
+const BRAND_INDIGO = '#4F46E5';
+const TEXT_PRIMARY = '#111827';
+const TEXT_SECONDARY = '#6B7280';
+const QUALITIVATE_LINK = 'qualitivate.io';
 
-/**
- * Loads an image from a URL and returns it as a base64 data URL.
- * Handles both network URLs and existing data URLs.
- */
-function loadImageAsBase64(url: string): Promise<string> {
-    // If already a data URL, return as-is
+function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
     if (url.startsWith('data:')) {
-        return Promise.resolve(url);
+      img.src = url;
+    } else {
+      img.src = url;
     }
-
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.naturalWidth;
-                canvas.height = img.naturalHeight;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    reject(new Error('Could not get canvas context'));
-                    return;
-                }
-                ctx.drawImage(img, 0, 0);
-                resolve(canvas.toDataURL('image/png'));
-            } catch (e) {
-                reject(e);
-            }
-        };
-        img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
-        img.src = url;
-    });
+  });
 }
 
-/**
- * Gets the base64 SVG topography background
- */
-function getTopographyBase64(): string {
-    const svg = `<svg width="800" height="1131" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M50 0V100M0 50H100" stroke="#E5E7EB" stroke-width="1"/>
-<path d="M20 20C40 10 70 30 80 10" stroke="#F3F4F6" stroke-width="2" fill="none"/>
-<path d="M10 50C30 40 60 60 90 50" stroke="#F3F4F6" stroke-width="2" fill="none"/>
-<path d="M20 80C40 70 70 90 80 80" stroke="#F3F4F6" stroke-width="2" fill="none"/>
-<path d="M5 10C25 0 55 20 65 0" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
-<path d="M35 15C55 5 85 25 95 5" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
-<path d="M0 30C20 20 50 40 80 30" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
-<path d="M15 40C35 30 65 50 95 40" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
-<path d="M5 60C25 50 55 70 85 60" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
-<path d="M15 70C35 60 65 80 95 70" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
-<path d="M0 90C20 80 50 100 80 90" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
-<path d="M30 95C50 85 80 105 90 85" stroke="#F9FAFB" stroke-width="1.5" fill="none"/>
-<path d="M10 25C15 20 25 30 35 25" stroke="#E5E7EB" stroke-width="0.5" fill="none"/>
-<path d="M60 15C65 10 75 20 85 15" stroke="#E5E7EB" stroke-width="0.5" fill="none"/>
-<path d="M20 55C25 50 35 60 45 55" stroke="#E5E7EB" stroke-width="0.5" fill="none"/>
-<path d="M70 45C75 40 85 50 95 45" stroke="#E5E7EB" stroke-width="0.5" fill="none"/>
-<path d="M10 85C15 80 25 90 35 85" stroke="#E5E7EB" stroke-width="0.5" fill="none"/>
-<path d="M60 75C65 70 75 80 85 75" stroke="#E5E7EB" stroke-width="0.5" fill="none"/>
-<path d="M25 15C31 12 38 18 42 16" stroke="#F3F4F6" stroke-width="0.8" fill="none"/>
-<path d="M65 35C71 32 78 38 82 36" stroke="#F3F4F6" stroke-width="0.8" fill="none"/>
-<path d="M15 65C21 62 28 68 32 66" stroke="#F3F4F6" stroke-width="0.8" fill="none"/>
-<path d="M75 65C81 62 88 68 92 66" stroke="#F3F4F6" stroke-width="0.8" fill="none"/>
-<path d="M40 85C46 82 53 88 57 86" stroke="#F3F4F6" stroke-width="0.8" fill="none"/>
-</svg>`;
-    const base64 = btoa(svg);
-    return `data:image/svg+xml;base64,${base64}`;
+function triggerDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
-/**
- * Main PDF generation function
- */
-export async function generateQrPdf(options: QrPdfOptions): Promise<void> {
-    const { surveyTitle, qrCodeUrl, companyName, companyActivity, surveyUrl } = options;
+function sanitizeFilename(title: string): string {
+  return title
+    .replace(/[^a-zA-Z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .substring(0, 50)
+    .toLowerCase() || 'survey';
+}
 
-    const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-    });
+function drawRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number, r: number
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
 
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 20;
+function fitImageInBox(
+  img: HTMLImageElement,
+  maxW: number,
+  maxH: number
+): { w: number; h: number } {
+  const ratio = img.naturalWidth / img.naturalHeight;
+  let w = maxW;
+  let h = w / ratio;
+  if (h > maxH) {
+    h = maxH;
+    w = h * ratio;
+  }
+  return { w, h };
+}
 
-    // Background fill (white base)
-    doc.setFillColor(255, 255, 255);
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+function wrapText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
 
-    // Decorative static SVG background pattern
-    doc.addImage(getTopographyBase64(), 'SVG', 0, 0, pageWidth, pageHeight, '', 'SLOW');
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    if (ctx.measureText(testLine).width > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  return lines;
+}
 
-    // ─── HEADER ───
-    let headerY = margin;
+// ─── SQUARE IMAGE EXPORT ───
 
-    // Top Left Logo
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(24);
-    doc.setTextColor(0, 0, 0);
+export async function generateQrImage(options: QrExportOptions): Promise<void> {
+  const { surveyTitle, qrCodeUrl, companyName, companyLogoUrl } = options;
 
+  const SIZE = 1200;
+  const PADDING = 80;
+  const canvas = document.createElement('canvas');
+  canvas.width = SIZE;
+  canvas.height = SIZE;
+  const ctx = canvas.getContext('2d')!;
+
+  // White background
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Subtle border
+  ctx.strokeStyle = '#E5E7EB';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, SIZE - 2, SIZE - 2);
+
+  let cursorY = PADDING;
+
+  // ── Header: Qualitivate logo (left) + Company logo (right) ──
+  const logoMaxH = 60;
+  const logoMaxW = 240;
+
+  try {
+    const qualitivateLogo = await loadImage('/branding/logo1.webp');
+    const qs = fitImageInBox(qualitivateLogo, logoMaxW, logoMaxH);
+    ctx.drawImage(qualitivateLogo, PADDING, cursorY, qs.w, qs.h);
+  } catch {
+    ctx.font = 'bold 32px "Helvetica Neue", Helvetica, Arial, sans-serif';
+    ctx.fillStyle = BRAND_INDIGO;
+    ctx.textAlign = 'left';
+    ctx.fillText('Qualitivate', PADDING, cursorY + 40);
+  }
+
+  let companyLogoLoaded = false;
+  if (companyLogoUrl) {
     try {
-        // Try exact logo.webp first to match the brand mark
-        const logoBase64 = await loadImageAsBase64('/branding/logo1.webp');
-        // Assume logo has text, size accordingly based on natural ratio
-        doc.addImage(logoBase64, 'WEBP', margin, headerY, 45, 12);
-    } catch {
-        // Fallback text
-        doc.setFont('helvetica', 'bold');
-        doc.text('Qualitivate', margin, headerY + 8);
+      const companyLogo = await loadImage(companyLogoUrl);
+      const cs = fitImageInBox(companyLogo, logoMaxW, logoMaxH);
+      ctx.drawImage(companyLogo, SIZE - PADDING - cs.w, cursorY, cs.w, cs.h);
+      companyLogoLoaded = true;
+    } catch { /* skip */ }
+  }
+
+  if (!companyLogoLoaded && companyName) {
+    ctx.font = '600 24px "Helvetica Neue", Helvetica, Arial, sans-serif';
+    ctx.fillStyle = TEXT_PRIMARY;
+    ctx.textAlign = 'right';
+    ctx.fillText(companyName, SIZE - PADDING, cursorY + 40);
+  }
+
+  cursorY += logoMaxH + 30;
+
+  // ── Separator line ──
+  ctx.strokeStyle = '#E5E7EB';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PADDING, cursorY);
+  ctx.lineTo(SIZE - PADDING, cursorY);
+  ctx.stroke();
+  cursorY += 30;
+
+  // ── Survey Title ──
+  ctx.textAlign = 'center';
+  ctx.fillStyle = TEXT_PRIMARY;
+  const titleMaxWidth = SIZE - PADDING * 2 - 40;
+
+  let titleFontSize = 42;
+  ctx.font = `bold ${titleFontSize}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+
+  let titleLines = wrapText(ctx, surveyTitle, titleMaxWidth);
+  while (titleLines.length > 3 && titleFontSize > 24) {
+    titleFontSize -= 2;
+    ctx.font = `bold ${titleFontSize}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+    titleLines = wrapText(ctx, surveyTitle, titleMaxWidth);
+  }
+
+  const titleLineHeight = titleFontSize * 1.3;
+  for (const line of titleLines) {
+    ctx.fillText(line, SIZE / 2, cursorY + titleFontSize);
+    cursorY += titleLineHeight;
+  }
+
+  cursorY += 20;
+
+  // ── QR Code ──
+  const availableSpace = SIZE - cursorY - PADDING - 80;
+  const qrSize = Math.min(availableSpace, SIZE - PADDING * 4, 600);
+  const qrX = (SIZE - qrSize) / 2;
+
+  // QR frame
+  const framePad = 16;
+  drawRoundedRect(
+    ctx,
+    qrX - framePad, cursorY - framePad,
+    qrSize + framePad * 2, qrSize + framePad * 2,
+    16
+  );
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+  ctx.strokeStyle = BRAND_INDIGO;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  try {
+    const qrImg = await loadImage(qrCodeUrl);
+    ctx.drawImage(qrImg, qrX, cursorY, qrSize, qrSize);
+  } catch {
+    ctx.font = '20px "Helvetica Neue", Helvetica, Arial, sans-serif';
+    ctx.fillStyle = TEXT_SECONDARY;
+    ctx.textAlign = 'center';
+    ctx.fillText('QR Code', SIZE / 2, cursorY + qrSize / 2);
+  }
+
+  cursorY += qrSize + framePad + 30;
+
+  // ── "Scan to take the survey" instruction ──
+  ctx.font = '600 22px "Helvetica Neue", Helvetica, Arial, sans-serif';
+  ctx.fillStyle = TEXT_SECONDARY;
+  ctx.textAlign = 'center';
+  ctx.fillText('Scan the QR code to take the survey', SIZE / 2, cursorY);
+  cursorY += 35;
+
+  // ── qualitivate.io link ──
+  ctx.font = 'bold 26px "Helvetica Neue", Helvetica, Arial, sans-serif';
+  ctx.fillStyle = BRAND_INDIGO;
+  ctx.textAlign = 'center';
+  ctx.fillText(QUALITIVATE_LINK, SIZE / 2, cursorY);
+
+  // ── Download ──
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error('Canvas toBlob failed'))),
+      'image/png',
+      1.0
+    );
+  });
+
+  triggerDownload(blob, `${sanitizeFilename(surveyTitle)}-qr.png`);
+}
+
+// ─── A4 PDF EXPORT ───
+
+export async function generateQrPdf(options: QrExportOptions): Promise<void> {
+  const { surveyTitle, qrCodeUrl, companyName, companyLogoUrl, surveyUrl } = options;
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pw = doc.internal.pageSize.getWidth();   // 210
+  const ph = doc.internal.pageSize.getHeight();   // 297
+  const margin = 20;
+
+  // White background
+  doc.setFillColor(255, 255, 255);
+  doc.rect(0, 0, pw, ph, 'F');
+
+  // Subtle background pattern (light dots grid)
+  doc.setFillColor(245, 245, 250);
+  for (let x = 10; x < pw; x += 15) {
+    for (let y = 10; y < ph; y += 15) {
+      doc.circle(x, y, 0.3, 'F');
     }
+  }
 
-    // Top Right URL
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
-    const topRightText = 'www.qualtivate.io';
-    const textWidth = doc.getTextWidth(topRightText);
-    const topRightX = pageWidth - margin - textWidth;
+  let cursorY = margin;
 
-    // Draw simple globe icon
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.3);
-    const topIconX = topRightX - 6;
-    const topIconY = headerY + 4;
-    doc.circle(topIconX, topIconY, 3, 'S');
-    doc.line(topIconX - 3, topIconY, topIconX + 3, topIconY);
-    doc.line(topIconX, topIconY - 3, topIconX, topIconY + 3);
-    // Draw ellipse for globe effect
-    doc.ellipse(topIconX, topIconY, 1.5, 3, 'S');
+  // ── HEADER: Qualitivate logo (left) + Company logo (right) ──
+  const logoMaxW = 45;
+  const logoMaxH = 14;
 
-    doc.text(topRightText, topRightX, headerY + 5.5);
+  try {
+    const qualitivateBase64 = await loadImageToBase64('/branding/logo1.webp');
+    doc.addImage(qualitivateBase64, 'PNG', margin, cursorY, logoMaxW, logoMaxH);
+  } catch {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.setTextColor(79, 70, 229);
+    doc.text('Qualitivate', margin, cursorY + 10);
+  }
 
-    // ─── SURVEY TITLE ───
-    doc.setFont('helvetica', 'normal');
-    // Using a thin, crisp font appearance
-    doc.setTextColor(0, 0, 0);
+  if (companyLogoUrl) {
+    try {
+      const companyBase64 = await loadImageToBase64(companyLogoUrl);
+      doc.addImage(companyBase64, 'PNG', pw - margin - logoMaxW, cursorY, logoMaxW, logoMaxH);
+    } catch {
+      if (companyName) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(17, 24, 39);
+        doc.text(companyName, pw - margin, cursorY + 10, { align: 'right' });
+      }
+    }
+  } else if (companyName) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(17, 24, 39);
+    doc.text(companyName, pw - margin, cursorY + 10, { align: 'right' });
+  }
 
-    let titleFontSize = 26;
+  cursorY += logoMaxH + 8;
+
+  // ── Separator ──
+  doc.setDrawColor(229, 231, 235);
+  doc.setLineWidth(0.5);
+  doc.line(margin, cursorY, pw - margin, cursorY);
+  cursorY += 15;
+
+  // ── Survey Title ──
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(17, 24, 39);
+
+  let titleFontSize = 28;
+  doc.setFontSize(titleFontSize);
+  const contentWidth = pw - margin * 2 - 20;
+
+  while (doc.getTextWidth(surveyTitle) > contentWidth * 2 && titleFontSize > 16) {
+    titleFontSize -= 1;
     doc.setFontSize(titleFontSize);
-    const contentWidth = pageWidth - margin * 4; // Much narrower for centered text
+  }
 
-    while (doc.getTextWidth(surveyTitle) > contentWidth && titleFontSize > 14) {
-        titleFontSize -= 1;
-        doc.setFontSize(titleFontSize);
-    }
+  const titleLines: string[] = doc.splitTextToSize(surveyTitle, contentWidth);
+  doc.text(titleLines, pw / 2, cursorY, { align: 'center' });
+  cursorY += titleLines.length * (titleFontSize * 0.45) + 15;
 
-    const titleLines: string[] = doc.splitTextToSize(surveyTitle, contentWidth);
-    const titleTotalHeight = titleLines.length * (titleFontSize * 0.35);
+  // ── QR Code with branded frame ──
+  const qrSize = Math.min(pw - margin * 4, 130);
+  const framePad = 6;
+  const frameX = (pw - qrSize) / 2 - framePad;
+  const frameW = qrSize + framePad * 2;
 
-    // Position title centered about 40mm down from top
-    const titleY = 55;
-    doc.text(titleLines, pageWidth / 2, titleY, { align: 'center' });
+  // Frame background
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(frameX, cursorY - framePad, frameW, frameW, 4, 4, 'F');
+  // Frame border
+  doc.setDrawColor(79, 70, 229);
+  doc.setLineWidth(2.5);
+  doc.roundedRect(frameX, cursorY - framePad, frameW, frameW, 4, 4, 'S');
 
-    // ─── QR CODE FRAME ───
-    // Fixed height layout based on template ratio
-    const qrSectionY = titleY + titleTotalHeight + 15;
-    const borderPadding = 8;
-    // Calculate square box width filling most of page width
-    const borderW = pageWidth - (margin * 3.5);
-    const borderH = borderW; // Perfect square
-    const borderX = (pageWidth - borderW) / 2;
-    const qrBorderRadius = 4;
-
-    // Draw the massive thick blurple frame
-    doc.setDrawColor(79, 70, 229); // #4F46E5 Brand
-    doc.setLineWidth(3.5);
-    doc.setFillColor(255, 255, 255);
-
-    // Fill white first to obscure the topography behind the QR area
-    doc.roundedRect(borderX, qrSectionY, borderW, borderH, qrBorderRadius, qrBorderRadius, 'F');
-    // Draw stroke
-    doc.roundedRect(borderX, qrSectionY, borderW, borderH, qrBorderRadius, qrBorderRadius, 'S');
-
-    // ─── QR CODE IMAGE ───
-    const qrBoxSize = borderW - (borderPadding * 2);
-    try {
-        const qrBase64 = await loadImageAsBase64(qrCodeUrl);
-        const qrX = borderX + borderPadding;
-        const qrY = qrSectionY + borderPadding;
-        doc.addImage(qrBase64, 'PNG', qrX, qrY, qrBoxSize, qrBoxSize);
-    } catch (e) {
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(12);
-        doc.setTextColor(100, 100, 100);
-        doc.text('QR Code rendering failed', pageWidth / 2, qrSectionY + borderH / 2, { align: 'center' });
-    }
-
-    // ─── FOOTER ───
-    const footerY = pageHeight - margin - 5;
-
-    // Left Logo (Afflatus logic)
-    // The design is specific to Afflatus Consulting Group. We will try to load their logo if we have it,
-    // otherwise fallback to text. If the server provides a logo in the future, we can wire it.
-    try {
-        // Look for the specific abstract triangle logo if it exists dynamically in assets
-        const footerLogoBase64 = await loadImageAsBase64('/images/logo.png');
-        doc.addImage(footerLogoBase64, 'PNG', margin, footerY - 12, 40, 15);
-    } catch {
-        // Text fallback
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
-
-        // Multi-line Afflatus styling
-        const cLines = (companyName || 'Afflatus Consulting').split(' ');
-        let cy = footerY - 8;
-        cLines.forEach(l => {
-            doc.text(l, margin + 5, cy);
-            cy += 5;
-        });
-
-        // Faux logo mark
-        doc.setDrawColor(107, 29, 58); // Maroon
-        doc.setLineWidth(1);
-        doc.line(margin, footerY - 15, margin, footerY);
-    }
-
-    // Right side website 
+  try {
+    const qrBase64 = await loadImageToBase64(qrCodeUrl);
+    doc.addImage(qrBase64, 'PNG', (pw - qrSize) / 2, cursorY, qrSize, qrSize);
+  } catch {
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.setTextColor(100, 100, 100);
+    doc.text('QR Code', pw / 2, cursorY + qrSize / 2, { align: 'center' });
+  }
 
-    const displayUrl = 'www.afflatus.consulting';
-    const bTextWidth = doc.getTextWidth(displayUrl);
-    const bRightX = pageWidth - margin - bTextWidth;
+  cursorY += qrSize + framePad + 15;
 
-    // Bottom globe icon
-    const bIconX = bRightX - 6;
-    const bIconY = footerY - 1.5;
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.3);
-    doc.circle(bIconX, bIconY, 3, 'S');
-    doc.line(bIconX - 3, bIconY, bIconX + 3, bIconY);
-    doc.line(bIconX, bIconY - 3, bIconX, bIconY + 3);
-    doc.ellipse(bIconX, bIconY, 1.5, 3, 'S');
+  // ── Scan instruction ──
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(14);
+  doc.setTextColor(107, 114, 128);
+  doc.text('Scan the QR code to take the survey', pw / 2, cursorY, { align: 'center' });
+  cursorY += 10;
 
-    doc.text(displayUrl, bRightX, footerY);
+  // ── Survey URL ──
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(107, 114, 128);
+  const displayUrl = surveyUrl.replace(/^https?:\/\//, '');
+  const urlLines = doc.splitTextToSize(displayUrl, contentWidth);
+  doc.text(urlLines, pw / 2, cursorY, { align: 'center' });
 
-    // ─── SAVE ───
-    const safeTitle = surveyTitle
-        .replace(/[^a-zA-Z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .substring(0, 50)
-        .toLowerCase();
+  // ── Footer ──
+  const footerY = ph - margin;
 
-    doc.save(`${safeTitle || 'survey'}-qr.pdf`);
+  // Separator
+  doc.setDrawColor(229, 231, 235);
+  doc.setLineWidth(0.5);
+  doc.line(margin, footerY - 12, pw - margin, footerY - 12);
+
+  // qualitivate.io link centered
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(79, 70, 229);
+  doc.text(QUALITIVATE_LINK, pw / 2, footerY, { align: 'center' });
+
+  // Powered by text
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(156, 163, 175);
+  doc.text('Powered by Qualitivate', pw / 2, footerY - 5, { align: 'center' });
+
+  // ── Save ──
+  doc.save(`${sanitizeFilename(surveyTitle)}-qr.pdf`);
+}
+
+function loadImageToBase64(url: string): Promise<string> {
+  if (url.startsWith('data:')) return Promise.resolve(url);
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('No canvas context')); return; }
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    img.onerror = () => reject(new Error(`Failed to load: ${url}`));
+    img.src = url;
+  });
 }

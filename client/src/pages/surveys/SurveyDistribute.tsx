@@ -6,7 +6,7 @@ import { surveyService } from '../../services/survey.service';
 import { companyService } from '../../services/organization.service';
 import { useAuth } from '../../contexts/AuthContext';
 import { DashboardLayout } from '../../components/layout';
-import { generateQrPdf } from '../../utils/qrPdfExport';
+import { generateQrPdf, generateQrImage } from '../../utils/qrPdfExport';
 
 const SurveyDistribute: React.FC = () => {
   const { id: surveyId } = useParams<{ id: string }>();
@@ -40,21 +40,35 @@ const SurveyDistribute: React.FC = () => {
   });
 
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+  const getExportOptions = (qrUrl: string) => ({
+    surveyTitle: survey?.title || 'Survey',
+    qrCodeUrl: qrUrl,
+    companyName: companyData?.name,
+    companyLogoUrl: companyData?.settings?.logoUrl,
+    surveyUrl: surveyUrl,
+  });
 
   const handleDownloadPdf = async (qrUrl: string) => {
     setIsGeneratingPdf(true);
     try {
-      await generateQrPdf({
-        surveyTitle: survey?.title || 'Survey',
-        qrCodeUrl: qrUrl,
-        companyName: companyData?.name,
-        companyActivity: companyData?.activity,
-        surveyUrl: surveyUrl,
-      });
+      await generateQrPdf(getExportOptions(qrUrl));
     } catch (err) {
       console.error('Failed to generate PDF:', err);
     } finally {
       setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleDownloadImage = async (qrUrl: string) => {
+    setIsGeneratingImage(true);
+    try {
+      await generateQrImage(getExportOptions(qrUrl));
+    } catch (err) {
+      console.error('Failed to generate image:', err);
+    } finally {
+      setIsGeneratingImage(false);
     }
   };
 
@@ -287,15 +301,28 @@ const SurveyDistribute: React.FC = () => {
                             <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            Download PDF
+                            Download PDF (A4)
                           </>
                         )}
                       </button>
                       <button
-                        onClick={() => window.open(qrDistribution.qrCodeUrl, '_blank')}
-                        className="btn-ghost text-text-secondary"
+                        onClick={() => handleDownloadImage(qrDistribution.qrCodeUrl!)}
+                        disabled={isGeneratingImage}
+                        className="btn-secondary"
                       >
-                        QR Image Only
+                        {isGeneratingImage ? (
+                          <>
+                            <span className="spinner spinner-sm mr-2"></span>
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Download Image
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
