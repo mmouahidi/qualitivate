@@ -337,10 +337,26 @@ export const updateSurvey = async (req: AuthRequest, res: Response) => {
       updateData.company_id = resolvedCompanyId || null;
     }
 
+    // DEBUG: Log the update data to trace company_id issues
+    console.log('[UPDATE SURVEY DEBUG]', {
+      settingsType: typeof settings,
+      parsedSettingsCompanyId: parsedSettings?.companyId,
+      bodyCompanyId: companyId,
+      resolvedCompanyId,
+      updateDataCompanyId: updateData.company_id,
+      updateDataKeys: Object.keys(updateData),
+    });
+
     const [updatedSurvey] = await db('surveys')
       .where({ id })
       .update(updateData)
       .returning('*');
+
+    // DEBUG: Log the result
+    console.log('[UPDATE SURVEY RESULT]', {
+      surveyId: updatedSurvey?.id,
+      resultCompanyId: updatedSurvey?.company_id,
+    });
 
     res.json(updatedSurvey);
   } catch (error) {
