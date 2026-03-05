@@ -297,7 +297,24 @@ export const updateSurvey = async (req: AuthRequest, res: Response) => {
       updateData.is_anonymous = resolvedIsAnonymous;
     }
     if (defaultLanguage !== undefined) updateData.default_language = defaultLanguage;
-    if (settings !== undefined) updateData.settings = settings;
+    // Parse settings if it comes as a string (e.g. from JSONB column serialization)
+    const parsedSettings = typeof settings === 'string' ? JSON.parse(settings) : settings;
+
+    // Extract notification emails and companyId from settings before cleaning
+    // Check both body root and inside settings for backward compatibility
+    const resolvedNotificationEmails = notificationEmails !== undefined
+      ? notificationEmails
+      : (parsedSettings?.notificationEmails !== undefined ? parsedSettings.notificationEmails : undefined);
+
+    const resolvedCompanyId = companyId !== undefined
+      ? companyId
+      : (parsedSettings?.companyId !== undefined ? parsedSettings.companyId : undefined);
+
+    // Clean internal keys from settings before persisting to the JSON column
+    if (parsedSettings) {
+      const { notificationEmails: _ne, companyId: _ci, ...cleanSettings } = parsedSettings;
+      updateData.settings = cleanSettings;
+    }
 
     // Validate date range with existing values
     const newStartsAt = startsAt !== undefined ? startsAt : survey.starts_at;
@@ -308,28 +325,16 @@ export const updateSurvey = async (req: AuthRequest, res: Response) => {
     if (startsAt !== undefined) updateData.starts_at = startsAt;
     if (endsAt !== undefined) updateData.ends_at = endsAt;
 
-    // Notification emails – check both body root and inside settings
-    const resolvedNotificationEmails = notificationEmails !== undefined
-      ? notificationEmails
-      : (settings?.notificationEmails !== undefined ? settings.notificationEmails : undefined);
+    // Notification emails
     if (resolvedNotificationEmails !== undefined) {
       if (Array.isArray(resolvedNotificationEmails)) {
         updateData.notification_emails = JSON.stringify(resolvedNotificationEmails);
       }
     }
 
-    // Company targeting (super_admin only) – check both body root and inside settings
-    const resolvedCompanyId = companyId !== undefined
-      ? companyId
-      : (settings?.companyId !== undefined ? settings.companyId : undefined);
+    // Company targeting (super_admin only)
     if (resolvedCompanyId !== undefined && user.role === 'super_admin') {
       updateData.company_id = resolvedCompanyId || null;
-    }
-
-    // Clean internal keys from persisted settings to avoid storing them in the JSON column
-    if (updateData.settings) {
-      const { notificationEmails: _ne, companyId: _ci, ...cleanSettings } = updateData.settings;
-      updateData.settings = cleanSettings;
     }
 
     const [updatedSurvey] = await db('surveys')
