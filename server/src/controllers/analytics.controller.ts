@@ -1395,3 +1395,202 @@ export const exportPDFReport = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Failed to generate PDF report' });
   }
 };
+
+/**
+ * Taxonomy-based quality report.
+ * Aggregates per-choice scores by dimension and category.
+ */
+export const getTaxonomyReport = async (req: AuthRequest, res: Response) => {
+  try {
+    const { surveyId } = req.params;
+    const user = req.user!;
+
+    const survey = await db('surveys').where({ id: surveyId }).first();
+    if (!survey) {
+      return res.status(404).json({ error: 'Survey not found' });
+    }
+
+    const accessFilter = buildAccessFilter(user);
+    if (accessFilter['surveys.company_id'] !== undefined && accessFilter['surveys.company_id'] !== survey.company_id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // 1. Fetch classified questions with taxonomy joins
+    const questions = await db('questions')
+      .select(
+        'questions.id',
+        'questions.options',
+        'questions.type',
+        'questions.category_id',
+        'questions.dimension_id',
+        'tc.id as cat_id',
+        'tc.name as category_name',
+        'tc.order_index as cat_order',
+        'td.id as dim_id',
+        'td.name as dimension_name',
+        'td.order_index as dim_order'
+      )
+      .leftJoin('taxonomy_categories as tc', 'questions.category_id', 'tc.id')
+      .leftJoin('taxonomy_dimensions as td', 'questions.dimension_id', 'td.id')
+      .where({ 'questions.survey_id': surveyId })
+      .whereNotNull('questions.category_id')
+      .whereNotNull('questions.dimension_id');
+
+    if (questions.length === 0) {
+      return res.json({
+        overall: { score: 0, grade: 'N/A', benchmark: null, respondentCount: 0 },
+        categories: [],
+      });
+    }
+
+    // 2. Fetch all answers for completed responses
+    const answers = await db('answers')
+      .select('answers.question_id', 'answers.value')
+      .join('responses', 'answers.response_id', 'responses.id')
+      .where({ 'responses.survey_id': surveyId, 'responses.status': 'completed' });
+
+    const respondentCount = await db('responses')
+      .where({ survey_id: surveyId, status: 'completed' })
+      .count('id as count')
+      .first()
+      .then((r: any) => Number(r?.count || 0));
+
+    // 3. Build a map of questionId → answers[]
+    const answersByQuestion: Record<string, any[]> = {};
+    for (const ans of answers) {
+      if (!answersByQuestion[ans.question_id]) answersByQuestion[ans.question_id] = [];
+      answersByQuestion[ans.question_id].push(ans.value);
+    }
+
+    // 4. Score each question (normalised 0-100)
+    const questionScores: Record<string, number> = {};
+
+    for (const q of questions) {
+      const opts = parseJsonSafe(q.options) || {};
+      const choices: any[] = opts.choices || [];
+      if (choices.length === 0) continue;
+
+      const maxScore = Math.max(...choices.map((c: any) => {
+        const s = typeof c === 'object' ? (c.score ?? 0) : 0;
+        return Number(s) || 0;
+      }));
+      if (maxScore <= 0) continue;
+
+      const qAnswers = answersByQuestion[q.id] || [];
+      if (qAnswers.length === 0) continue;
+
+      let totalNormalized = 0;
+      let validCount = 0;
+
+      for (const rawValue of qAnswers) {
+        const ansVal = getAnswerValue(rawValue);
+        const ansStr = String(ansVal ?? '').trim();
+
+        let choiceScore: number | null = null;
+        for (const c of choices) {
+          const cv = typeof c === 'object' ? String(c.value ?? '') : String(c);
+          if (cv === ansStr) {
+            choiceScore = typeof c === 'object' ? (Number(c.score) || 0) : 0;
+            break;
+          }
+        }
+
+        if (choiceScore !== null) {
+          totalNormalized += (choiceScore / maxScore) * 100;
+          validCount++;
+        }
+      }
+
+      if (validCount > 0) {
+        questionScores[q.id] = Math.round(totalNormalized / validCount);
+      }
+    }
+
+    // 5. Aggregate by dimension then by category
+    interface DimAccum { id: string; name: string; order: number; scores: number[]; questionCount: number; }
+    interface CatAccum { id: string; name: string; order: number; dims: Record<string, DimAccum>; }
+
+    const catMap: Record<string, CatAccum> = {};
+
+    for (const q of questions) {
+      if (questionScores[q.id] === undefined) continue;
+
+      const catId = q.cat_id;
+      const dimId = q.dim_id;
+
+      if (!catMap[catId]) {
+        catMap[catId] = { id: catId, name: q.category_name, order: q.cat_order, dims: {} };
+      }
+      if (!catMap[catId].dims[dimId]) {
+        catMap[catId].dims[dimId] = { id: dimId, name: q.dimension_name, order: q.dim_order, scores: [], questionCount: 0 };
+      }
+      catMap[catId].dims[dimId].scores.push(questionScores[q.id]);
+      catMap[catId].dims[dimId].questionCount++;
+    }
+
+    const settings = parseJsonSafe(survey.settings) || {};
+    const benchmarks: Record<string, number> = settings.benchmarks || {};
+
+    const categories = Object.values(catMap)
+      .sort((a, b) => a.order - b.order)
+      .map(cat => {
+        const dimensions = Object.values(cat.dims)
+          .sort((a, b) => a.order - b.order)
+          .map(dim => ({
+            id: dim.id,
+            name: dim.name,
+            score: Math.round(dim.scores.reduce((s, v) => s + v, 0) / dim.scores.length),
+            questionCount: dim.questionCount,
+          }));
+
+        const catScore = Math.round(
+          dimensions.reduce((s, d) => s + d.score, 0) / dimensions.length
+        );
+
+        const benchmark = benchmarks[cat.id] ?? null;
+
+        return {
+          id: cat.id,
+          name: cat.name,
+          score: catScore,
+          benchmark,
+          change: benchmark !== null ? (catScore > benchmark ? 'up' : catScore < benchmark ? 'down' : 'same') : null,
+          dimensions,
+        };
+      });
+
+    const overallScore = categories.length > 0
+      ? Math.round(categories.reduce((s, c) => s + c.score, 0) / categories.length)
+      : 0;
+
+    const overallBenchmark = categories.length > 0 && categories.every(c => c.benchmark !== null)
+      ? Math.round(categories.reduce((s, c) => s + (c.benchmark ?? 0), 0) / categories.length)
+      : null;
+
+    const gradeFromScore = (score: number): string => {
+      if (score >= 90) return 'A';
+      if (score >= 75) return 'B';
+      if (score >= 60) return 'C';
+      if (score >= 45) return 'D';
+      return 'F';
+    };
+
+    res.json({
+      overall: {
+        score: overallScore,
+        grade: gradeFromScore(overallScore),
+        benchmark: overallBenchmark,
+        previousGrade: overallBenchmark !== null ? gradeFromScore(overallBenchmark) : null,
+        change: overallBenchmark !== null
+          ? (overallScore > overallBenchmark ? 'up' : overallScore < overallBenchmark ? 'down' : 'same')
+          : null,
+        respondentCount,
+      },
+      categories,
+    });
+
+  } catch (error) {
+    logger.error('Taxonomy report error:', { error });
+    res.status(500).json({ error: 'Failed to generate taxonomy report' });
+  }
+};

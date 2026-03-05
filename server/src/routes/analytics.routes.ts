@@ -8,7 +8,8 @@ import {
   exportResponses,
   exportPDFReport,
   getCompanyAnalytics,
-  getRoleDashboard
+  getRoleDashboard,
+  getTaxonomyReport
 } from '../controllers/analytics.controller';
 
 const router = Router();
@@ -31,6 +32,13 @@ router.get(
   '/surveys/:surveyId',
   authorize('super_admin', 'company_admin', 'site_admin', 'department_admin'),
   getSurveyAnalytics
+);
+
+// Taxonomy-based quality report for a survey
+router.get(
+  '/surveys/:surveyId/taxonomy-report',
+  authorize('super_admin', 'company_admin', 'site_admin', 'department_admin'),
+  getTaxonomyReport
 );
 
 // Question-level analytics for a survey
