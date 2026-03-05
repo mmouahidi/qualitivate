@@ -13,6 +13,7 @@ const SurveyAnalyticsPage: React.FC = () => {
   const [questionAnalytics, setQuestionAnalytics] = useState<QuestionAnalytics | null>(null);
   const [responses, setResponses] = useState<PaginatedResponses | null>(null);
   const [taxonomyReport, setTaxonomyReport] = useState<TaxonomyReport | null>(null);
+  const [taxonomyLoaded, setTaxonomyLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<'report' | 'overview' | 'questions' | 'responses' | 'quality'>('report');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -30,9 +31,9 @@ const SurveyAnalyticsPage: React.FC = () => {
       loadQuestionAnalytics();
     } else if (activeTab === 'responses' && surveyId) {
       loadResponses(currentPage);
-    } else if (activeTab === 'quality' && !taxonomyReport && surveyId) {
+    } else if (activeTab === 'quality' && !taxonomyLoaded && surveyId) {
       loadTaxonomyReport();
-    } else if (activeTab === 'report' && !taxonomyReport && surveyId) {
+    } else if (activeTab === 'report' && !taxonomyLoaded && surveyId) {
       loadTaxonomyReport();
     }
   }, [activeTab, surveyId, currentPage]);
@@ -64,6 +65,9 @@ const SurveyAnalyticsPage: React.FC = () => {
       setTaxonomyReport(data);
     } catch (err: any) {
       console.error('Failed to load taxonomy report:', err);
+      setTaxonomyReport({ overall: { score: 0, grade: 'N/A', benchmark: null, previousGrade: null, change: null, respondentCount: 0 }, categories: [] });
+    } finally {
+      setTaxonomyLoaded(true);
     }
   };
 
@@ -218,29 +222,27 @@ const SurveyAnalyticsPage: React.FC = () => {
         {/* Report Tab */}
         {activeTab === 'report' && (
           <div>
-            {taxonomyReport ? (
-              taxonomyReport.categories.length > 0 ? (
-                <FoodSafetyCultureReport
-                  taxonomy={taxonomyReport}
-                  analytics={analytics}
-                  onExport={handleExport}
-                  exporting={exporting}
-                />
-              ) : (
-                <div className="card-soft text-center py-12">
-                  <svg className="w-16 h-16 mx-auto text-text-muted/30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                  <h3 className="text-lg font-semibold text-text-primary mb-2">No Assessment Data Available</h3>
-                  <p className="text-text-secondary max-w-md mx-auto">
-                    To generate a Food Safety Culture Assessment Report, classify your survey questions by assigning
-                    a Category and Dimension in the survey builder's Configuration panel.
-                  </p>
-                </div>
-              )
-            ) : (
+            {!taxonomyLoaded ? (
               <div className="text-center py-8">
                 <div className="spinner spinner-lg text-primary-600 mx-auto"></div>
+              </div>
+            ) : taxonomyReport && taxonomyReport.categories.length > 0 ? (
+              <FoodSafetyCultureReport
+                taxonomy={taxonomyReport}
+                analytics={analytics}
+                onExport={handleExport}
+                exporting={exporting}
+              />
+            ) : (
+              <div className="card-soft text-center py-12">
+                <svg className="w-16 h-16 mx-auto text-text-muted/30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <h3 className="text-lg font-semibold text-text-primary mb-2">No Assessment Data Available</h3>
+                <p className="text-text-secondary max-w-md mx-auto">
+                  To generate a Food Safety Culture Assessment Report, classify your survey questions by assigning
+                  a Category and Dimension in the survey builder's Configuration panel.
+                </p>
               </div>
             )}
           </div>
@@ -349,24 +351,22 @@ const SurveyAnalyticsPage: React.FC = () => {
         {/* Quality Report Tab */}
         {activeTab === 'quality' && (
           <div>
-            {taxonomyReport ? (
-              taxonomyReport.categories.length > 0 ? (
-                <TaxonomyReportView data={taxonomyReport} />
-              ) : (
-                <div className="card-soft text-center py-12">
-                  <svg className="w-16 h-16 mx-auto text-text-muted/30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <h3 className="text-lg font-semibold text-text-primary mb-2">No Classification Data</h3>
-                  <p className="text-text-secondary max-w-md mx-auto">
-                    To generate a quality report, classify your survey questions by assigning a Category and Dimension
-                    in the survey builder's Configuration panel.
-                  </p>
-                </div>
-              )
-            ) : (
+            {!taxonomyLoaded ? (
               <div className="text-center py-8">
                 <div className="spinner spinner-lg text-primary-600 mx-auto"></div>
+              </div>
+            ) : taxonomyReport && taxonomyReport.categories.length > 0 ? (
+              <TaxonomyReportView data={taxonomyReport} />
+            ) : (
+              <div className="card-soft text-center py-12">
+                <svg className="w-16 h-16 mx-auto text-text-muted/30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 className="text-lg font-semibold text-text-primary mb-2">No Classification Data</h3>
+                <p className="text-text-secondary max-w-md mx-auto">
+                  To generate a quality report, classify your survey questions by assigning a Category and Dimension
+                  in the survey builder's Configuration panel.
+                </p>
               </div>
             )}
           </div>
