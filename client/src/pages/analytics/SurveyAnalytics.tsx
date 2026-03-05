@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import analyticsService, { SurveyAnalytics, QuestionAnalytics, PaginatedResponses, TaxonomyReport } from '../../services/analytics.service';
 import { DashboardLayout } from '../../components/layout';
 import TaxonomyReportView from '../../components/analytics/TaxonomyReport';
+import FoodSafetyCultureReport from '../../components/analytics/FoodSafetyCultureReport';
 
 const SurveyAnalyticsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -12,7 +13,7 @@ const SurveyAnalyticsPage: React.FC = () => {
   const [questionAnalytics, setQuestionAnalytics] = useState<QuestionAnalytics | null>(null);
   const [responses, setResponses] = useState<PaginatedResponses | null>(null);
   const [taxonomyReport, setTaxonomyReport] = useState<TaxonomyReport | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'questions' | 'responses' | 'quality'>('overview');
+  const [activeTab, setActiveTab] = useState<'report' | 'overview' | 'questions' | 'responses' | 'quality'>('report');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +31,8 @@ const SurveyAnalyticsPage: React.FC = () => {
     } else if (activeTab === 'responses' && surveyId) {
       loadResponses(currentPage);
     } else if (activeTab === 'quality' && !taxonomyReport && surveyId) {
+      loadTaxonomyReport();
+    } else if (activeTab === 'report' && !taxonomyReport && surveyId) {
       loadTaxonomyReport();
     }
   }, [activeTab, surveyId, currentPage]);
@@ -156,38 +159,40 @@ const SurveyAnalyticsPage: React.FC = () => {
               <span className="text-sm text-text-secondary">{analytics.questionCount} {t('survey.questions')}</span>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleExport('pdf')}
-              disabled={exporting}
-              className="btn-primary flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              {exporting ? t('analytics.generating') : t('analytics.exportPdf')}
-            </button>
-            <button
-              onClick={() => handleExport('csv')}
-              disabled={exporting}
-              className="btn-secondary"
-            >
-              {t('analytics.exportCsv')}
-            </button>
-            <button
-              onClick={() => handleExport('json')}
-              disabled={exporting}
-              className="btn-secondary"
-            >
-              {t('analytics.exportJson')}
-            </button>
-          </div>
+          {activeTab !== 'report' && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleExport('pdf')}
+                disabled={exporting}
+                className="btn-primary flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                {exporting ? t('analytics.generating') : t('analytics.exportPdf')}
+              </button>
+              <button
+                onClick={() => handleExport('csv')}
+                disabled={exporting}
+                className="btn-secondary"
+              >
+                {t('analytics.exportCsv')}
+              </button>
+              <button
+                onClick={() => handleExport('json')}
+                disabled={exporting}
+                className="btn-secondary"
+              >
+                {t('analytics.exportJson')}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
         <div className="border-b border-border">
           <nav className="-mb-px flex space-x-8">
-            {(['overview', 'quality', 'questions', 'responses'] as const).map((tab) => (
+            {(['report', 'overview', 'quality', 'questions', 'responses'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -197,11 +202,49 @@ const SurveyAnalyticsPage: React.FC = () => {
                     : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border'
                 }`}
               >
-                {tab === 'quality' ? 'Quality Report' : t(`analytics.${tab}`)}
+                {tab === 'report' ? (
+                  <span className="flex items-center gap-1.5">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    Assessment Report
+                  </span>
+                ) : tab === 'quality' ? 'Quality Report' : t(`analytics.${tab}`)}
               </button>
             ))}
           </nav>
         </div>
+
+        {/* Report Tab */}
+        {activeTab === 'report' && (
+          <div>
+            {taxonomyReport ? (
+              taxonomyReport.categories.length > 0 ? (
+                <FoodSafetyCultureReport
+                  taxonomy={taxonomyReport}
+                  analytics={analytics}
+                  onExport={handleExport}
+                  exporting={exporting}
+                />
+              ) : (
+                <div className="card-soft text-center py-12">
+                  <svg className="w-16 h-16 mx-auto text-text-muted/30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <h3 className="text-lg font-semibold text-text-primary mb-2">No Assessment Data Available</h3>
+                  <p className="text-text-secondary max-w-md mx-auto">
+                    To generate a Food Safety Culture Assessment Report, classify your survey questions by assigning
+                    a Category and Dimension in the survey builder's Configuration panel.
+                  </p>
+                </div>
+              )
+            ) : (
+              <div className="text-center py-8">
+                <div className="spinner spinner-lg text-primary-600 mx-auto"></div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Overview Tab */}
         {activeTab === 'overview' && (
