@@ -4,7 +4,8 @@ import {
   LayoutDashboard,
   ClipboardList,
   BarChart3,
-  Building
+  Building,
+  FileText
 } from 'lucide-react';
 import { SidebarProvider } from '../../contexts/SidebarContext';
 import { Sidebar, NavItem, MobileMenuButton } from './Sidebar';
@@ -17,6 +18,7 @@ function useNavigation(): NavItem[] {
     { name: t('sidebar.dashboard'), path: '/dashboard', icon: LayoutDashboard },
     { name: t('sidebar.surveys'), path: '/surveys', icon: ClipboardList, roles: ['super_admin', 'company_admin', 'site_admin', 'department_admin'] },
     { name: t('sidebar.analytics'), path: '/analytics', icon: BarChart3, roles: ['super_admin', 'company_admin', 'site_admin', 'department_admin'] },
+    { name: t('sidebar.templates'), path: '/templates', icon: FileText, roles: ['super_admin', 'company_admin'] },
     { name: t('sidebar.companies'), path: '/companies', icon: Building, roles: ['super_admin'] },
   ];
 }

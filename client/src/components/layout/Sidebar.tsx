@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Menu, X, LogOut, Sun, Moon, Monitor } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Menu, X, LogOut, Sun, Moon, Monitor, Contrast } from 'lucide-react';
 import { Logo } from '../ui/Logo';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -158,11 +158,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ navigation }) => {
           )}
         </Link>
 
-        {/* Dark Mode Toggle */}
+        {/* Theme Toggle */}
         <button
           onClick={() => {
-            const next = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light';
-            setTheme(next);
+            const cycle: Record<string, 'dark' | 'high-contrast' | 'system' | 'light'> = {
+              light: 'dark',
+              dark: 'high-contrast',
+              'high-contrast': 'system',
+              system: 'light',
+            };
+            setTheme(cycle[theme] ?? 'light');
           }}
           aria-label={t('sidebar.toggleTheme', 'Toggle theme')}
           className={`
@@ -172,14 +177,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ navigation }) => {
             transition-colors
             ${isExpanded ? 'justify-start gap-2' : 'justify-center'}
           `}
-          title={!isExpanded ? (theme === 'light' ? 'Light' : theme === 'dark' ? 'Dark' : 'System') : undefined}
+          title={!isExpanded ? ({ light: 'Light', dark: 'Dark', 'high-contrast': 'High Contrast', system: 'System' }[theme]) : undefined}
         >
           {theme === 'light' && <Sun className="w-4 h-4 flex-shrink-0" />}
           {theme === 'dark' && <Moon className="w-4 h-4 flex-shrink-0" />}
+          {theme === 'high-contrast' && <Contrast className="w-4 h-4 flex-shrink-0" />}
           {theme === 'system' && <Monitor className="w-4 h-4 flex-shrink-0" />}
           {isExpanded && (
             <span>
-              {theme === 'light' ? t('profile.themeLight', 'Light') : theme === 'dark' ? t('profile.themeDark', 'Dark') : t('profile.themeSystem', 'System')}
+              {{ light: t('profile.themeLight', 'Light'), dark: t('profile.themeDark', 'Dark'), 'high-contrast': t('profile.themeHighContrast', 'High Contrast'), system: t('profile.themeSystem', 'System') }[theme]}
             </span>
           )}
         </button>

@@ -18,6 +18,7 @@ import {
     Sun,
     Moon,
     Monitor,
+    Contrast,
     RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -192,6 +193,7 @@ const Profile: React.FC = () => {
     const themeOptions = [
         { value: 'light' as const, icon: Sun, label: t('profile.themeLight', 'Light') },
         { value: 'dark' as const, icon: Moon, label: t('profile.themeDark', 'Dark') },
+        { value: 'high-contrast' as const, icon: Contrast, label: t('profile.themeHighContrast', 'High Contrast') },
         { value: 'system' as const, icon: Monitor, label: t('profile.themeSystem', 'System') },
     ];
 

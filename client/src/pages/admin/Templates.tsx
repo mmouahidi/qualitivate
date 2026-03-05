@@ -3,7 +3,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import templateService, { Template, CreateTemplateData } from '../../services/template.service';
+import { companyService } from '../../services/organization.service';
 import { DashboardLayout } from '../../components/layout';
+
+const ALL_ROLES = [
+    { value: 'company_admin', label: 'Company Admin' },
+    { value: 'site_admin', label: 'Site Admin' },
+    { value: 'department_admin', label: 'Department Admin' },
+    { value: 'employee', label: 'Employee' },
+];
 
 const Templates: React.FC = () => {
     const { user: currentUser } = useAuth();
@@ -18,9 +26,13 @@ const Templates: React.FC = () => {
         category: '',
         type: 'custom',
         isGlobal: false,
-        isAnonymous: true
+        isAnonymous: true,
+        targetCompanies: [],
+        targetRoles: [],
     });
     const [error, setError] = useState<string | null>(null);
+
+    const isSuperAdmin = currentUser?.role === 'super_admin';
 
     const { data: templates, isLoading } = useQuery({
         queryKey: ['templates', selectedCategory],
@@ -35,21 +47,21 @@ const Templates: React.FC = () => {
         queryFn: () => templateService.getCategories()
     });
 
+    const { data: companiesData } = useQuery({
+        queryKey: ['companies-all'],
+        queryFn: () => companyService.listAll(),
+        enabled: isSuperAdmin,
+    });
+
+    const companies = companiesData?.data || [];
+
     const createMutation = useMutation({
         mutationFn: templateService.create,
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['templates'] });
             setIsCreateModalOpen(false);
-            setFormData({
-                name: '',
-                description: '',
-                category: '',
-                type: 'custom',
-                isGlobal: false,
-                isAnonymous: true
-            });
+            resetFormData();
             setError(null);
-            // Navigate to edit the template to add questions
             navigate(`/templates/${data.id}/edit`);
         },
         onError: (err: any) => {
@@ -67,6 +79,13 @@ const Templates: React.FC = () => {
             setError(err.response?.data?.error || 'Failed to delete template');
         }
     });
+
+    const resetFormData = () => {
+        setFormData({
+            name: '', description: '', category: '', type: 'custom',
+            isGlobal: false, isAnonymous: true, targetCompanies: [], targetRoles: [],
+        });
+    };
 
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,6 +106,26 @@ const Templates: React.FC = () => {
             setError(err.response?.data?.error || 'Failed to create survey from template');
         }
     };
+
+    const toggleCompany = (companyId: string) => {
+        const current = formData.targetCompanies || [];
+        const next = current.includes(companyId)
+            ? current.filter(id => id !== companyId)
+            : [...current, companyId];
+        setFormData({ ...formData, targetCompanies: next });
+    };
+
+    const toggleRole = (role: string) => {
+        const current = formData.targetRoles || [];
+        const next = current.includes(role)
+            ? current.filter(r => r !== role)
+            : [...current, role];
+        setFormData({ ...formData, targetRoles: next });
+    };
+
+    const getCompanyName = (id: string) => companies.find((c: any) => c.id === id)?.name || id.slice(0, 8);
+
+    const getRoleLabel = (role: string) => ALL_ROLES.find(r => r.value === role)?.label || role;
 
     const getCategoryBadgeClass = (category?: string) => {
         switch (category?.toLowerCase()) {
@@ -219,7 +258,7 @@ const Templates: React.FC = () => {
                                 </p>
                             )}
 
-                            <div className="flex items-center gap-4 text-sm text-text-muted mb-4">
+                            <div className="flex items-center gap-4 text-sm text-text-muted mb-3">
                                 <span className="flex items-center gap-1">
                                     <QuestionIcon className="w-4 h-4" />
                                     {template.questionCount || 0} questions
@@ -229,6 +268,30 @@ const Templates: React.FC = () => {
                                     {template.useCount || 0} uses
                                 </span>
                             </div>
+
+                            {/* Targeting info (super_admin only) */}
+                            {isSuperAdmin && template.isGlobal && (
+                                <div className="flex flex-wrap gap-1.5 mb-3">
+                                    {(template.targetCompanies?.length > 0) ? (
+                                        template.targetCompanies.map((cId: string) => (
+                                            <span key={cId} className="badge-neutral text-xs">
+                                                <BuildingIcon className="w-3 h-3 mr-0.5" />
+                                                {getCompanyName(cId)}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span className="text-xs text-text-muted">All companies</span>
+                                    )}
+                                    {(template.targetRoles?.length > 0) && (
+                                        template.targetRoles.map((r: string) => (
+                                            <span key={r} className="badge-info text-xs">
+                                                <UserIcon className="w-3 h-3 mr-0.5" />
+                                                {getRoleLabel(r)}
+                                            </span>
+                                        ))
+                                    )}
+                                </div>
+                            )}
 
                             <div className="flex items-center gap-2 pt-4 border-t border-border">
                                 <button
@@ -317,12 +380,17 @@ const Templates: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    {currentUser?.role === 'super_admin' && (
+                                    {isSuperAdmin && (
                                         <label className="flex items-center gap-2 cursor-pointer">
                                             <input
                                                 type="checkbox"
                                                 checked={formData.isGlobal}
-                                                onChange={(e) => setFormData({ ...formData, isGlobal: e.target.checked })}
+                                                onChange={(e) => setFormData({
+                                                    ...formData,
+                                                    isGlobal: e.target.checked,
+                                                    targetCompanies: e.target.checked ? formData.targetCompanies : [],
+                                                    targetRoles: e.target.checked ? formData.targetRoles : [],
+                                                })}
                                                 className="checkbox-soft"
                                             />
                                             <span className="text-sm text-text-secondary">Global template</span>
@@ -338,6 +406,74 @@ const Templates: React.FC = () => {
                                         <span className="text-sm text-text-secondary">Anonymous responses</span>
                                     </label>
                                 </div>
+
+                                {/* Targeting section (super_admin + global template) */}
+                                {isSuperAdmin && formData.isGlobal && (
+                                    <div className="space-y-4 p-4 rounded-lg bg-background border border-border">
+                                        <h4 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                                            <TargetIcon className="w-4 h-4 text-primary-500" />
+                                            Template Targeting
+                                        </h4>
+                                        <p className="text-xs text-text-muted">
+                                            Leave empty to make available to all companies and roles.
+                                        </p>
+
+                                        {/* Target Companies */}
+                                        <div>
+                                            <label className="label-soft text-xs">Target Companies</label>
+                                            <div className="max-h-36 overflow-y-auto border border-border rounded-lg p-2 space-y-1">
+                                                {companies.length === 0 ? (
+                                                    <p className="text-xs text-text-muted p-1">No companies found</p>
+                                                ) : (
+                                                    companies.map((company: any) => (
+                                                        <label key={company.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-hover cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={formData.targetCompanies?.includes(company.id) || false}
+                                                                onChange={() => toggleCompany(company.id)}
+                                                                className="checkbox-soft"
+                                                            />
+                                                            <span className="text-sm text-text-primary truncate">{company.name}</span>
+                                                        </label>
+                                                    ))
+                                                )}
+                                            </div>
+                                            {(formData.targetCompanies?.length || 0) > 0 && (
+                                                <p className="text-xs text-primary-600 mt-1">
+                                                    {formData.targetCompanies!.length} compan{formData.targetCompanies!.length === 1 ? 'y' : 'ies'} selected
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Target Roles */}
+                                        <div>
+                                            <label className="label-soft text-xs">Target User Roles</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {ALL_ROLES.map(role => {
+                                                    const selected = formData.targetRoles?.includes(role.value);
+                                                    return (
+                                                        <label
+                                                            key={role.value}
+                                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+                                                                selected
+                                                                    ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                                                                    : 'border-border text-text-secondary hover:border-primary-300'
+                                                            }`}
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selected || false}
+                                                                onChange={() => toggleRole(role.value)}
+                                                                className="sr-only"
+                                                            />
+                                                            <span className="text-sm">{role.label}</span>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex justify-end gap-3 mt-6">
                                 <button
@@ -434,6 +570,24 @@ const EditIcon = ({ className }: { className?: string }) => (
 const TrashIcon = ({ className }: { className?: string }) => (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+);
+
+const BuildingIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+    </svg>
+);
+
+const UserIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+);
+
+const TargetIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
     </svg>
 );
 

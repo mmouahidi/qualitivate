@@ -29,7 +29,7 @@ const normalizeJson = <T>(value: T | string | null | undefined, fallback: T): T 
 };
 
 
-// List templates (global + company-specific)
+// List templates (global + company-specific, filtered by targeting)
 export const listTemplates = async (req: AuthRequest, res: Response) => {
   try {
     const user = req.user!;
@@ -44,16 +44,32 @@ export const listTemplates = async (req: AuthRequest, res: Response) => {
       )
       .leftJoin('users', 'survey_templates.created_by', 'users.id');
 
-    // Filter by access
     if (user.role === 'super_admin') {
-      // Super admin sees all
+      // Super admin sees all templates
     } else {
-      // Others see global templates + their company's templates
       query = query.where((builder) => {
-        builder.where('survey_templates.is_global', true);
+        // Company-owned templates
         if (user.companyId) {
-          builder.orWhere('survey_templates.company_id', user.companyId);
+          builder.where('survey_templates.company_id', user.companyId);
         }
+        // Global templates visible if targeting matches
+        builder.orWhere((globalBuilder) => {
+          globalBuilder.where('survey_templates.is_global', true);
+          // Filter by target_companies: empty array means all companies
+          if (user.companyId) {
+            globalBuilder.andWhere((companyFilter) => {
+              companyFilter
+                .whereRaw("survey_templates.target_companies = '[]'::jsonb")
+                .orWhereRaw('survey_templates.target_companies @> ?', [JSON.stringify([user.companyId])]);
+            });
+          }
+          // Filter by target_roles: empty array means all roles
+          globalBuilder.andWhere((roleFilter) => {
+            roleFilter
+              .whereRaw("survey_templates.target_roles = '[]'::jsonb")
+              .orWhereRaw('survey_templates.target_roles @> ?', [JSON.stringify([user.role])]);
+          });
+        });
       });
     }
 
@@ -119,9 +135,12 @@ export const getTemplate = async (req: AuthRequest, res: Response) => {
 export const createTemplate = async (req: AuthRequest, res: Response) => {
   try {
     const user = req.user!;
-    const { name, description, category, type = 'custom', isGlobal = false, isAnonymous = false, questions = [] } = req.body;
+    const {
+      name, description, category, type = 'custom',
+      isGlobal = false, isAnonymous = false, questions = [],
+      targetCompanies = [], targetRoles = [],
+    } = req.body;
 
-    // Validation
     if (!name?.trim()) {
       return res.status(400).json({ error: 'Template name is required' });
     }
@@ -130,14 +149,17 @@ export const createTemplate = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Invalid template type' });
     }
 
-    // Only super_admin can create global templates
     if (isGlobal && user.role !== 'super_admin') {
       return res.status(403).json({ error: 'Only super admins can create global templates' });
     }
 
-    // Only company_admin+ can create company templates
     if (!['super_admin', 'company_admin'].includes(user.role)) {
       return res.status(403).json({ error: 'Insufficient permissions to create templates' });
+    }
+
+    // Only super_admin can set targeting
+    if ((targetCompanies.length > 0 || targetRoles.length > 0) && user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Only super admins can set template targeting' });
     }
 
     const trx = await db.transaction();
@@ -156,6 +178,8 @@ export const createTemplate = async (req: AuthRequest, res: Response) => {
         is_global: isGlobal,
         is_anonymous: isAnonymous,
         default_settings: {},
+        target_companies: JSON.stringify(targetCompanies),
+        target_roles: JSON.stringify(targetRoles),
       });
 
       // Insert questions
@@ -199,7 +223,7 @@ export const updateTemplate = async (req: AuthRequest, res: Response) => {
   try {
     const user = req.user!;
     const { id } = req.params;
-    const { name, description, category, isAnonymous } = req.body;
+    const { name, description, category, isAnonymous, targetCompanies, targetRoles } = req.body;
 
     const template = await db('survey_templates').where('id', id).first();
 
@@ -207,7 +231,6 @@ export const updateTemplate = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Template not found' });
     }
 
-    // Check permissions
     if (template.is_global && user.role !== 'super_admin') {
       return res.status(403).json({ error: 'Only super admins can update global templates' });
     }
@@ -216,13 +239,26 @@ export const updateTemplate = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    await db('survey_templates').where('id', id).update({
+    if ((targetCompanies !== undefined || targetRoles !== undefined) && user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Only super admins can set template targeting' });
+    }
+
+    const updateData: Record<string, any> = {
       name: name?.trim() || template.name,
       description: description !== undefined ? description?.trim() : template.description,
       category: category !== undefined ? category?.trim() : template.category,
       is_anonymous: isAnonymous !== undefined ? isAnonymous : template.is_anonymous,
       updated_at: db.fn.now(),
-    });
+    };
+
+    if (targetCompanies !== undefined) {
+      updateData.target_companies = JSON.stringify(targetCompanies);
+    }
+    if (targetRoles !== undefined) {
+      updateData.target_roles = JSON.stringify(targetRoles);
+    }
+
+    await db('survey_templates').where('id', id).update(updateData);
 
     const updated = await db('survey_templates').where('id', id).first();
     res.json(updated);

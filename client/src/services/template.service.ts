@@ -12,9 +12,10 @@ export interface Template {
   isAnonymous: boolean;
   defaultSettings: Record<string, any>;
   useCount: number;
+  targetCompanies: string[];
+  targetRoles: string[];
   createdAt: string;
   updatedAt: string;
-  // Joined fields
   creatorFirstName?: string;
   creatorLastName?: string;
   questionCount?: number;
@@ -41,6 +42,8 @@ export interface CreateTemplateData {
   type?: 'nps' | 'custom';
   isGlobal?: boolean;
   isAnonymous?: boolean;
+  targetCompanies?: string[];
+  targetRoles?: string[];
   questions?: Array<{
     type: string;
     content: string;

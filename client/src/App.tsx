@@ -14,6 +14,7 @@ import Users from './pages/admin/Users';
 import Sites from './pages/organizations/Sites';
 import Surveys from './pages/surveys/Surveys';
 import SurveyBuilder from './pages/surveys/SurveyBuilder';
+import Templates from './pages/admin/Templates';
 import TemplateBuilder from './pages/admin/TemplateBuilder';
 import Permissions from './pages/admin/Permissions';
 import SurveyDistribute from './pages/surveys/SurveyDistribute';
@@ -127,6 +128,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <SurveyDistribute />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/templates"
+                    element={
+                      <ProtectedRoute>
+                        <Templates />
                       </ProtectedRoute>
                     }
                   />

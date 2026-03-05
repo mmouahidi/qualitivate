@@ -4,16 +4,26 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import templateService from '../../services/template.service';
+import { companyService } from '../../services/organization.service';
+import { useAuth } from '../../contexts/AuthContext';
 import QuestionCard from '../../components/survey/builder/QuestionCard';
 import EnhancedToolbox from '../../components/survey/builder/EnhancedToolbox';
 import ConfigurationPanel from '../../components/survey/builder/ConfigurationPanel';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import { QuestionType, ExtendedQuestionType } from '../../types';
 
+const ALL_ROLES = [
+    { value: 'company_admin', label: 'Company Admin' },
+    { value: 'site_admin', label: 'Site Admin' },
+    { value: 'department_admin', label: 'Department Admin' },
+    { value: 'employee', label: 'Employee' },
+];
+
 const TemplateBuilder: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { user: currentUser } = useAuth();
 
     const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
     const [toolboxCollapsed, setToolboxCollapsed] = useState(false);
@@ -22,6 +32,9 @@ const TemplateBuilder: React.FC = () => {
     const [localTitle, setLocalTitle] = useState('');
     const [localDescription, setLocalDescription] = useState('');
     const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
+    const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+
+    const isSuperAdmin = currentUser?.role === 'super_admin';
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -34,6 +47,14 @@ const TemplateBuilder: React.FC = () => {
         queryFn: () => templateService.get(id!),
         enabled: !!id,
     });
+
+    const { data: companiesData } = useQuery({
+        queryKey: ['companies-all'],
+        queryFn: () => companyService.listAll(),
+        enabled: isSuperAdmin,
+    });
+
+    const allCompanies = companiesData?.data || [];
 
     React.useEffect(() => {
         if (template) {
@@ -162,6 +183,10 @@ const TemplateBuilder: React.FC = () => {
         }
     };
 
+    const handleTargetingUpdate = (targetCompanies: string[], targetRoles: string[]) => {
+        updateTemplateMutation.mutate({ targetCompanies, targetRoles });
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
@@ -223,8 +248,37 @@ const TemplateBuilder: React.FC = () => {
                             )}
                         </div>
                     </div>
+
+                    {/* Settings button (super_admin + global template) */}
+                    {isSuperAdmin && template?.isGlobal && (
+                        <button
+                            onClick={() => setShowSettingsPanel(!showSettingsPanel)}
+                            className={`p-2 rounded transition-colors ${
+                                showSettingsPanel
+                                    ? 'text-primary-600 bg-primary-50 dark:bg-primary-900/30'
+                                    : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
+                            }`}
+                            title="Template Targeting Settings"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
             </header>
+
+            {/* Targeting Settings Panel */}
+            {showSettingsPanel && isSuperAdmin && template?.isGlobal && (
+                <TargetingPanel
+                    targetCompanies={template.targetCompanies || []}
+                    targetRoles={template.targetRoles || []}
+                    companies={allCompanies}
+                    onSave={handleTargetingUpdate}
+                    onClose={() => setShowSettingsPanel(false)}
+                />
+            )}
 
             {/* Main Content */}
             <main className="flex-1 flex overflow-hidden">
@@ -347,6 +401,127 @@ const TemplateBuilder: React.FC = () => {
                 icon="delete"
                 isLoading={deleteQuestionMutation.isPending}
             />
+        </div>
+    );
+};
+
+// Inline targeting panel for the template builder
+const TargetingPanel: React.FC<{
+    targetCompanies: string[];
+    targetRoles: string[];
+    companies: Array<{ id: string; name: string }>;
+    onSave: (companies: string[], roles: string[]) => void;
+    onClose: () => void;
+}> = ({ targetCompanies, targetRoles, companies, onSave, onClose }) => {
+    const [localCompanies, setLocalCompanies] = useState<string[]>(targetCompanies);
+    const [localRoles, setLocalRoles] = useState<string[]>(targetRoles);
+
+    React.useEffect(() => {
+        setLocalCompanies(targetCompanies);
+        setLocalRoles(targetRoles);
+    }, [targetCompanies, targetRoles]);
+
+    const toggleCompany = (id: string) => {
+        setLocalCompanies(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
+    };
+
+    const toggleRole = (role: string) => {
+        setLocalRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
+    };
+
+    const hasChanges =
+        JSON.stringify(localCompanies.sort()) !== JSON.stringify([...targetCompanies].sort()) ||
+        JSON.stringify(localRoles.sort()) !== JSON.stringify([...targetRoles].sort());
+
+    return (
+        <div className="flex-shrink-0 bg-surface border-b border-border px-4 py-3">
+            <div className="max-w-4xl mx-auto">
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                        <svg className="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        Template Targeting
+                    </h3>
+                    <div className="flex items-center gap-2">
+                        {hasChanges && (
+                            <button
+                                onClick={() => { onSave(localCompanies, localRoles); onClose(); }}
+                                className="text-xs px-3 py-1.5 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+                            >
+                                Save Changes
+                            </button>
+                        )}
+                        <button
+                            onClick={onClose}
+                            className="p-1 text-text-muted hover:text-text-primary rounded transition-colors"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <p className="text-xs text-text-muted mb-3">
+                    Leave empty to make available to all companies and roles.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Companies */}
+                    <div>
+                        <label className="text-xs font-medium text-text-secondary mb-1 block">Target Companies</label>
+                        <div className="max-h-32 overflow-y-auto border border-border rounded-lg p-1.5 space-y-0.5">
+                            {companies.length === 0 ? (
+                                <p className="text-xs text-text-muted p-1">No companies</p>
+                            ) : (
+                                companies.map(company => (
+                                    <label key={company.id} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-surface-hover cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={localCompanies.includes(company.id)}
+                                            onChange={() => toggleCompany(company.id)}
+                                            className="checkbox-soft"
+                                        />
+                                        <span className="text-xs text-text-primary truncate">{company.name}</span>
+                                    </label>
+                                ))
+                            )}
+                        </div>
+                        {localCompanies.length > 0 && (
+                            <p className="text-xs text-primary-600 mt-1">
+                                {localCompanies.length} selected
+                            </p>
+                        )}
+                    </div>
+                    {/* Roles */}
+                    <div>
+                        <label className="text-xs font-medium text-text-secondary mb-1 block">Target User Roles</label>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                            {ALL_ROLES.map(role => {
+                                const selected = localRoles.includes(role.value);
+                                return (
+                                    <button
+                                        key={role.value}
+                                        type="button"
+                                        onClick={() => toggleRole(role.value)}
+                                        className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                                            selected
+                                                ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                                                : 'border-border text-text-secondary hover:border-primary-300'
+                                        }`}
+                                    >
+                                        {role.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {localRoles.length > 0 && (
+                            <p className="text-xs text-primary-600 mt-1">
+                                {localRoles.length} selected
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

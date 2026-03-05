@@ -1,16 +1,19 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
-type Theme = 'light' | 'dark' | 'system';
+type Theme = 'light' | 'dark' | 'high-contrast' | 'system';
+type ResolvedTheme = 'light' | 'dark' | 'high-contrast';
 
 interface ThemeContextType {
     theme: Theme;
-    resolvedTheme: 'light' | 'dark';
+    resolvedTheme: ResolvedTheme;
     setTheme: (theme: Theme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'qualitivate-theme';
+
+const THEME_CLASSES = ['dark', 'high-contrast'] as const;
 
 function getSystemTheme(): 'light' | 'dark' {
     if (typeof window !== 'undefined' && window.matchMedia) {
@@ -19,30 +22,36 @@ function getSystemTheme(): 'light' | 'dark' {
     return 'light';
 }
 
+function resolveTheme(theme: Theme): ResolvedTheme {
+    if (theme === 'system') return getSystemTheme();
+    return theme;
+}
+
 function getStoredTheme(): Theme {
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored === 'light' || stored === 'dark' || stored === 'system') {
+        if (stored === 'light' || stored === 'dark' || stored === 'high-contrast' || stored === 'system') {
             return stored;
         }
     } catch {
         // localStorage not available
     }
-    return 'system';
+    return 'light';
 }
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [theme, setThemeState] = useState<Theme>(getStoredTheme);
-    const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(
-        () => (getStoredTheme() === 'system' ? getSystemTheme() : getStoredTheme() as 'light' | 'dark')
+    const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(
+        () => resolveTheme(getStoredTheme())
     );
 
-    const applyTheme = useCallback((resolved: 'light' | 'dark') => {
+    const applyTheme = useCallback((resolved: ResolvedTheme) => {
         const root = document.documentElement;
+        root.classList.remove(...THEME_CLASSES);
         if (resolved === 'dark') {
             root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
+        } else if (resolved === 'high-contrast') {
+            root.classList.add('high-contrast');
         }
         setResolvedTheme(resolved);
     }, []);
@@ -54,17 +63,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         } catch {
             // localStorage not available
         }
-        const resolved = newTheme === 'system' ? getSystemTheme() : newTheme;
-        applyTheme(resolved);
+        applyTheme(resolveTheme(newTheme));
     }, [applyTheme]);
 
-    // Apply theme on mount
     useEffect(() => {
-        const resolved = theme === 'system' ? getSystemTheme() : theme;
-        applyTheme(resolved);
+        applyTheme(resolveTheme(theme));
     }, [theme, applyTheme]);
 
-    // Listen for system theme changes when in 'system' mode
     useEffect(() => {
         if (theme !== 'system') return;
 
