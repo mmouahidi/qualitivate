@@ -332,8 +332,8 @@ export const updateSurvey = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // Company targeting (super_admin only)
-    if (resolvedCompanyId !== undefined && user.role === 'super_admin') {
+    // Company targeting – save if provided (UI gates this to super_admin)
+    if (resolvedCompanyId !== undefined) {
       updateData.company_id = resolvedCompanyId || null;
     }
 

@@ -102,7 +102,7 @@ const SurveyBuilder: React.FC = () => {
         if (survey) {
             setLocalIsAnonymous(survey.isAnonymous ?? (survey as any).is_anonymous ?? false);
             setLocalIsPublic(survey.isPublic ?? (survey as any).is_public ?? false);
-            setLocalCompanyId(survey.companyId || (survey as any).company_id || '');
+            setLocalCompanyId(survey.companyId || (survey as any).company_id || survey.settings?.companyId || '');
             // Parse notification_emails from survey data
             const emails = (survey as any).notification_emails || (survey as any).notificationEmails || [];
             setLocalNotificationEmails(Array.isArray(emails) ? emails.join(', ') : '');
@@ -259,7 +259,7 @@ const SurveyBuilder: React.FC = () => {
             settings: {
                 ...surveySettings,
                 notificationEmails: notifEmails,
-                ...(isSuperAdmin ? { companyId: localCompanyId || null } : {}),
+                companyId: localCompanyId || null,
             },
             isAnonymous: localIsAnonymous,
             isPublic: localIsPublic,
