@@ -2,12 +2,12 @@
  * Configuration Panel Component
  * 
  * Right sidebar for editing properties of the selected question.
- * Features collapsible sections: General, Settings, Conditions, Validation.
+ * Features collapsible sections: General, Settings, Classification.
  */
 
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { ExtendedQuestionType, Validator, ValidatorType } from '../../../types';
+
 import { taxonomyService } from '../../../services/taxonomy.service';
 
 interface ConfigurationPanelProps {
@@ -20,7 +20,7 @@ interface ConfigurationPanelProps {
 }
 
 // Section collapse state
-type SectionName = 'general' | 'settings' | 'classification' | 'conditions' | 'validation';
+type SectionName = 'general' | 'settings' | 'classification';
 
 // Icons
 const Icons = {
@@ -226,26 +226,16 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
         const description = question.description || '';
         const name = question.name || `question_${question.id?.slice(0, 8) || 'new'}`;
         const isRequired = question.is_required ?? question.isRequired ?? false;
-        const visible = question.visible ?? true;
-        const visibleIf = question.visibleIf || '';
-        const enableIf = question.enableIf || '';
-        const requiredIf = question.requiredIf || '';
         const categoryId = (question as any).category_id || (question as any).categoryId || '';
         const dimensionId = (question as any).dimension_id || (question as any).dimensionId || '';
-        const maxScore = question.options?.maxScore || 0;
 
         const nextValues = {
           title,
           description,
           name,
           isRequired,
-          visible,
-          visibleIf,
-          enableIf,
-          requiredIf,
           categoryId,
           dimensionId,
-          maxScore,
           ...question.options,
         };
 
@@ -289,7 +279,7 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
         onUpdate({ categoryId: value || null });
       } else if (key === 'dimensionId') {
         onUpdate({ dimensionId: value || null });
-      } else if (['visibleIf', 'enableIf', 'requiredIf', 'description', 'name', 'visible'].includes(key)) {
+      } else if (['description', 'name'].includes(key)) {
         onUpdate({ [key]: value });
       } else {
         onUpdate({ options: { ...question?.options, [key]: value } });
@@ -372,7 +362,7 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
 
   const renderField = (
     label: string,
-    type: 'text' | 'number' | 'boolean' | 'select' | 'choices' | 'expression',
+    type: 'text' | 'number' | 'boolean' | 'select' | 'choices',
     key: string,
     options?: { selectOptions?: string[]; placeholder?: string }
   ) => {
@@ -421,15 +411,6 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
             ))}
           </select>
         )}
-        {type === 'expression' && (
-          <input
-            type="text"
-            value={value || ''}
-            onChange={(e) => handleChange(key, e.target.value)}
-            placeholder="{questionName} = 'value'"
-            className="w-full px-3 py-2 text-sm font-mono bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          />
-        )}
         {type === 'choices' && (
           <ChoicesEditor
             value={value || []}
@@ -469,8 +450,6 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
             {renderField('Description', 'text', 'description', { placeholder: 'Optional description...' })}
             {renderField('Name', 'text', 'name', { placeholder: 'question_name' })}
             {renderField('Required', 'boolean', 'isRequired')}
-            {renderField('Visible', 'boolean', 'visible')}
-            {renderField('Max Score / Weight', 'number', 'maxScore')}
           </div>
         )}
 
@@ -539,29 +518,6 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
           </div>
         )}
 
-        {/* Conditions Section */}
-        {renderSectionHeader('conditions', 'Conditions')}
-        {expandedSections.includes('conditions') && (
-          <div className="px-4 py-3 border-b border-border">
-            {renderField('Visible If', 'expression', 'visibleIf')}
-            {renderField('Enable If', 'expression', 'enableIf')}
-            {renderField('Required If', 'expression', 'requiredIf')}
-            <p className="text-xs text-text-muted mt-2">
-              Use expressions like <code className="bg-background px-1 rounded">{'{q1}'} = 'yes'</code>
-            </p>
-          </div>
-        )}
-
-        {/* Validation Section */}
-        {renderSectionHeader('validation', 'Validation')}
-        {expandedSections.includes('validation') && (
-          <div className="px-4 py-3 border-b border-border">
-            <ValidatorsEditor
-              validators={question.validators || question.options?.validators || []}
-              onChange={(validators) => handleChange('validators', validators)}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
@@ -655,131 +611,6 @@ const ChoicesEditor: React.FC<{
           <Icons.Plus />
         </button>
       </div>
-    </div>
-  );
-};
-
-// Validators Editor Sub-component
-const ValidatorsEditor: React.FC<{
-  validators: Validator[];
-  onChange: (validators: Validator[]) => void;
-}> = ({ validators, onChange }) => {
-  const addValidator = (type: ValidatorType) => {
-    onChange([...validators, { type }]);
-  };
-
-  const removeValidator = (index: number) => {
-    onChange(validators.filter((_, i) => i !== index));
-  };
-
-  const updateValidator = (index: number, updates: Partial<Validator>) => {
-    const updated = [...validators];
-    updated[index] = { ...updated[index], ...updates };
-    onChange(updated);
-  };
-
-  return (
-    <div className="space-y-3">
-      {validators.map((validator, index) => (
-        <div key={index} className="p-3 bg-background rounded-lg border border-border">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-text-primary capitalize">
-              {validator.type.replace(/_/g, ' ')}
-            </span>
-            <button
-              onClick={() => removeValidator(index)}
-              className="p-1 text-red-500 hover:text-red-700"
-            >
-              <Icons.Trash />
-            </button>
-          </div>
-
-          {validator.type === 'numeric' && (
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="number"
-                value={validator.minValue ?? ''}
-                onChange={(e) => updateValidator(index, { minValue: e.target.value ? Number(e.target.value) : undefined })}
-                placeholder="Min"
-                className="px-2 py-1 text-xs border border-border rounded"
-              />
-              <input
-                type="number"
-                value={validator.maxValue ?? ''}
-                onChange={(e) => updateValidator(index, { maxValue: e.target.value ? Number(e.target.value) : undefined })}
-                placeholder="Max"
-                className="px-2 py-1 text-xs border border-border rounded"
-              />
-            </div>
-          )}
-
-          {validator.type === 'text' && (
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="number"
-                value={validator.minLength ?? ''}
-                onChange={(e) => updateValidator(index, { minLength: e.target.value ? Number(e.target.value) : undefined })}
-                placeholder="Min Length"
-                className="px-2 py-1 text-xs border border-border rounded"
-              />
-              <input
-                type="number"
-                value={validator.maxLength ?? ''}
-                onChange={(e) => updateValidator(index, { maxLength: e.target.value ? Number(e.target.value) : undefined })}
-                placeholder="Max Length"
-                className="px-2 py-1 text-xs border border-border rounded"
-              />
-            </div>
-          )}
-
-          {validator.type === 'regex' && (
-            <input
-              type="text"
-              value={validator.regex ?? ''}
-              onChange={(e) => updateValidator(index, { regex: e.target.value })}
-              placeholder="Regex pattern"
-              className="w-full px-2 py-1 text-xs font-mono border border-border rounded"
-            />
-          )}
-
-          {validator.type === 'expression' && (
-            <input
-              type="text"
-              value={validator.expression ?? ''}
-              onChange={(e) => updateValidator(index, { expression: e.target.value })}
-              placeholder="Expression"
-              className="w-full px-2 py-1 text-xs font-mono border border-border rounded"
-            />
-          )}
-
-          <input
-            type="text"
-            value={validator.text ?? ''}
-            onChange={(e) => updateValidator(index, { text: e.target.value })}
-            placeholder="Error message"
-            className="w-full mt-2 px-2 py-1 text-xs border border-border rounded"
-          />
-        </div>
-      ))}
-
-      <select
-        onChange={(e) => {
-          if (e.target.value) {
-            addValidator(e.target.value as ValidatorType);
-            e.target.value = '';
-          }
-        }}
-        className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-        defaultValue=""
-      >
-        <option value="">+ Add Validator</option>
-        <option value="required">Required</option>
-        <option value="email">Email</option>
-        <option value="numeric">Numeric</option>
-        <option value="text">Text Length</option>
-        <option value="regex">Regex</option>
-        <option value="expression">Expression</option>
-      </select>
     </div>
   );
 };
