@@ -6,7 +6,7 @@ const SurveyRespond: React.FC = () => {
   const { surveyId } = useParams<{ surveyId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const distributionId = searchParams.get('d') || undefined;
+  const distributionId = searchParams.get('dist') || searchParams.get('d') || undefined;
 
   const [survey, setSurvey] = useState<PublicSurvey | null>(null);
   const [loading, setLoading] = useState(true);

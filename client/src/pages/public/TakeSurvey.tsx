@@ -21,7 +21,7 @@ const TakeSurvey: React.FC = () => {
   const { surveyId } = useParams<{ surveyId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const distributionId = searchParams.get('d') || undefined;
+  const distributionId = searchParams.get('dist') || searchParams.get('d') || undefined;
   const resumeResponseId = searchParams.get('resume') || undefined;
 
   const [survey, setSurvey] = useState<PublicSurvey | null>(null);

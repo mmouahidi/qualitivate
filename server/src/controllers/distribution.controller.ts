@@ -55,7 +55,7 @@ export const createLinkDistribution = async (req: AuthRequest, res: Response) =>
     }
 
     const distributionId = uuidv4();
-    const targetUrl = `${FRONTEND_URL}/survey/${surveyId}/respond?dist=${distributionId}`;
+    const targetUrl = `${FRONTEND_URL}/survey/${surveyId}/take?dist=${distributionId}`;
 
     const [distribution] = await db('survey_distributions')
       .insert({
@@ -84,7 +84,7 @@ export const createQRDistribution = async (req: AuthRequest, res: Response) => {
     }
 
     const distributionId = uuidv4();
-    const targetUrl = `${FRONTEND_URL}/survey/${surveyId}/respond?dist=${distributionId}`;
+    const targetUrl = `${FRONTEND_URL}/survey/${surveyId}/take?dist=${distributionId}`;
 
     // Generate QR code as data URL
     const qrCodeDataUrl = await QRCode.toDataURL(targetUrl, {
@@ -173,7 +173,7 @@ export const createEmailDistribution = async (req: AuthRequest, res: Response) =
     }
 
     const distributionId = uuidv4();
-    const baseUrl = `${FRONTEND_URL}/survey/${surveyId}/respond?dist=${distributionId}`;
+    const baseUrl = `${FRONTEND_URL}/survey/${surveyId}/take?dist=${distributionId}`;
 
     // Send emails
     const results = [];
