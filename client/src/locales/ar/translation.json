@@ -387,5 +387,10 @@
       "departmentAdmin": "مدير القسم",
       "user": "مستخدم"
     }
+  },
+  "export": {
+    "scanQr": "امسح رمز QR للمشاركة في الاستطلاع",
+    "shareOpinion": "شارك برأيك.. امسح الكود",
+    "poweredBy": "مدعوم من Qualitivate"
   }
 }

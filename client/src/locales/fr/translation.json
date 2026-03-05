@@ -387,5 +387,10 @@
       "departmentAdmin": "Admin Département",
       "user": "Utilisateur"
     }
+  },
+  "export": {
+    "scanQr": "Scannez le QR code pour répondre au sondage",
+    "shareOpinion": "Votre avis compte.. Scannez le QR",
+    "poweredBy": "Propulsé par Qualitivate"
   }
 }

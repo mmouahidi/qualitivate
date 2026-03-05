@@ -402,5 +402,10 @@
       "title": "Nothing Here",
       "description": "There's nothing to show at the moment."
     }
+  },
+  "export": {
+    "scanQr": "Scan the QR code to take the survey",
+    "shareOpinion": "Your opinion matters.. Scan the QR",
+    "poweredBy": "Powered by Qualitivate"
   }
 }
