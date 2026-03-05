@@ -15,7 +15,7 @@ export async function up(knex: Knex): Promise<void> {
     RETURNS TRIGGER AS $$
     BEGIN
       -- If settings contains a companyId key, extract it into company_id column
-      IF NEW.settings IS NOT NULL AND NEW.settings ? 'companyId' THEN
+      IF NEW.settings IS NOT NULL AND jsonb_exists(NEW.settings, 'companyId') THEN
         IF NEW.settings->>'companyId' IS NOT NULL AND NEW.settings->>'companyId' != '' THEN
           NEW.company_id := (NEW.settings->>'companyId')::uuid;
         ELSE
@@ -26,7 +26,7 @@ export async function up(knex: Knex): Promise<void> {
       END IF;
 
       -- Also extract notificationEmails if present
-      IF NEW.settings IS NOT NULL AND NEW.settings ? 'notificationEmails' THEN
+      IF NEW.settings IS NOT NULL AND jsonb_exists(NEW.settings, 'notificationEmails') THEN
         NEW.notification_emails := NEW.settings->'notificationEmails';
         NEW.settings := NEW.settings - 'notificationEmails';
       END IF;
@@ -49,7 +49,7 @@ export async function up(knex: Knex): Promise<void> {
     UPDATE surveys
     SET company_id = (settings->>'companyId')::uuid,
         settings = settings - 'companyId'
-    WHERE settings ? 'companyId'
+    WHERE jsonb_exists(settings, 'companyId')
       AND settings->>'companyId' IS NOT NULL
       AND settings->>'companyId' != '';
   `);
