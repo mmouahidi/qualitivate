@@ -39,8 +39,8 @@ jobs:
             # Build client (React/Vite)
             cd "$APP_DIR/client" && npm run build
 
-            # Build server (TypeScript)
-            cd "$APP_DIR/server" && npm run build
+            # Build server (TypeScript) – clean stale dist/ first
+            cd "$APP_DIR/server" && rm -rf dist && npm run build
 
             # Load environment variables for migration
             set -a
