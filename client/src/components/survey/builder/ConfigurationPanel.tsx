@@ -270,21 +270,17 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
     );
   };
 
-  // Debounce timer ref
-  const debounceTimerRef = React.useRef<any>(null);
+  // Per-key debounce timers so concurrent field changes don't cancel each other
+  const debounceTimersRef = React.useRef<Record<string, any>>({});
 
   const handleChange = (key: string, value: any) => {
-    // 1. Instantly update local UI state so the user sees their typing immediately without losing focus
     setLocalValues(prev => ({ ...prev, [key]: value }));
 
-    // 2. Clear any existing debounce timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+    if (debounceTimersRef.current[key]) {
+      clearTimeout(debounceTimersRef.current[key]);
     }
 
-    // 3. Set a new timer to fire the actual API update after 500ms of inactivity
-    debounceTimerRef.current = setTimeout(() => {
-      // Map certain keys to the correct update structure
+    debounceTimersRef.current[key] = setTimeout(() => {
       if (key === 'title') {
         onUpdate({ content: value });
       } else if (key === 'isRequired') {
@@ -296,10 +292,20 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
       } else if (['visibleIf', 'enableIf', 'requiredIf', 'description', 'name', 'visible'].includes(key)) {
         onUpdate({ [key]: value });
       } else {
-        // Update in options
         onUpdate({ options: { ...question?.options, [key]: value } });
       }
     }, 500);
+  };
+
+  const handleCategoryChange = (newCategoryId: string) => {
+    setLocalValues(prev => ({ ...prev, categoryId: newCategoryId, dimensionId: '' }));
+
+    if (debounceTimersRef.current['categoryId']) clearTimeout(debounceTimersRef.current['categoryId']);
+    if (debounceTimersRef.current['dimensionId']) clearTimeout(debounceTimersRef.current['dimensionId']);
+
+    debounceTimersRef.current['categoryId'] = setTimeout(() => {
+      onUpdate({ categoryId: newCategoryId || null, dimensionId: null });
+    }, 300);
   };
 
   // Collapsed view
@@ -500,11 +506,7 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
               <label className="block text-xs font-medium text-text-secondary mb-1.5">Category</label>
               <select
                 value={localValues.categoryId || ''}
-                onChange={(e) => {
-                  handleChange('categoryId', e.target.value);
-                  // Reset dimension when category changes
-                  handleChange('dimensionId', '');
-                }}
+                onChange={(e) => handleCategoryChange(e.target.value)}
                 className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">No category</option>
