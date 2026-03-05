@@ -5,6 +5,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { surveyService, questionService } from '../../services/survey.service';
 import { companyService } from '../../services/organization.service';
+import { taxonomyService } from '../../services/taxonomy.service';
 import templateService from '../../services/template.service';
 import QuestionCard from '../../components/survey/builder/QuestionCard';
 import SurveyBuilderLayout from '../../components/survey/builder/SurveyBuilderLayout';
@@ -47,12 +48,19 @@ const SurveyBuilder: React.FC = () => {
     const [localCompanyId, setLocalCompanyId] = useState('');
     const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
     const [localNotificationEmails, setLocalNotificationEmails] = useState('');
+    const [localBenchmarks, setLocalBenchmarks] = useState<Record<string, string>>({});
 
     // Fetch companies for targeting (super_admin only)
     const { data: companiesData } = useQuery({
         queryKey: ['companies-list'],
         queryFn: () => companyService.listAll(),
         enabled: isSuperAdmin,
+    });
+
+    const { data: taxonomyCategoriesData } = useQuery({
+        queryKey: ['taxonomy-categories'],
+        queryFn: () => taxonomyService.listCategories(),
+        staleTime: 10 * 60 * 1000,
     });
 
     const sensors = useSensors(
@@ -106,6 +114,11 @@ const SurveyBuilder: React.FC = () => {
             // Parse notification_emails from survey data
             const emails = (survey as any).notification_emails || (survey as any).notificationEmails || [];
             setLocalNotificationEmails(Array.isArray(emails) ? emails.join(', ') : '');
+            // Parse benchmarks
+            const bm = survey.settings?.benchmarks || {};
+            const bmStrings: Record<string, string> = {};
+            for (const [k, v] of Object.entries(bm)) bmStrings[k] = String(v ?? '');
+            setLocalBenchmarks(bmStrings);
         }
     }, [
         survey?.settings,
@@ -255,11 +268,17 @@ const SurveyBuilder: React.FC = () => {
             .split(/[,;\n]+/)
             .map((e: string) => e.trim())
             .filter((e: string) => e.length > 0 && e.includes('@'));
+        const benchmarksClean: Record<string, number> = {};
+        for (const [catId, val] of Object.entries(localBenchmarks)) {
+            const n = parseInt(val, 10);
+            if (!isNaN(n) && n >= 0 && n <= 100) benchmarksClean[catId] = n;
+        }
         const payload: any = {
             settings: {
                 ...surveySettings,
                 notificationEmails: notifEmails,
                 companyId: localCompanyId || null,
+                benchmarks: benchmarksClean,
             },
             isAnonymous: localIsAnonymous,
             isPublic: localIsPublic,
@@ -716,6 +735,30 @@ const SurveyBuilder: React.FC = () => {
                                 />
                                 <p className="text-xs text-text-muted mt-1">Separate multiple emails with commas, semicolons, or new lines.</p>
                             </div>
+
+                            {/* Category Benchmarks */}
+                            {(taxonomyCategoriesData?.data || []).length > 0 && (
+                                <div className="mb-6 p-4 bg-surface rounded-lg border border-border">
+                                    <h3 className="text-sm font-semibold text-text-primary mb-2">📊 Category Benchmarks</h3>
+                                    <p className="text-xs text-text-muted mb-3">Set benchmark targets (0-100) per category for the Quality Report comparison.</p>
+                                    <div className="space-y-2">
+                                        {(taxonomyCategoriesData?.data || []).map((cat: any) => (
+                                            <div key={cat.id} className="flex items-center gap-3">
+                                                <span className="text-sm text-text-secondary flex-1 truncate">{cat.name}</span>
+                                                <input
+                                                    type="number"
+                                                    min={0}
+                                                    max={100}
+                                                    value={localBenchmarks[cat.id] || ''}
+                                                    onChange={(e) => setLocalBenchmarks(prev => ({ ...prev, [cat.id]: e.target.value }))}
+                                                    className="w-20 px-2 py-1.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-center"
+                                                    placeholder="--"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Scoring Method */}
                             <div className="mb-6 p-4 bg-surface rounded-lg border border-border">

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import analyticsService, { SurveyAnalytics, QuestionAnalytics, PaginatedResponses } from '../../services/analytics.service';
+import analyticsService, { SurveyAnalytics, QuestionAnalytics, PaginatedResponses, TaxonomyReport } from '../../services/analytics.service';
 import { DashboardLayout } from '../../components/layout';
+import TaxonomyReportView from '../../components/analytics/TaxonomyReport';
 
 const SurveyAnalyticsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -10,7 +11,8 @@ const SurveyAnalyticsPage: React.FC = () => {
   const [analytics, setAnalytics] = useState<SurveyAnalytics | null>(null);
   const [questionAnalytics, setQuestionAnalytics] = useState<QuestionAnalytics | null>(null);
   const [responses, setResponses] = useState<PaginatedResponses | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'questions' | 'responses'>('overview');
+  const [taxonomyReport, setTaxonomyReport] = useState<TaxonomyReport | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'questions' | 'responses' | 'quality'>('overview');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +29,8 @@ const SurveyAnalyticsPage: React.FC = () => {
       loadQuestionAnalytics();
     } else if (activeTab === 'responses' && surveyId) {
       loadResponses(currentPage);
+    } else if (activeTab === 'quality' && !taxonomyReport && surveyId) {
+      loadTaxonomyReport();
     }
   }, [activeTab, surveyId, currentPage]);
 
@@ -48,6 +52,15 @@ const SurveyAnalyticsPage: React.FC = () => {
       setQuestionAnalytics(data);
     } catch (err: any) {
       console.error('Failed to load question analytics:', err);
+    }
+  };
+
+  const loadTaxonomyReport = async () => {
+    try {
+      const data = await analyticsService.getTaxonomyReport(surveyId!);
+      setTaxonomyReport(data);
+    } catch (err: any) {
+      console.error('Failed to load taxonomy report:', err);
     }
   };
 
@@ -174,7 +187,7 @@ const SurveyAnalyticsPage: React.FC = () => {
         {/* Tabs */}
         <div className="border-b border-border">
           <nav className="-mb-px flex space-x-8">
-            {(['overview', 'questions', 'responses'] as const).map((tab) => (
+            {(['overview', 'quality', 'questions', 'responses'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -184,7 +197,7 @@ const SurveyAnalyticsPage: React.FC = () => {
                     : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border'
                 }`}
               >
-                {t(`analytics.${tab}`)}
+                {tab === 'quality' ? 'Quality Report' : t(`analytics.${tab}`)}
               </button>
             ))}
           </nav>
@@ -287,6 +300,32 @@ const SurveyAnalyticsPage: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Quality Report Tab */}
+        {activeTab === 'quality' && (
+          <div>
+            {taxonomyReport ? (
+              taxonomyReport.categories.length > 0 ? (
+                <TaxonomyReportView data={taxonomyReport} />
+              ) : (
+                <div className="card-soft text-center py-12">
+                  <svg className="w-16 h-16 mx-auto text-text-muted/30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <h3 className="text-lg font-semibold text-text-primary mb-2">No Classification Data</h3>
+                  <p className="text-text-secondary max-w-md mx-auto">
+                    To generate a quality report, classify your survey questions by assigning a Category and Dimension
+                    in the survey builder's Configuration panel.
+                  </p>
+                </div>
+              )
+            ) : (
+              <div className="text-center py-8">
+                <div className="spinner spinner-lg text-primary-600 mx-auto"></div>
+              </div>
+            )}
           </div>
         )}
 

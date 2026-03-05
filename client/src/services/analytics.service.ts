@@ -128,6 +128,34 @@ export interface CompanyAnalytics {
   }>;
 }
 
+export interface TaxonomyDimensionScore {
+  id: string;
+  name: string;
+  score: number;
+  questionCount: number;
+}
+
+export interface TaxonomyCategoryScore {
+  id: string;
+  name: string;
+  score: number;
+  benchmark: number | null;
+  change: 'up' | 'down' | 'same' | null;
+  dimensions: TaxonomyDimensionScore[];
+}
+
+export interface TaxonomyReport {
+  overall: {
+    score: number;
+    grade: string;
+    benchmark: number | null;
+    previousGrade: string | null;
+    change: 'up' | 'down' | 'same' | null;
+    respondentCount: number;
+  };
+  categories: TaxonomyCategoryScore[];
+}
+
 // Role-specific dashboard types
 export interface RoleDashboardData {
   role: string;
@@ -199,6 +227,14 @@ class AnalyticsService {
    */
   async getQuestionAnalytics(surveyId: string): Promise<QuestionAnalytics> {
     const response = await api.get<QuestionAnalytics>(`/analytics/surveys/${surveyId}/questions`);
+    return response.data;
+  }
+
+  /**
+   * Get taxonomy-based quality report for a survey
+   */
+  async getTaxonomyReport(surveyId: string): Promise<TaxonomyReport> {
+    const response = await api.get<TaxonomyReport>(`/analytics/surveys/${surveyId}/taxonomy-report`);
     return response.data;
   }
 
