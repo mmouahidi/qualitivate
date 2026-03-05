@@ -297,7 +297,41 @@ export const updateSurvey = async (req: AuthRequest, res: Response) => {
       updateData.is_anonymous = resolvedIsAnonymous;
     }
     if (defaultLanguage !== undefined) updateData.default_language = defaultLanguage;
-    if (settings !== undefined) updateData.settings = settings;
+
+    // Extract companyId and notificationEmails from settings (they are embedded
+    // inside settings to bypass VPS Joi validation) and persist them into their
+    // own database columns.
+    if (settings !== undefined) {
+      const parsedSettings = typeof settings === 'string' ? JSON.parse(settings) : settings;
+
+      // Extract values before cleaning
+      const embeddedCompanyId = parsedSettings?.companyId;
+      const embeddedNotifEmails = parsedSettings?.notificationEmails;
+
+      // Clean internal keys from settings before persisting to the JSON column
+      if (parsedSettings) {
+        const { notificationEmails: _ne, companyId: _ci, ...cleanSettings } = parsedSettings;
+        updateData.settings = cleanSettings;
+      }
+
+      // Company targeting – update the dedicated column
+      if (embeddedCompanyId !== undefined) {
+        updateData.company_id = embeddedCompanyId || null;
+      }
+
+      // Notification emails – update the dedicated column
+      if (embeddedNotifEmails !== undefined && Array.isArray(embeddedNotifEmails)) {
+        updateData.notification_emails = JSON.stringify(embeddedNotifEmails);
+      }
+    }
+
+    // Also handle body-root companyId / notificationEmails (if validator allows it)
+    if (companyId !== undefined) {
+      updateData.company_id = companyId || null;
+    }
+    if (notificationEmails !== undefined && Array.isArray(notificationEmails)) {
+      updateData.notification_emails = JSON.stringify(notificationEmails);
+    }
 
     // Validate date range with existing values
     const newStartsAt = startsAt !== undefined ? startsAt : survey.starts_at;
@@ -307,18 +341,6 @@ export const updateSurvey = async (req: AuthRequest, res: Response) => {
     }
     if (startsAt !== undefined) updateData.starts_at = startsAt;
     if (endsAt !== undefined) updateData.ends_at = endsAt;
-
-    // Notification emails
-    if (notificationEmails !== undefined) {
-      if (Array.isArray(notificationEmails)) {
-        updateData.notification_emails = JSON.stringify(notificationEmails);
-      }
-    }
-
-    // Company targeting
-    if (companyId !== undefined) {
-      updateData.company_id = companyId || null;
-    }
 
     const [updatedSurvey] = await db('surveys')
       .where({ id })

@@ -258,9 +258,9 @@ const SurveyBuilder: React.FC = () => {
         const payload: any = {
             settings: {
                 ...surveySettings,
+                notificationEmails: notifEmails,
+                companyId: localCompanyId || null,
             },
-            notificationEmails: notifEmails,
-            companyId: localCompanyId || null,
             isAnonymous: localIsAnonymous,
             isPublic: localIsPublic,
         };

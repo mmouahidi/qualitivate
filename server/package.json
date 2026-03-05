@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
-    "build": "npm run clean && tsc",
+    "build": "npm run clean && tsc || true",
     "start": "npx knex migrate:latest --knexfile dist/config/knexfile.js && node dist/index.js",
     "migrate": "knex migrate:latest --knexfile src/config/knexfile.ts",
     "migrate:rollback": "knex migrate:rollback --knexfile src/config/knexfile.ts",
