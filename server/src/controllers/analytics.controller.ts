@@ -791,17 +791,46 @@ export const getResponses = async (req: AuthRequest, res: Response) => {
 
     const totalQuestions = parseInt(questionCount?.count as string || '0', 10);
 
-    const formattedResponses = responses.map((r: any) => ({
-      id: r.id,
-      status: r.status,
-      respondentEmail: r.respondent_email || (survey.is_anonymous ? 'Anonymous' : 'Unknown'),
-      startedAt: r.started_at,
-      completedAt: r.completed_at,
-      answeredQuestions: answerCountMap[r.id] || 0,
-      totalQuestions,
-      completionPercentage: Math.round(((answerCountMap[r.id] || 0) / totalQuestions) * 100),
-      metadata: r.metadata
-    }));
+    // Fetch respondent metadata for these responses
+    const respondentMetaRows = await db('respondent_metadata')
+      .whereIn('response_id', responseIds)
+      .select(
+        'response_id',
+        'device_type',
+        'browser_name',
+        'os_name',
+        'country',
+        'country_code',
+        'city'
+      );
+
+    const respondentMetaMap = respondentMetaRows.reduce((map: any, item: any) => {
+      map[item.response_id] = item;
+      return map;
+    }, {});
+
+    const formattedResponses = responses.map((r: any) => {
+      const meta = respondentMetaMap[r.id];
+      return {
+        id: r.id,
+        status: r.status,
+        respondentEmail: r.respondent_email || (survey.is_anonymous ? 'Anonymous' : 'Unknown'),
+        startedAt: r.started_at,
+        completedAt: r.completed_at,
+        answeredQuestions: answerCountMap[r.id] || 0,
+        totalQuestions,
+        completionPercentage: Math.round(((answerCountMap[r.id] || 0) / totalQuestions) * 100),
+        metadata: r.metadata,
+        respondentInfo: meta ? {
+          deviceType: meta.device_type,
+          browser: meta.browser_name,
+          os: meta.os_name,
+          country: meta.country,
+          countryCode: meta.country_code,
+          city: meta.city,
+        } : null,
+      };
+    });
 
     res.json({
       responses: formattedResponses,
@@ -861,6 +890,25 @@ export const getResponseDetails = async (req: AuthRequest, res: Response) => {
       }
     }
 
+    // Fallback: if no invitation but respondent_id exists, get user info
+    if (!respondentInfo && response.respondent_id && !response.is_anonymous) {
+      const respondentUser = await db('users')
+        .where({ id: response.respondent_id })
+        .select('email', 'first_name', 'last_name')
+        .first();
+      if (respondentUser) {
+        respondentInfo = {
+          email: respondentUser.email,
+          name: `${respondentUser.first_name} ${respondentUser.last_name}`.trim(),
+        };
+      }
+    }
+
+    // Get respondent metadata
+    const respondentMetadata = await db('respondent_metadata')
+      .where({ response_id: responseId })
+      .first();
+
     // Get all answers with questions
     const answers = await db('answers')
       .join('questions', 'answers.question_id', 'questions.id')
@@ -868,7 +916,7 @@ export const getResponseDetails = async (req: AuthRequest, res: Response) => {
       .select(
         'answers.id as answer_id',
         'answers.value',
-        'answers.answered_at',
+        'answers.created_at as answered_at',
         'questions.id as question_id',
         'questions.content as question_text',
         'questions.type as question_type',
@@ -895,6 +943,34 @@ export const getResponseDetails = async (req: AuthRequest, res: Response) => {
       durationSeconds,
       respondent: respondentInfo || (response.is_anonymous ? { anonymous: true } : null),
       metadata: response.metadata,
+      respondentMetadata: respondentMetadata ? {
+        ipAddress: respondentMetadata.ip_address,
+        country: respondentMetadata.country,
+        countryCode: respondentMetadata.country_code,
+        region: respondentMetadata.region,
+        city: respondentMetadata.city,
+        isp: respondentMetadata.isp,
+        timezone: respondentMetadata.timezone,
+        language: respondentMetadata.language,
+        browserName: respondentMetadata.browser_name,
+        browserVersion: respondentMetadata.browser_version,
+        osName: respondentMetadata.os_name,
+        osVersion: respondentMetadata.os_version,
+        deviceType: respondentMetadata.device_type,
+        deviceVendor: respondentMetadata.device_vendor,
+        deviceModel: respondentMetadata.device_model,
+        screenWidth: respondentMetadata.screen_width,
+        screenHeight: respondentMetadata.screen_height,
+        viewportWidth: respondentMetadata.viewport_width,
+        viewportHeight: respondentMetadata.viewport_height,
+        touchSupport: respondentMetadata.touch_support,
+        connectionType: respondentMetadata.connection_type,
+        referrer: respondentMetadata.referrer,
+        utmSource: respondentMetadata.utm_source,
+        utmMedium: respondentMetadata.utm_medium,
+        utmCampaign: respondentMetadata.utm_campaign,
+        entryUrl: respondentMetadata.entry_url,
+      } : null,
       answers: answers.map((a: any) => ({
         answerId: a.answer_id,
         questionId: a.question_id,
@@ -957,6 +1033,16 @@ export const exportResponses = async (req: AuthRequest, res: Response) => {
       .whereIn('response_id', responseIds)
       .select('response_id', 'question_id', 'value');
 
+    // Get respondent metadata for all responses
+    const allMetadata = await db('respondent_metadata')
+      .whereIn('response_id', responseIds)
+      .select(
+        'response_id', 'country', 'city', 'device_type',
+        'browser_name', 'os_name', 'language', 'timezone'
+      );
+    const metaMap: Record<string, any> = {};
+    allMetadata.forEach((m: any) => { metaMap[m.response_id] = m; });
+
     // Build answer map
     const answerMap: Record<string, Record<string, any>> = {};
     allAnswers.forEach((a: any) => {
@@ -966,13 +1052,20 @@ export const exportResponses = async (req: AuthRequest, res: Response) => {
     });
 
     if (format === 'json') {
-      // Return JSON format
       const data = responses.map((r: any) => {
+        const m = metaMap[r.id] || {};
         const row: any = {
           responseId: r.id,
           email: survey.is_anonymous ? 'Anonymous' : (r.email || 'Unknown'),
           startedAt: r.started_at,
-          completedAt: r.completed_at
+          completedAt: r.completed_at,
+          country: m.country || '',
+          city: m.city || '',
+          deviceType: m.device_type || '',
+          browser: m.browser_name || '',
+          os: m.os_name || '',
+          language: m.language || '',
+          timezone: m.timezone || '',
         };
         questions.forEach((q: any) => {
           row[`Q${q.order_index + 1}: ${q.content.substring(0, 50)}`] =
@@ -990,15 +1083,30 @@ export const exportResponses = async (req: AuthRequest, res: Response) => {
       'Email',
       'Started At',
       'Completed At',
+      'Country',
+      'City',
+      'Device Type',
+      'Browser',
+      'OS',
+      'Language',
+      'Timezone',
       ...questions.map((q: any) => `Q${q.order_index + 1}: ${q.content.substring(0, 50)}`)
     ];
 
     const rows = responses.map((r: any) => {
+      const m = metaMap[r.id] || {};
       const row = [
         r.id,
         survey.is_anonymous ? 'Anonymous' : (r.email || 'Unknown'),
         r.started_at,
         r.completed_at,
+        m.country || '',
+        m.city || '',
+        m.device_type || '',
+        m.browser_name || '',
+        m.os_name || '',
+        m.language || '',
+        m.timezone || '',
         ...questions.map((q: any) => {
           const answer = answerMap[r.id]?.[q.id];
           if (answer === undefined || answer === null) return '';
@@ -1171,6 +1279,197 @@ export const getCompanyAnalytics = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     logger.error('Get company analytics error:', { error });
     res.status(500).json({ error: 'Failed to fetch company analytics' });
+  }
+};
+
+/**
+ * Get respondent demographics / metadata analytics for a survey
+ * Aggregates device types, browsers, OS, countries, etc.
+ */
+export const getRespondentInsights = async (req: AuthRequest, res: Response) => {
+  try {
+    const { surveyId } = req.params;
+    const user = req.user!;
+
+    const survey = await db('surveys').where({ id: surveyId }).first();
+    if (!survey) {
+      return res.status(404).json({ error: 'Survey not found' });
+    }
+
+    if (user.role !== 'super_admin' && survey.company_id !== user.companyId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const baseQuery = () =>
+      db('respondent_metadata as rm')
+        .join('responses as r', 'rm.response_id', 'r.id')
+        .where('r.survey_id', surveyId)
+        .where('r.status', 'completed');
+
+    const totalRespondents = await baseQuery()
+      .count('rm.id as count')
+      .first()
+      .then((r: any) => Number(r?.count || 0));
+
+    if (totalRespondents === 0) {
+      return res.json({
+        totalRespondents: 0,
+        deviceTypes: [],
+        browsers: [],
+        operatingSystems: [],
+        countries: [],
+        languages: [],
+        screenSizes: [],
+        timezones: [],
+        referrers: [],
+        connectionTypes: [],
+        utmSources: [],
+        utmMediums: [],
+        utmCampaigns: [],
+      });
+    }
+
+    const aggregateField = async (field: string, label: string = field) => {
+      const rows = await baseQuery()
+        .select(`rm.${field} as name`)
+        .count('rm.id as count')
+        .whereNotNull(`rm.${field}`)
+        .where(`rm.${field}`, '!=', '')
+        .groupBy(`rm.${field}`)
+        .orderBy('count', 'desc')
+        .limit(20);
+      return rows.map((r: any) => ({
+        name: r.name || 'Unknown',
+        count: parseInt(r.count, 10),
+        percentage: Math.round((parseInt(r.count, 10) / totalRespondents) * 100),
+      }));
+    };
+
+    const [
+      deviceTypes,
+      browsers,
+      operatingSystems,
+      countries,
+      languages,
+      timezones,
+      connectionTypes,
+      utmSources,
+      utmMediums,
+      utmCampaigns,
+    ] = await Promise.all([
+      aggregateField('device_type'),
+      aggregateField('browser_name'),
+      aggregateField('os_name'),
+      aggregateField('country'),
+      aggregateField('language'),
+      aggregateField('timezone'),
+      aggregateField('connection_type'),
+      aggregateField('utm_source'),
+      aggregateField('utm_medium'),
+      aggregateField('utm_campaign'),
+    ]);
+
+    // Screen size buckets
+    const screenBuckets = await baseQuery()
+      .select(
+        db.raw(`CASE 
+          WHEN rm.screen_width <= 480 THEN 'Small Mobile (<=480px)'
+          WHEN rm.screen_width <= 768 THEN 'Mobile (481-768px)'
+          WHEN rm.screen_width <= 1024 THEN 'Tablet (769-1024px)'
+          WHEN rm.screen_width <= 1440 THEN 'Desktop (1025-1440px)'
+          WHEN rm.screen_width > 1440 THEN 'Large Desktop (>1440px)'
+          ELSE 'Unknown'
+        END as name`)
+      )
+      .count('rm.id as count')
+      .whereNotNull('rm.screen_width')
+      .groupBy(db.raw(`CASE 
+        WHEN rm.screen_width <= 480 THEN 'Small Mobile (<=480px)'
+        WHEN rm.screen_width <= 768 THEN 'Mobile (481-768px)'
+        WHEN rm.screen_width <= 1024 THEN 'Tablet (769-1024px)'
+        WHEN rm.screen_width <= 1440 THEN 'Desktop (1025-1440px)'
+        WHEN rm.screen_width > 1440 THEN 'Large Desktop (>1440px)'
+        ELSE 'Unknown'
+      END`))
+      .orderBy('count', 'desc');
+
+    const screenSizes = screenBuckets.map((r: any) => ({
+      name: r.name,
+      count: parseInt(r.count, 10),
+      percentage: Math.round((parseInt(r.count, 10) / totalRespondents) * 100),
+    }));
+
+    // Top referrers (clean domain only)
+    const referrerRows = await baseQuery()
+      .select('rm.referrer')
+      .whereNotNull('rm.referrer')
+      .where('rm.referrer', '!=', '');
+
+    const referrerDomains: Record<string, number> = {};
+    for (const row of referrerRows as any[]) {
+      try {
+        const domain = new URL(row.referrer).hostname;
+        referrerDomains[domain] = (referrerDomains[domain] || 0) + 1;
+      } catch {
+        referrerDomains['Direct / Unknown'] = (referrerDomains['Direct / Unknown'] || 0) + 1;
+      }
+    }
+    const referrers = Object.entries(referrerDomains)
+      .map(([name, count]) => ({
+        name,
+        count,
+        percentage: Math.round((count / totalRespondents) * 100),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 20);
+
+    // Geographic map data
+    const countryMap = await baseQuery()
+      .select('rm.country_code as code', 'rm.country as name')
+      .count('rm.id as count')
+      .whereNotNull('rm.country_code')
+      .groupBy('rm.country_code', 'rm.country')
+      .orderBy('count', 'desc');
+
+    const geoData = countryMap.map((r: any) => ({
+      code: r.code,
+      name: r.name,
+      count: parseInt(r.count, 10),
+    }));
+
+    // Touch vs non-touch
+    const touchData = await baseQuery()
+      .select(db.raw(`CASE WHEN rm.touch_support = true THEN 'Touch' ELSE 'Non-Touch' END as name`))
+      .count('rm.id as count')
+      .whereNotNull('rm.touch_support')
+      .groupBy(db.raw(`CASE WHEN rm.touch_support = true THEN 'Touch' ELSE 'Non-Touch' END`));
+
+    const touchBreakdown = touchData.map((r: any) => ({
+      name: r.name,
+      count: parseInt(r.count, 10),
+      percentage: Math.round((parseInt(r.count, 10) / totalRespondents) * 100),
+    }));
+
+    res.json({
+      totalRespondents,
+      deviceTypes,
+      browsers,
+      operatingSystems,
+      countries,
+      geoData,
+      languages,
+      screenSizes,
+      timezones,
+      touchBreakdown,
+      connectionTypes,
+      referrers,
+      utmSources,
+      utmMediums,
+      utmCampaigns,
+    });
+  } catch (error) {
+    logger.error('Get respondent insights error:', { error });
+    res.status(500).json({ error: 'Failed to fetch respondent insights' });
   }
 };
 

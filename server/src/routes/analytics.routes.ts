@@ -9,7 +9,8 @@ import {
   exportPDFReport,
   getCompanyAnalytics,
   getRoleDashboard,
-  getTaxonomyReport
+  getTaxonomyReport,
+  getRespondentInsights
 } from '../controllers/analytics.controller';
 
 const router = Router();
@@ -46,6 +47,13 @@ router.get(
   '/surveys/:surveyId/questions',
   authorize('super_admin', 'company_admin', 'site_admin', 'department_admin'),
   getQuestionAnalytics
+);
+
+// Get respondent demographics / metadata insights for a survey
+router.get(
+  '/surveys/:surveyId/respondents',
+  authorize('super_admin', 'company_admin', 'site_admin', 'department_admin'),
+  getRespondentInsights
 );
 
 // Get list of responses for a survey

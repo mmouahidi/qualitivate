@@ -154,11 +154,63 @@ export const getPublicSurvey = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// Fire-and-forget: resolve IP geolocation and update respondent_metadata
+const resolveGeolocation = async (metadataId: string, ipAddress: string) => {
+  try {
+    if (!ipAddress || ipAddress === '::1' || ipAddress === '127.0.0.1') return;
+
+    const cleanIp = ipAddress.replace('::ffff:', '');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const resp = await fetch(
+      `http://ip-api.com/json/${cleanIp}?fields=status,country,countryCode,regionName,city,lat,lon,isp`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+
+    if (!resp.ok) return;
+    const geo = await resp.json() as Record<string, any>;
+    if (geo.status !== 'success') return;
+
+    await db('respondent_metadata')
+      .where({ id: metadataId })
+      .update({
+        country: geo.country as string,
+        country_code: geo.countryCode as string,
+        region: geo.regionName as string,
+        city: geo.city as string,
+        latitude: geo.lat as number,
+        longitude: geo.lon as number,
+        isp: geo.isp as string,
+      });
+  } catch (err) {
+    logger.warn('Geolocation lookup failed (non-blocking):', { error: err });
+  }
+};
+
+// Parse UTM params from a URL string
+const parseUtmParams = (url: string | undefined): Record<string, string | undefined> => {
+  if (!url) return {};
+  try {
+    const parsed = new URL(url);
+    return {
+      utm_source: parsed.searchParams.get('utm_source') || undefined,
+      utm_medium: parsed.searchParams.get('utm_medium') || undefined,
+      utm_campaign: parsed.searchParams.get('utm_campaign') || undefined,
+      utm_term: parsed.searchParams.get('utm_term') || undefined,
+      utm_content: parsed.searchParams.get('utm_content') || undefined,
+    };
+  } catch {
+    return {};
+  }
+};
+
 // Start a survey response
 export const startResponse = async (req: AuthRequest, res: Response) => {
   try {
     const { surveyId } = req.params;
-    const { distributionId, email } = req.body;
+    const { distributionId, email, clientMetadata } = req.body;
 
     const survey = await db('surveys')
       .where({ id: surveyId, status: 'active' })
@@ -168,42 +220,37 @@ export const startResponse = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Survey not found or not active' });
     }
 
-    // Enforce access control: private surveys require authentication
     if (!survey.is_public && !req.user) {
       return res.status(401).json({ error: 'Authentication required for this survey' });
     }
 
-    // Generate anonymous token
     const anonymousToken = `${distributionId || 'direct'}_${uuidv4()}`;
 
-    // Parse User-Agent
     const userAgent = req.headers['user-agent'] || '';
     const parser = new UAParser(userAgent);
     const parsedUA = parser.getResult();
 
-    // Prepare metadata
     const metadata = {
       ip: req.ip,
-      userAgent: userAgent,
+      userAgent,
       browser: parsedUA.browser,
       os: parsedUA.os,
       device: parsedUA.device,
       engine: parsedUA.engine,
     };
 
-    // Build response record with optional respondent_id if user is authenticated
+    const responseId = uuidv4();
     const responseData: Record<string, any> = {
-      id: uuidv4(),
+      id: responseId,
       survey_id: surveyId,
       anonymous_token: anonymousToken,
       ip_address: req.ip,
       language_used: req.body.language || survey.default_language,
       status: 'started',
       started_at: new Date(),
-      metadata: metadata,
+      metadata,
     };
 
-    // If user is authenticated, track the respondent
     if (req.user?.id) {
       responseData.respondent_id = req.user.id;
     }
@@ -211,6 +258,74 @@ export const startResponse = async (req: AuthRequest, res: Response) => {
     const [response] = await db('responses')
       .insert(responseData)
       .returning('*');
+
+    // Build and insert rich respondent metadata
+    const cm = clientMetadata || {};
+    const ipAddress = req.ip || '';
+    const acceptLanguage = req.headers['accept-language'] || '';
+    const referrer = cm.referrer || req.headers['referer'] || '';
+    const entryUrl = cm.entryUrl || '';
+    const utmParams = parseUtmParams(entryUrl || referrer);
+
+    const deviceType = parsedUA.device?.type || (
+      cm.touchSupport && cm.screenWidth && cm.screenWidth < 768 ? 'mobile' :
+      cm.touchSupport && cm.screenWidth && cm.screenWidth < 1024 ? 'tablet' :
+      'desktop'
+    );
+
+    const metadataRecord: Record<string, any> = {
+      id: uuidv4(),
+      response_id: responseId,
+      ip_address: ipAddress,
+      timezone: cm.timezone || undefined,
+      language: cm.language || undefined,
+      languages: cm.languages || [],
+      accept_language: acceptLanguage,
+      user_agent: userAgent,
+      browser_name: parsedUA.browser?.name || undefined,
+      browser_version: parsedUA.browser?.version || undefined,
+      engine_name: parsedUA.engine?.name || undefined,
+      engine_version: parsedUA.engine?.version || undefined,
+      os_name: parsedUA.os?.name || undefined,
+      os_version: parsedUA.os?.version || undefined,
+      device_type: deviceType,
+      device_vendor: parsedUA.device?.vendor || undefined,
+      device_model: parsedUA.device?.model || undefined,
+      screen_width: cm.screenWidth || undefined,
+      screen_height: cm.screenHeight || undefined,
+      viewport_width: cm.viewportWidth || undefined,
+      viewport_height: cm.viewportHeight || undefined,
+      pixel_ratio: cm.pixelRatio || undefined,
+      color_depth: cm.colorDepth || undefined,
+      orientation: cm.orientation || undefined,
+      touch_support: cm.touchSupport ?? undefined,
+      cookies_enabled: cm.cookiesEnabled ?? undefined,
+      do_not_track: cm.doNotTrack ?? undefined,
+      hardware_concurrency: cm.hardwareConcurrency || undefined,
+      device_memory: cm.deviceMemory || undefined,
+      connection_type: cm.connectionType || undefined,
+      connection_downlink: cm.connectionDownlink || undefined,
+      connection_effective_type: cm.connectionEffectiveType || undefined,
+      referrer: referrer || undefined,
+      utm_source: utmParams.utm_source,
+      utm_medium: utmParams.utm_medium,
+      utm_campaign: utmParams.utm_campaign,
+      utm_term: utmParams.utm_term,
+      utm_content: utmParams.utm_content,
+      entry_url: entryUrl || undefined,
+    };
+
+    // Remove undefined values
+    Object.keys(metadataRecord).forEach(key => {
+      if (metadataRecord[key] === undefined) delete metadataRecord[key];
+    });
+
+    const [insertedMeta] = await db('respondent_metadata')
+      .insert(metadataRecord)
+      .returning('id');
+
+    // Fire-and-forget geolocation resolution
+    resolveGeolocation(insertedMeta.id, ipAddress);
 
     res.status(201).json({
       responseId: response.id,
