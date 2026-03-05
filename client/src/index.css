@@ -61,11 +61,17 @@
   --color-text-secondary: #1a1a1a;
   --color-text-muted: #333333;
 
-  /* Shadows */
-  --shadow-color: rgba(0, 0, 0, 0.2);
+  /* Shadows — disabled for clarity */
+  --shadow-color: transparent;
 
   /* Glass */
   --glass-bg: rgba(255, 255, 255, 0.95);
+}
+
+.high-contrast *,
+.high-contrast *::before,
+.high-contrast *::after {
+  box-shadow: none !important;
 }
 
 /* Custom Animations */
