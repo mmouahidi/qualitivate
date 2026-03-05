@@ -297,24 +297,7 @@ export const updateSurvey = async (req: AuthRequest, res: Response) => {
       updateData.is_anonymous = resolvedIsAnonymous;
     }
     if (defaultLanguage !== undefined) updateData.default_language = defaultLanguage;
-    // Parse settings if it comes as a string (e.g. from JSONB column serialization)
-    const parsedSettings = typeof settings === 'string' ? JSON.parse(settings) : settings;
-
-    // Extract notification emails and companyId from settings before cleaning
-    // Check both body root and inside settings for backward compatibility
-    const resolvedNotificationEmails = notificationEmails !== undefined
-      ? notificationEmails
-      : (parsedSettings?.notificationEmails !== undefined ? parsedSettings.notificationEmails : undefined);
-
-    const resolvedCompanyId = companyId !== undefined
-      ? companyId
-      : (parsedSettings?.companyId !== undefined ? parsedSettings.companyId : undefined);
-
-    // Clean internal keys from settings before persisting to the JSON column
-    if (parsedSettings) {
-      const { notificationEmails: _ne, companyId: _ci, ...cleanSettings } = parsedSettings;
-      updateData.settings = cleanSettings;
-    }
+    if (settings !== undefined) updateData.settings = settings;
 
     // Validate date range with existing values
     const newStartsAt = startsAt !== undefined ? startsAt : survey.starts_at;
@@ -326,37 +309,21 @@ export const updateSurvey = async (req: AuthRequest, res: Response) => {
     if (endsAt !== undefined) updateData.ends_at = endsAt;
 
     // Notification emails
-    if (resolvedNotificationEmails !== undefined) {
-      if (Array.isArray(resolvedNotificationEmails)) {
-        updateData.notification_emails = JSON.stringify(resolvedNotificationEmails);
+    if (notificationEmails !== undefined) {
+      if (Array.isArray(notificationEmails)) {
+        updateData.notification_emails = JSON.stringify(notificationEmails);
       }
     }
 
-    // Company targeting – save if provided (UI gates this to super_admin)
-    if (resolvedCompanyId !== undefined) {
-      updateData.company_id = resolvedCompanyId || null;
+    // Company targeting
+    if (companyId !== undefined) {
+      updateData.company_id = companyId || null;
     }
-
-    // DEBUG: Log the update data to trace company_id issues
-    console.log('[UPDATE SURVEY DEBUG]', {
-      settingsType: typeof settings,
-      parsedSettingsCompanyId: parsedSettings?.companyId,
-      bodyCompanyId: companyId,
-      resolvedCompanyId,
-      updateDataCompanyId: updateData.company_id,
-      updateDataKeys: Object.keys(updateData),
-    });
 
     const [updatedSurvey] = await db('surveys')
       .where({ id })
       .update(updateData)
       .returning('*');
-
-    // DEBUG: Log the result
-    console.log('[UPDATE SURVEY RESULT]', {
-      surveyId: updatedSurvey?.id,
-      resultCompanyId: updatedSurvey?.company_id,
-    });
 
     res.json(updatedSurvey);
   } catch (error) {
