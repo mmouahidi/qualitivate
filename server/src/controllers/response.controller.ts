@@ -43,8 +43,13 @@ const triggerResponseNotification = async (surveyId: string, responseId: string)
       answers: formattedAnswers,
       submittedAt: new Date().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }),
     });
-  } catch (err) {
-    logger.error('Response notification email failed (non-blocking):', { error: err });
+  } catch (err: any) {
+    const errMsg = err?.message || '';
+    if (errMsg.includes('SMTP is not configured')) {
+      logger.warn('Response notification skipped: SMTP is not configured');
+    } else {
+      logger.error('Response notification email failed (non-blocking):', { error: err });
+    }
   }
 };
 

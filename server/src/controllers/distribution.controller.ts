@@ -177,6 +177,7 @@ export const createEmailDistribution = async (req: AuthRequest, res: Response) =
 
     // Send emails
     const results = [];
+    let smtpError: string | null = null;
     for (const email of emails) {
       const personalizedUrl = `${baseUrl}&email=${encodeURIComponent(email)}`;
       try {
@@ -189,10 +190,22 @@ export const createEmailDistribution = async (req: AuthRequest, res: Response) =
           message
         });
         results.push({ email, status: 'sent' });
-      } catch (err) {
+      } catch (err: any) {
+        const errMsg = err?.message || 'Unknown error';
         logger.warn(`Failed to send email to ${email}`, { error: err });
-        results.push({ email, status: 'failed' });
+        results.push({ email, status: 'failed', error: errMsg });
+        if (errMsg.includes('SMTP is not configured') || errMsg.includes('SMTP connection failed')) {
+          smtpError = errMsg;
+          for (const remaining of emails.slice(emails.indexOf(email) + 1)) {
+            results.push({ email: remaining, status: 'failed', error: errMsg });
+          }
+          break;
+        }
       }
+    }
+
+    if (smtpError && results.every(r => r.status === 'failed')) {
+      return res.status(503).json({ error: smtpError, results });
     }
 
     const [distribution] = await db('survey_distributions')

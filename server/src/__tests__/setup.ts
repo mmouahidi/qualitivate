@@ -1,5 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 
+process.env.JWT_SECRET = 'test-jwt-secret-that-is-at-least-32-chars-long';
+process.env.JWT_REFRESH_SECRET = 'test-jwt-refresh-secret-at-least-32-chars';
+process.env.SMTP_HOST = 'smtp.test.com';
+process.env.SMTP_PORT = '587';
+process.env.SMTP_USER = 'test@test.com';
+process.env.SMTP_PASS = 'testpass';
+process.env.SMTP_FROM = 'noreply@test.com';
+
 // Test utilities
 export const mockRequest = (overrides: any = {}): any => ({
   body: {},
