@@ -181,7 +181,7 @@
 
   /* Cards */
   .card-soft {
-    @apply bg-surface rounded-soft shadow-soft p-6 transition-all duration-smooth;
+    @apply bg-surface rounded-soft shadow-soft border border-border p-6 transition-all duration-smooth;
   }
 
   .card-soft:hover {
@@ -189,7 +189,7 @@
   }
 
   .card-soft-sm {
-    @apply bg-surface rounded-soft shadow-soft-sm p-4 transition-all duration-smooth;
+    @apply bg-surface rounded-soft shadow-soft-sm border border-border p-4 transition-all duration-smooth;
   }
 
   /* Buttons - Primary */
