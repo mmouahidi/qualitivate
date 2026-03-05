@@ -94,7 +94,10 @@ const SurveyDistribute: React.FC = () => {
   });
 
   const createLinkMutation = useMutation({
-    mutationFn: () => distributionService.createLink(surveyId!)
+    mutationFn: () => distributionService.createLink(surveyId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['distributions', surveyId] });
+    }
   });
 
   const createQrMutation = useMutation({
@@ -257,17 +260,24 @@ const SurveyDistribute: React.FC = () => {
                   <input
                     type="text"
                     readOnly
-                    value={surveyUrl}
+                    value={linkDistribution?.targetUrl || surveyUrl}
                     className="flex-1 input-soft bg-background"
                   />
                   <button
-                    onClick={() => copyToClipboard(surveyUrl)}
+                    onClick={() => copyToClipboard(linkDistribution?.targetUrl || surveyUrl)}
                     className="btn-primary"
                   >
                     {copied ? 'Copied!' : 'Copy'}
                   </button>
                 </div>
-                {!linkDistribution && (
+                {linkDistribution ? (
+                  <p className="text-sm text-green-600 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Link tracking enabled
+                  </p>
+                ) : (
                   <button
                     onClick={() => createLinkMutation.mutate()}
                     disabled={createLinkMutation.isPending}
