@@ -1,10 +1,194 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import analyticsService, { SurveyAnalytics, QuestionAnalytics, PaginatedResponses, TaxonomyReport } from '../../services/analytics.service';
+import analyticsService, { SurveyAnalytics, QuestionAnalytics, PaginatedResponses, TaxonomyReport, RespondentInsights } from '../../services/analytics.service';
 import { DashboardLayout } from '../../components/layout';
 import TaxonomyReportView from '../../components/analytics/TaxonomyReport';
 import FoodSafetyCultureReport from '../../components/analytics/FoodSafetyCultureReport';
+
+// Horizontal bar chart for insight breakdown
+const InsightBarChart: React.FC<{ items: Array<{ name: string; count: number; percentage: number }>; color?: string }> = ({ items, color = 'bg-primary-500' }) => {
+  if (items.length === 0) return <p className="text-sm text-text-muted py-2">No data</p>;
+  return (
+    <div className="space-y-2">
+      {items.map((item) => (
+        <div key={item.name} className="flex items-center gap-2">
+          <span className="w-28 text-sm text-text-secondary truncate flex-shrink-0" title={item.name}>{item.name}</span>
+          <div className="flex-1 bg-background rounded-full h-5">
+            <div
+              className={`${color} h-5 rounded-full flex items-center justify-end pr-2 transition-all duration-500`}
+              style={{ width: `${Math.max(item.percentage, 3)}%` }}
+            >
+              {item.percentage >= 10 && <span className="text-xs text-white font-medium">{item.count}</span>}
+            </div>
+          </div>
+          <span className="w-12 text-sm text-text-secondary text-right flex-shrink-0">{item.percentage}%</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const InsightCard: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
+  <div className="card-soft">
+    <div className="flex items-center gap-2 mb-4">
+      {icon}
+      <h3 className="text-base font-semibold text-text-primary">{title}</h3>
+    </div>
+    {children}
+  </div>
+);
+
+const RespondentInsightsView: React.FC<{ data: RespondentInsights }> = ({ data }) => {
+  return (
+    <div className="space-y-6">
+      {/* Summary stat */}
+      <div className="card-soft bg-gradient-to-r from-primary-50 to-primary-100/50">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-primary-500 flex items-center justify-center">
+            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-3xl font-bold text-primary-700">{data.totalRespondents}</p>
+            <p className="text-sm text-primary-600">Total Respondents with Metadata</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Row 1: Devices, Browsers, OS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <InsightCard
+          title="Device Types"
+          icon={<svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>}
+        >
+          {data.deviceTypes.length > 0 ? (
+            <div className="space-y-3">
+              {data.deviceTypes.map((d) => (
+                <div key={d.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">
+                      {d.name === 'mobile' ? '\uD83D\uDCF1' : d.name === 'tablet' ? '\uD83D\uDCBB' : '\uD83D\uDDA5\uFE0F'}
+                    </span>
+                    <span className="text-sm font-medium text-text-primary capitalize">{d.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-text-primary">{d.count}</span>
+                    <span className="text-xs text-text-muted">({d.percentage}%)</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : <p className="text-sm text-text-muted">No data</p>}
+        </InsightCard>
+
+        <InsightCard
+          title="Browsers"
+          icon={<svg className="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>}
+        >
+          <InsightBarChart items={data.browsers} color="bg-orange-500" />
+        </InsightCard>
+
+        <InsightCard
+          title="Operating Systems"
+          icon={<svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
+        >
+          <InsightBarChart items={data.operatingSystems} color="bg-green-500" />
+        </InsightCard>
+      </div>
+
+      {/* Row 2: Countries & Languages */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <InsightCard
+          title="Countries"
+          icon={<svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+        >
+          <InsightBarChart items={data.countries} color="bg-indigo-500" />
+        </InsightCard>
+
+        <InsightCard
+          title="Languages"
+          icon={<svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>}
+        >
+          <InsightBarChart items={data.languages} color="bg-purple-500" />
+        </InsightCard>
+      </div>
+
+      {/* Row 3: Screen Sizes & Touch/Connection */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <InsightCard
+          title="Screen Sizes"
+          icon={<svg className="w-5 h-5 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>}
+        >
+          <InsightBarChart items={data.screenSizes} color="bg-cyan-500" />
+        </InsightCard>
+
+        <InsightCard
+          title="Touch vs Non-Touch"
+          icon={<svg className="w-5 h-5 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" /></svg>}
+        >
+          {data.touchBreakdown.length > 0 ? (
+            <div className="space-y-3">
+              {data.touchBreakdown.map((t) => (
+                <div key={t.name} className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-text-primary">{t.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-text-primary">{t.count}</span>
+                    <span className="text-xs text-text-muted">({t.percentage}%)</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : <p className="text-sm text-text-muted">No data</p>}
+        </InsightCard>
+
+        <InsightCard
+          title="Connection Types"
+          icon={<svg className="w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0" /></svg>}
+        >
+          <InsightBarChart items={data.connectionTypes} color="bg-yellow-500" />
+        </InsightCard>
+      </div>
+
+      {/* Row 4: Traffic Sources */}
+      {(data.referrers.length > 0 || data.utmSources.length > 0 || data.utmCampaigns.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <InsightCard
+            title="Top Referrers"
+            icon={<svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>}
+          >
+            <InsightBarChart items={data.referrers} color="bg-red-500" />
+          </InsightCard>
+
+          <InsightCard
+            title="UTM Sources"
+            icon={<svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" /></svg>}
+          >
+            <InsightBarChart items={data.utmSources} color="bg-emerald-500" />
+          </InsightCard>
+
+          <InsightCard
+            title="UTM Campaigns"
+            icon={<svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg>}
+          >
+            <InsightBarChart items={data.utmCampaigns} color="bg-amber-500" />
+          </InsightCard>
+        </div>
+      )}
+
+      {/* Row 5: Timezones */}
+      {data.timezones.length > 0 && (
+        <InsightCard
+          title="Timezones"
+          icon={<svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+        >
+          <InsightBarChart items={data.timezones} color="bg-slate-500" />
+        </InsightCard>
+      )}
+    </div>
+  );
+};
 
 const SurveyAnalyticsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -14,7 +198,9 @@ const SurveyAnalyticsPage: React.FC = () => {
   const [responses, setResponses] = useState<PaginatedResponses | null>(null);
   const [taxonomyReport, setTaxonomyReport] = useState<TaxonomyReport | null>(null);
   const [taxonomyLoaded, setTaxonomyLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'report' | 'overview' | 'questions' | 'responses' | 'quality'>('report');
+  const [respondentInsights, setRespondentInsights] = useState<RespondentInsights | null>(null);
+  const [respondentInsightsLoaded, setRespondentInsightsLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState<'report' | 'overview' | 'questions' | 'responses' | 'quality' | 'respondents'>('report');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +221,8 @@ const SurveyAnalyticsPage: React.FC = () => {
       loadTaxonomyReport();
     } else if (activeTab === 'report' && !taxonomyLoaded && surveyId) {
       loadTaxonomyReport();
+    } else if (activeTab === 'respondents' && !respondentInsightsLoaded && surveyId) {
+      loadRespondentInsights();
     }
   }, [activeTab, surveyId, currentPage]);
 
@@ -68,6 +256,17 @@ const SurveyAnalyticsPage: React.FC = () => {
       setTaxonomyReport({ overall: { score: 0, grade: 'N/A', benchmark: null, previousGrade: null, change: null, respondentCount: 0 }, categories: [] });
     } finally {
       setTaxonomyLoaded(true);
+    }
+  };
+
+  const loadRespondentInsights = async () => {
+    try {
+      const data = await analyticsService.getRespondentInsights(surveyId!);
+      setRespondentInsights(data);
+    } catch (err) {
+      console.error('Failed to load respondent insights:', err);
+    } finally {
+      setRespondentInsightsLoaded(true);
     }
   };
 
@@ -196,7 +395,7 @@ const SurveyAnalyticsPage: React.FC = () => {
         {/* Tabs */}
         <div className="border-b border-border">
           <nav className="-mb-px flex space-x-8">
-            {(['report', 'overview', 'quality', 'questions', 'responses'] as const).map((tab) => (
+            {(['report', 'overview', 'quality', 'questions', 'responses', 'respondents'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -212,6 +411,13 @@ const SurveyAnalyticsPage: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                     Assessment Report
+                  </span>
+                ) : tab === 'respondents' ? (
+                  <span className="flex items-center gap-1.5">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Respondents
                   </span>
                 ) : tab === 'quality' ? 'Quality Report' : t(`analytics.${tab}`)}
               </button>
@@ -434,6 +640,30 @@ const SurveyAnalyticsPage: React.FC = () => {
             {!questionAnalytics && (
               <div className="text-center py-8">
                 <div className="spinner spinner-lg text-primary-600 mx-auto"></div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Respondents Tab */}
+        {activeTab === 'respondents' && (
+          <div>
+            {!respondentInsightsLoaded ? (
+              <div className="text-center py-8">
+                <div className="spinner spinner-lg text-primary-600 mx-auto"></div>
+              </div>
+            ) : respondentInsights && respondentInsights.totalRespondents > 0 ? (
+              <RespondentInsightsView data={respondentInsights} />
+            ) : (
+              <div className="card-soft text-center py-12">
+                <svg className="w-16 h-16 mx-auto text-text-muted/30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <h3 className="text-lg font-semibold text-text-primary mb-2">No Respondent Data Yet</h3>
+                <p className="text-text-secondary max-w-md mx-auto">
+                  Respondent metadata will appear here once people start taking your survey.
+                  Data includes device type, browser, location, screen size, and more.
+                </p>
               </div>
             )}
           </div>

@@ -76,6 +76,65 @@ export interface PaginatedResponses {
   };
 }
 
+export interface RespondentMetadata {
+  ipAddress?: string;
+  country?: string;
+  countryCode?: string;
+  region?: string;
+  city?: string;
+  isp?: string;
+  timezone?: string;
+  language?: string;
+  browserName?: string;
+  browserVersion?: string;
+  osName?: string;
+  osVersion?: string;
+  deviceType?: string;
+  deviceVendor?: string;
+  deviceModel?: string;
+  screenWidth?: number;
+  screenHeight?: number;
+  viewportWidth?: number;
+  viewportHeight?: number;
+  touchSupport?: boolean;
+  connectionType?: string;
+  referrer?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  entryUrl?: string;
+}
+
+interface InsightItem {
+  name: string;
+  count: number;
+  percentage: number;
+}
+
+interface GeoItem {
+  code: string;
+  name: string;
+  count: number;
+}
+
+export interface RespondentInsights {
+  totalRespondents: number;
+  deviceTypes: InsightItem[];
+  browsers: InsightItem[];
+  operatingSystems: InsightItem[];
+  countries: InsightItem[];
+  geoData: GeoItem[];
+  languages: InsightItem[];
+  screenSizes: InsightItem[];
+  timezones: InsightItem[];
+  touchBreakdown: InsightItem[];
+  connectionTypes: InsightItem[];
+  referrers: InsightItem[];
+  utmSources: InsightItem[];
+  utmMediums: InsightItem[];
+  utmCampaigns: InsightItem[];
+}
+
 export interface ResponseDetails {
   id: string;
   surveyId: string;
@@ -86,18 +145,20 @@ export interface ResponseDetails {
   durationSeconds: number | null;
   respondent: {
     email?: string;
+    name?: string;
     sentAt?: string;
     openedAt?: string;
     anonymous?: boolean;
   } | null;
-  metadata: any;
+  metadata: Record<string, unknown> | null;
+  respondentMetadata: RespondentMetadata | null;
   answers: Array<{
     answerId: string;
     questionId: string;
     questionText: string;
     questionType: string;
-    questionOptions: any;
-    answer: any;
+    questionOptions: Record<string, unknown> | null;
+    answer: unknown;
     answeredAt: string;
   }>;
 }
@@ -235,6 +296,14 @@ class AnalyticsService {
    */
   async getTaxonomyReport(surveyId: string): Promise<TaxonomyReport> {
     const response = await api.get<TaxonomyReport>(`/analytics/surveys/${surveyId}/taxonomy-report`);
+    return response.data;
+  }
+
+  /**
+   * Get respondent demographics / metadata insights for a survey
+   */
+  async getRespondentInsights(surveyId: string): Promise<RespondentInsights> {
+    const response = await api.get<RespondentInsights>(`/analytics/surveys/${surveyId}/respondents`);
     return response.data;
   }
 
