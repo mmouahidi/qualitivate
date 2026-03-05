@@ -52,28 +52,64 @@ export interface SurveySettings {
   };
 }
 
+function collectClientMetadata(): Record<string, any> {
+  const meta: Record<string, any> = {};
+
+  try {
+    meta.screenWidth = window.screen?.width;
+    meta.screenHeight = window.screen?.height;
+    meta.viewportWidth = window.innerWidth;
+    meta.viewportHeight = window.innerHeight;
+    meta.pixelRatio = window.devicePixelRatio;
+    meta.colorDepth = window.screen?.colorDepth;
+    meta.orientation = window.screen?.orientation?.type;
+    meta.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    meta.language = navigator.language;
+    meta.languages = Array.from(navigator.languages || []);
+    meta.platform = navigator.platform;
+    meta.cookiesEnabled = navigator.cookieEnabled;
+    meta.doNotTrack = navigator.doNotTrack === '1';
+    meta.touchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    meta.hardwareConcurrency = navigator.hardwareConcurrency;
+    meta.deviceMemory = (navigator as any).deviceMemory;
+    meta.referrer = document.referrer || undefined;
+    meta.entryUrl = window.location.href;
+
+    const conn = (navigator as any).connection;
+    if (conn) {
+      meta.connectionType = conn.type;
+      meta.connectionDownlink = conn.downlink;
+      meta.connectionEffectiveType = conn.effectiveType;
+    }
+  } catch {
+    // Silently handle any browser API errors
+  }
+
+  return meta;
+}
+
 const responseService = {
-  // Get public survey for taking
   async getPublicSurvey(surveyId: string, params?: { dist?: string; lang?: string }): Promise<PublicSurvey> {
     const response = await api.get(`/responses/survey/${surveyId}/public`, { params });
     return response.data;
   },
 
-  // Get available languages for a survey
   async getSurveyLanguages(surveyId: string): Promise<{ languages: string[] }> {
     const response = await api.get(`/responses/survey/${surveyId}/languages`);
     return response.data;
   },
 
-  // Get survey settings (for thank you page)
   async getSurveySettings(surveyId: string): Promise<SurveySettings> {
     const response = await api.get(`/responses/survey/${surveyId}/settings`);
     return response.data;
   },
 
-  // Start a survey response
   async startResponse(surveyId: string, data?: { distributionId?: string; email?: string; language?: string }): Promise<StartResponseResult> {
-    const response = await api.post(`/responses/survey/${surveyId}/start`, data);
+    const clientMetadata = collectClientMetadata();
+    const response = await api.post(`/responses/survey/${surveyId}/start`, {
+      ...data,
+      clientMetadata,
+    });
     return response.data;
   },
 
