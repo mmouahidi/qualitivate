@@ -29,8 +29,7 @@ jobs:
             git config --global --add safe.directory "$APP_DIR"
             git reset --hard HEAD
             git clean -fd
-            # Server must use SSH remote: git@github.com:owner/repo.git and have a deploy key in GitHub
-            git remote set-url origin git@github.com:${{ github.repository }}.git
+            git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git
             git pull origin master
 
             # Install all workspace dependencies
