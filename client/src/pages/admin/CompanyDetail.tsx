@@ -188,7 +188,7 @@ const CompanyDetail: React.FC = () => {
             data: {
                 firstName: editForm.firstName,
                 lastName: editForm.lastName,
-                role: editForm.role,
+                role: editForm.role as UserType['role'],
                 position: editForm.position || undefined,
                 siteId: editForm.siteId || undefined,
             },

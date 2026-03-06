@@ -78,11 +78,11 @@ const Roles: React.FC = () => {
         }
     }, [permsData]);
 
-    const updateMutation = useMutation({
-        mutationFn: async ({ role, permissions }: { role: string; permissions: string[] }) => {
+    const updateMutation = useMutation<unknown, Error, { role: string; permissions: string[] }>({
+        mutationFn: async ({ role, permissions }) => {
             await api.put('/rbac/permissions', { role, permissions });
         },
-        onSuccess: (_data: unknown, variables: { role: string }) => {
+        onSuccess: (_data, variables) => {
             setSaveError(null);
             setSavedRole(variables.role);
             if (savedRoleTimeout.current) clearTimeout(savedRoleTimeout.current);
