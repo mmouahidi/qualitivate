@@ -188,18 +188,27 @@ const LandingPage: React.FC = () => {
                 </section>
 
                 {/* Trust Section */}
-                <section className="py-12 bg-surface border-y border-border/60">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                        <p className="text-text-secondary font-medium tracking-wide uppercase mb-8">{t('trust.label')}</p>
-                        <div className="flex flex-wrap justify-center items-center gap-12 md:gap-20 opacity-70">
-                            <span className="text-xl font-bold text-text-primary">Acme Corp</span>
-                            <span className="text-xl font-bold text-text-primary">Globex</span>
-                            <span className="text-xl font-bold text-text-primary">Umbrella</span>
-                            <span className="text-xl font-bold text-text-primary">Massive</span>
-                            <span className="text-xl font-bold text-text-primary">Initech</span>
+                {publicCompanies?.data && publicCompanies.data.length > 0 && (
+                    <section className="py-12 bg-surface border-y border-border/60">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                            <p className="text-text-secondary font-medium tracking-wide uppercase mb-8">{t('trust.label')}</p>
+                            <div className="flex flex-wrap justify-center items-center gap-12 md:gap-20">
+                                {publicCompanies.data.map((company) => (
+                                    <div key={company.id} className="flex items-center gap-3 opacity-70 hover:opacity-100 transition-opacity">
+                                        {company.logoUrl && (
+                                            <img
+                                                src={company.logoUrl}
+                                                alt={company.name}
+                                                className="h-8 w-8 object-contain rounded-full"
+                                            />
+                                        )}
+                                        <span className="text-xl font-bold text-text-primary">{company.name}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                )}
 
                 {/* Data-Driven Precision */}
                 <section id="benefits" className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
