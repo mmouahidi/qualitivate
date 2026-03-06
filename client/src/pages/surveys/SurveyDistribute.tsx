@@ -48,7 +48,6 @@ const SurveyDistribute: React.FC = () => {
         surveyTitle: survey?.title || 'Survey',
         qrCodeUrl: qrUrl,
         companyName: companyData?.name,
-        companyActivity: companyData?.activity,
         surveyUrl: surveyUrl,
       });
     } catch (err) {
