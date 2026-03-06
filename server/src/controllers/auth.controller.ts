@@ -384,7 +384,7 @@ export const me = async (req: AuthRequest, res: Response) => {
 
     const user = await db('users')
       .where({ id: req.user.id })
-      .select('id', 'email', 'first_name', 'last_name', 'role', 'company_id', 'site_id', 'department_id', 'avatar_style')
+      .select('id', 'email', 'first_name', 'last_name', 'role', 'company_id', 'site_id', 'department_id', 'position', 'avatar_style')
       .first();
 
     if (!user) {

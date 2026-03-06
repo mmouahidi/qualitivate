@@ -16,7 +16,8 @@
     "build:server": "npm run build --workspace=server",
     "build:client": "npm run build --workspace=client",
     "build:all": "npm run build:db && npm run build:client && npm run build:server",
-    "start": "cd server && npx knex migrate:latest --knexfile dist/config/knexfile.js && node dist/index.js"
+    "start": "cd server && npx knex migrate:latest --knexfile dist/config/knexfile.js && node dist/index.js",
+    "seed:org": "cd server && npx tsx ../scripts/seed-organizational-data.ts"
   },
   "engines": {
     "node": ">=18.0.0"

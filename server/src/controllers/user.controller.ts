@@ -16,7 +16,7 @@ export const listUsers = async (req: AuthRequest, res: Response) => {
 
     let query = db('users').select(
       'id', 'email', 'first_name', 'last_name', 'role',
-      'company_id', 'site_id', 'department_id', 'is_active', 'created_at'
+      'company_id', 'site_id', 'department_id', 'position', 'is_active', 'created_at'
     );
 
     if (user.role === 'super_admin') {
@@ -107,7 +107,7 @@ export const getUser = async (req: AuthRequest, res: Response) => {
 
     const user = await db('users')
       .select('id', 'email', 'first_name', 'last_name', 'role',
-        'company_id', 'site_id', 'department_id', 'is_active', 'created_at')
+        'company_id', 'site_id', 'department_id', 'position', 'is_active', 'created_at')
       .where({ id })
       .first();
 
@@ -210,7 +210,7 @@ export const inviteUser = async (req: AuthRequest, res: Response) => {
         department_id: targetDepartmentId || null,
         is_active: true
       })
-      .returning(['id', 'email', 'first_name', 'last_name', 'role', 'company_id', 'site_id', 'department_id']);
+      .returning(['id', 'email', 'first_name', 'last_name', 'role', 'company_id', 'site_id', 'department_id', 'position']);
 
     res.status(201).json(newUser);
   } catch (error) {
@@ -356,7 +356,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     const [updatedUser] = await db('users')
       .where({ id })
       .update(updateData)
-      .returning(['id', 'email', 'first_name', 'last_name', 'role', 'company_id', 'site_id', 'department_id', 'is_active']);
+      .returning(['id', 'email', 'first_name', 'last_name', 'role', 'company_id', 'site_id', 'department_id', 'position', 'is_active']);
 
     res.json(updatedUser);
   } catch (error) {
