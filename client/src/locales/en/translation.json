@@ -158,6 +158,7 @@
       "title": "Users",
       "subtitle": "Manage your organization's users",
       "add": "Add User",
+      "edit": "Edit User",
       "bulkImport": "Bulk Import",
       "searchPlaceholder": "Search users...",
       "email": "Email",

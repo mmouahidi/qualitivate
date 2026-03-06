@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { ShieldCheck, Lock, Settings2 } from 'lucide-react';
+import { ShieldCheck, Lock, Settings2, Check, Loader2 } from 'lucide-react';
 
 interface RoleItem {
     id: string;
@@ -38,7 +38,9 @@ const Roles: React.FC = () => {
     const queryClient = useQueryClient();
     const [localMatrix, setLocalMatrix] = useState<Record<string, Set<string>>>({});
     const [saveError, setSaveError] = useState<string | null>(null);
+    const [savedRole, setSavedRole] = useState<string | null>(null);
     const pendingFlush = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+    const savedRoleTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     if (user?.role !== 'super_admin') {
         return (
@@ -80,8 +82,14 @@ const Roles: React.FC = () => {
         mutationFn: async ({ role, permissions }: { role: string; permissions: string[] }) => {
             await api.put('/rbac/permissions', { role, permissions });
         },
-        onSuccess: () => {
+        onSuccess: (_data: unknown, variables: { role: string }) => {
             setSaveError(null);
+            setSavedRole(variables.role);
+            if (savedRoleTimeout.current) clearTimeout(savedRoleTimeout.current);
+            savedRoleTimeout.current = setTimeout(() => {
+                setSavedRole(null);
+                savedRoleTimeout.current = null;
+            }, 2500);
             queryClient.invalidateQueries({ queryKey: ['rbac-permissions'] });
         },
         onError: (err: { response?: { data?: { error?: string } } }) => {
@@ -131,17 +139,54 @@ const Roles: React.FC = () => {
     const configurableRoles = permsData?.roles ?? [];
     const permissionDetails = permsData?.permissionDetails ?? [];
 
-    // Build groups from permissionDetails (group by permissionGroup)
+    const allPermissionNames = React.useMemo(
+        () => permissionDetails.map((p) => p.name),
+        [permissionDetails]
+    );
+
+    const handleSelectAll = (role: string) => {
+        setSaveError(null);
+        const newPerms = new Set(allPermissionNames);
+        setLocalMatrix((prev) => ({ ...prev, [role]: newPerms }));
+        if (pendingFlush.current[role]) clearTimeout(pendingFlush.current[role]);
+        flushRole(role, newPerms);
+    };
+
+    const handleClearAll = (role: string) => {
+        setSaveError(null);
+        const newPerms = new Set<string>();
+        setLocalMatrix((prev) => ({ ...prev, [role]: newPerms }));
+        if (pendingFlush.current[role]) clearTimeout(pendingFlush.current[role]);
+        flushRole(role, newPerms);
+    };
+
+    // Build groups from permissionDetails (group by permissionGroup). Fallback to single group if no details.
     const permissionGroups = React.useMemo(() => {
-        const byGroup = new Map<string, PermissionDetail[]>();
-        for (const p of permissionDetails) {
-            const group = p.permissionGroup ?? 'Other';
-            const list = byGroup.get(group) ?? [];
-            list.push(p);
-            byGroup.set(group, list);
+        if (permissionDetails.length > 0) {
+            const byGroup = new Map<string, PermissionDetail[]>();
+            for (const p of permissionDetails) {
+                const group = p.permissionGroup ?? 'Other';
+                const list = byGroup.get(group) ?? [];
+                list.push(p);
+                byGroup.set(group, list);
+            }
+            return Array.from(byGroup.entries()).map(([label, perms]) => ({ label, permissions: perms }));
         }
-        return Array.from(byGroup.entries()).map(([label, perms]) => ({ label, permissions: perms }));
-    }, [permissionDetails]);
+        const names = permsData?.permissions ?? [];
+        if (names.length === 0) return [];
+        return [
+            {
+                label: 'Permissions',
+                permissions: names.map((name) => ({
+                    name,
+                    resource: name.split(':')[0] ?? '',
+                    action: name.split(':')[1] ?? '',
+                    description: name,
+                    permissionGroup: 'Other',
+                })),
+            },
+        ];
+    }, [permissionDetails, permsData?.permissions]);
 
     return (
         <DashboardLayout
@@ -213,9 +258,20 @@ const Roles: React.FC = () => {
                         </button>
                     </div>
                 )}
-                {updateMutation.isPending && (
-                    <p className="text-sm text-primary-500 mb-2">Saving…</p>
-                )}
+                <div className="mb-2 flex items-center gap-3">
+                    {updateMutation.isPending && (
+                        <span className="text-sm text-primary-500 flex items-center gap-1.5">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Saving…
+                        </span>
+                    )}
+                    {savedRole && !updateMutation.isPending && (
+                        <span className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                            <Check className="w-4 h-4" />
+                            Saved {roles.find((r) => r.id === savedRole)?.label ?? savedRole}
+                        </span>
+                    )}
+                </div>
 
                 {isLoading ? (
                     <div className="flex justify-center py-12">
@@ -238,6 +294,23 @@ const Roles: React.FC = () => {
                                                 <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
                                                     {roles.find((r) => r.id === role)?.label ?? role}
                                                 </span>
+                                                <div className="flex items-center justify-center gap-2 mt-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleSelectAll(role)}
+                                                        className="text-xs text-primary-600 dark:text-primary-400 hover:underline font-medium"
+                                                    >
+                                                        All
+                                                    </button>
+                                                    <span className="text-border">|</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleClearAll(role)}
+                                                        className="text-xs text-text-muted hover:text-text-primary hover:underline font-medium"
+                                                    >
+                                                        None
+                                                    </button>
+                                                </div>
                                             </th>
                                         ))}
                                     </tr>

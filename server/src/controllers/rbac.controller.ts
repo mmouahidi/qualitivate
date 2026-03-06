@@ -84,6 +84,9 @@ export const getPermissionsMatrix = async (req: AuthRequest, res: Response) => {
                 .select('name', 'resource', 'action', 'description', 'permission_group')
                 .orderBy('permission_group')
                 .orderBy('name');
+            if (permissionRows.length === 0) {
+                permissionRows = FALLBACK_PERMISSION_DETAILS;
+            }
         } catch {
             permissionRows = FALLBACK_PERMISSION_DETAILS;
         }

@@ -8,6 +8,7 @@ import {
     Users,
     MapPin,
     Plus,
+    Pencil,
     Trash2,
     Loader2,
     Upload,
@@ -33,12 +34,18 @@ const CompanyDetail: React.FC = () => {
 
     // --- Modal states ---
     const [showAddUser, setShowAddUser] = useState(false);
+    const [showEditUser, setShowEditUser] = useState(false);
     const [showAddSite, setShowAddSite] = useState(false);
     const [showBulkImport, setShowBulkImport] = useState(false);
 
     // Add User form
     const [userForm, setUserForm] = useState({ email: '', firstName: '', lastName: '', password: '', role: 'user', position: '' });
     const [userFormError, setUserFormError] = useState('');
+
+    // Edit User form
+    const [editTarget, setEditTarget] = useState<UserType | null>(null);
+    const [editForm, setEditForm] = useState<{ firstName: string; lastName: string; role: string; position: string; siteId: string }>({ firstName: '', lastName: '', role: 'user', position: '', siteId: '' });
+    const [editFormError, setEditFormError] = useState('');
 
     // Add Site form
     const [siteForm, setSiteForm] = useState({ name: '', location: '' });
@@ -73,7 +80,7 @@ const CompanyDetail: React.FC = () => {
     const { data: jobPositionsData } = useQuery({
         queryKey: ['reference', 'job-positions'],
         queryFn: () => referenceService.getJobPositions(),
-        enabled: !!showAddUser
+        enabled: !!showAddUser || !!showEditUser
     });
     const jobPositions = jobPositionsData?.data ?? [];
 
@@ -104,6 +111,20 @@ const CompanyDetail: React.FC = () => {
         },
         onError: (err: any) => {
             setUserFormError(err?.response?.data?.error || 'Failed to create user');
+        },
+    });
+
+    const updateUserMutation = useMutation({
+        mutationFn: ({ userId, data }: { userId: string; data: Partial<UserType> }) => userService.update(userId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users', { companyId: id }] });
+            setShowEditUser(false);
+            setEditTarget(null);
+            setEditForm({ firstName: '', lastName: '', role: 'user', position: '', siteId: '' });
+            setEditFormError('');
+        },
+        onError: (err: any) => {
+            setEditFormError(err?.response?.data?.error || 'Failed to update user');
         },
     });
 
@@ -143,6 +164,35 @@ const CompanyDetail: React.FC = () => {
         if (confirm(t('admin.users.deleteConfirm', 'Delete this user? This action cannot be undone.'))) {
             deleteUserMutation.mutate(userId);
         }
+    };
+
+    const handleEditUser = (u: UserType) => {
+        setEditTarget(u);
+        setEditForm({
+            firstName: u.firstName ?? '',
+            lastName: u.lastName ?? '',
+            role: u.role ?? 'user',
+            position: u.position ?? '',
+            siteId: u.siteId ?? '',
+        });
+        setEditFormError('');
+        setShowEditUser(true);
+    };
+
+    const handleUpdateUser = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editTarget) return;
+        setEditFormError('');
+        updateUserMutation.mutate({
+            userId: editTarget.id,
+            data: {
+                firstName: editForm.firstName,
+                lastName: editForm.lastName,
+                role: editForm.role,
+                position: editForm.position || undefined,
+                siteId: editForm.siteId || undefined,
+            },
+        });
     };
 
     const handleInviteUser = (e: React.FormEvent) => {
@@ -436,14 +486,25 @@ const CompanyDetail: React.FC = () => {
                                                 </span>
                                             </td>
                                             <td className="text-right">
-                                                {user?.role === 'super_admin' && (
-                                                    <button
-                                                        onClick={() => handleDeleteUser(u.id)}
-                                                        className="btn-ghost text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                )}
+                                                <div className="flex gap-2 justify-end">
+                                                    {(user?.role === 'super_admin' || user?.role === 'company_admin') && u.id !== user?.id && (
+                                                        <button
+                                                            onClick={() => handleEditUser(u)}
+                                                            className="btn-ghost text-text-secondary hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-sm"
+                                                            title={t('common.edit', 'Edit')}
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                    {user?.role === 'super_admin' && (
+                                                        <button
+                                                            onClick={() => handleDeleteUser(u.id)}
+                                                            className="btn-ghost text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -528,6 +589,83 @@ const CompanyDetail: React.FC = () => {
                                 <button type="button" onClick={() => setShowAddUser(false)} className="btn-secondary">{t('common.cancel', 'Cancel')}</button>
                                 <button type="submit" disabled={inviteUserMutation.isPending} className="btn-primary">
                                     {inviteUserMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t('admin.users.add', 'Add User')}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* =================== EDIT USER MODAL =================== */}
+            {showEditUser && editTarget && (
+                <div className="modal-overlay" onClick={() => setShowEditUser(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="modal-title mb-0">{t('admin.users.edit', 'Edit User')}</h2>
+                            <button onClick={() => setShowEditUser(false)} className="text-text-muted hover:text-text-primary"><X className="w-5 h-5" /></button>
+                        </div>
+                        <p className="text-sm text-text-secondary mb-4">
+                            {editTarget.email}
+                        </p>
+                        {editFormError && (
+                            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4 shrink-0" /> {editFormError}
+                            </div>
+                        )}
+                        <form onSubmit={handleUpdateUser}>
+                            <div className="grid grid-cols-2 gap-3 mb-3">
+                                <div>
+                                    <label className="label-soft">{t('admin.users.firstName', 'First Name')}</label>
+                                    <input type="text" required value={editForm.firstName} onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })} className="input-soft" />
+                                </div>
+                                <div>
+                                    <label className="label-soft">{t('admin.users.lastName', 'Last Name')}</label>
+                                    <input type="text" required value={editForm.lastName} onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })} className="input-soft" />
+                                </div>
+                            </div>
+                            <div className="mb-3">
+                                <label className="label-soft">{t('admin.users.role', 'Role')}</label>
+                                <select value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })} className="select-soft">
+                                    <option value="user">{t('profile.roles.user', 'User')}</option>
+                                    <option value="department_admin">{t('profile.roles.departmentAdmin', 'Department Admin')}</option>
+                                    <option value="site_admin">{t('profile.roles.siteAdmin', 'Site Admin')}</option>
+                                    <option value="company_admin">{t('profile.roles.companyAdmin', 'Company Admin')}</option>
+                                    {user?.role === 'super_admin' && <option value="super_admin">{t('profile.roles.superAdmin', 'Super Admin')}</option>}
+                                </select>
+                            </div>
+                            <div className="mb-3">
+                                <label className="label-soft">{t('admin.users.position', 'Position / Job Title')}</label>
+                                <select value={editForm.position} onChange={(e) => setEditForm({ ...editForm, position: e.target.value })} className="select-soft">
+                                    <option value="">— {t('admin.users.selectPosition', 'Select position')} —</option>
+                                    {(() => {
+                                        const byDept = jobPositions.reduce<Record<string, typeof jobPositions>>((acc, jp) => {
+                                            if (!acc[jp.department]) acc[jp.department] = [];
+                                            acc[jp.department].push(jp);
+                                            return acc;
+                                        }, {});
+                                        return Object.entries(byDept).map(([dept, list]) => (
+                                            <optgroup key={dept} label={dept}>
+                                                {list.map((jp) => (
+                                                    <option key={jp.id} value={jp.position}>{jp.position}</option>
+                                                ))}
+                                            </optgroup>
+                                        ));
+                                    })()}
+                                </select>
+                            </div>
+                            <div className="mb-4">
+                                <label className="label-soft">{t('admin.users.site', 'Site')}</label>
+                                <select value={editForm.siteId} onChange={(e) => setEditForm({ ...editForm, siteId: e.target.value })} className="select-soft">
+                                    <option value="">— {t('admin.users.selectSite', 'Select site')} —</option>
+                                    {(sitesData?.data ?? []).map((site) => (
+                                        <option key={site.id} value={site.id}>{site.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex justify-end gap-3">
+                                <button type="button" onClick={() => setShowEditUser(false)} className="btn-secondary">{t('common.cancel', 'Cancel')}</button>
+                                <button type="submit" disabled={updateUserMutation.isPending} className="btn-primary">
+                                    {updateUserMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t('common.save', 'Save Changes')}
                                 </button>
                             </div>
                         </form>
