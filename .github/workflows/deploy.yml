@@ -28,7 +28,9 @@ jobs:
             git config --global --add safe.directory "$APP_DIR"
             git reset --hard HEAD
             git clean -fd
-            git pull
+            # Server must use SSH remote: git@github.com:owner/repo.git and have a deploy key in GitHub
+            git remote set-url origin git@github.com:${{ github.repository }}.git
+            git pull origin master
 
             # Install all workspace dependencies
             npm ci
