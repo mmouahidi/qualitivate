@@ -21,11 +21,16 @@ interface PermissionDetail {
     permissionGroup: string;
 }
 
+interface RolePermissions {
+    role: string;
+    permissions: string[];
+}
+
 interface PermissionsMatrix {
     roles: string[];
     permissions: string[];
     permissionDetails?: PermissionDetail[];
-    matrix: Record<string, string[]>;
+    rolePermissions: RolePermissions[];
 }
 
 const Roles: React.FC = () => {
@@ -64,8 +69,8 @@ const Roles: React.FC = () => {
     useEffect(() => {
         if (permsData) {
             const m: Record<string, Set<string>> = {};
-            for (const role of permsData.roles) {
-                m[role] = new Set(permsData.matrix[role] || []);
+            for (const rp of permsData.rolePermissions ?? []) {
+                m[rp.role] = new Set(rp.permissions);
             }
             setLocalMatrix(m);
         }
@@ -178,11 +183,14 @@ const Roles: React.FC = () => {
                                     <p className="text-sm text-text-muted mt-1 line-clamp-3">
                                         {role.description}
                                     </p>
-                                    {role.configurable && permsData?.matrix[role.id] && (
-                                        <p className="text-xs text-text-muted mt-2">
-                                            {permsData.matrix[role.id].length} permissions
-                                        </p>
-                                    )}
+                                    {role.configurable && (() => {
+                                        const rp = permsData?.rolePermissions?.find(r => r.role === role.id);
+                                        return rp && rp.permissions.length > 0 && (
+                                            <p className="text-xs text-text-muted mt-2">
+                                                {rp.permissions.length} permissions
+                                            </p>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         </div>

@@ -91,20 +91,27 @@ export const getPermissionsMatrix = async (req: AuthRequest, res: Response) => {
 
         const rolePermRows = await db('role_permissions').select('role', 'permission');
 
-        const matrix: Record<string, string[]> = {};
+        const matrixMap: Record<string, string[]> = {};
         for (const role of CONFIGURABLE_ROLES) {
-            matrix[role] = [];
+            matrixMap[role] = [];
         }
         for (const row of rolePermRows) {
-            if (!matrix[row.role]) matrix[row.role] = [];
-            matrix[row.role].push(row.permission);
+            if (!matrixMap[row.role]) matrixMap[row.role] = [];
+            matrixMap[row.role].push(row.permission);
         }
+
+        // Use array format to avoid camelCaseResponse middleware
+        // transforming role-name keys (e.g. company_admin -> companyAdmin)
+        const rolePermissions = CONFIGURABLE_ROLES.map(role => ({
+            role,
+            permissions: matrixMap[role],
+        }));
 
         res.json({
             roles: CONFIGURABLE_ROLES,
             permissions: allPermissions,
             permissionDetails: permissionRows,
-            matrix,
+            rolePermissions,
         });
     } catch (error: any) {
         logger.error('Error fetching permissions matrix:', { error });
