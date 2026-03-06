@@ -7,6 +7,7 @@ export interface User {
   companyId?: string;
   siteId?: string;
   departmentId?: string;
+  position?: string;
 }
 
 export interface AuthResponse {

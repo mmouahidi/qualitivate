@@ -9,6 +9,7 @@ export interface User {
   companyId: string | null;
   siteId: string | null;
   departmentId: string | null;
+  position?: string;
   isActive: boolean;
   createdAt: string;
 }

@@ -20,6 +20,11 @@ coverage/
 # Antigravity Kit (AI agent config)
 .agent/
 
+# Data files
+*.xlsx
+*.xls
+*.csv
+
 # Temp files
 temp_*/
 test_output*.txt
