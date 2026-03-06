@@ -1,0 +1,15 @@
+{
+  "setup-worktree-windows": [
+    "npm ci",
+    "if (Test-Path $env:ROOT_WORKTREE_PATH\\.env) { Copy-Item $env:ROOT_WORKTREE_PATH\\.env .env }",
+    "if (Test-Path $env:ROOT_WORKTREE_PATH\\.env.local) { Copy-Item $env:ROOT_WORKTREE_PATH\\.env.local .env.local }"
+  ],
+  "setup-worktree-unix": [
+    "npm ci",
+    "cp \"$ROOT_WORKTREE_PATH/.env\" .env 2>/dev/null || true",
+    "cp \"$ROOT_WORKTREE_PATH/.env.local\" .env.local 2>/dev/null || true"
+  ],
+  "setup-worktree": [
+    "npm ci"
+  ]
+}
