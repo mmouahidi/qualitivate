@@ -17,6 +17,7 @@ import SurveyBuilder from './pages/surveys/SurveyBuilder';
 import Templates from './pages/admin/Templates';
 import TemplateBuilder from './pages/admin/TemplateBuilder';
 import Permissions from './pages/admin/Permissions';
+import Roles from './pages/admin/Roles';
 import SurveyDistribute from './pages/surveys/SurveyDistribute';
 import SurveyRespond from './pages/surveys/SurveyRespond';
 import TakeSurvey from './pages/public/TakeSurvey';
@@ -172,12 +173,16 @@ function App() {
                     }
                   />
                   <Route
-                    path="/permissions"
+                    path="/roles"
                     element={
                       <ProtectedRoute>
-                        <Permissions />
+                        <Roles />
                       </ProtectedRoute>
                     }
+                  />
+                  <Route
+                    path="/permissions"
+                    element={<Navigate to="/roles" replace />}
                   />
                   <Route
                     path="/profile"
