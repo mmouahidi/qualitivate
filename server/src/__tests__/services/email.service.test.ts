@@ -5,6 +5,7 @@ import { sendSurveyInvitation, sendSurveyReminder } from '../../services/email.s
 jest.mock('nodemailer', () => ({
   createTransport: jest.fn().mockReturnValue({
     sendMail: jest.fn().mockResolvedValue({ messageId: 'mock-message-id' }),
+    verify: jest.fn().mockResolvedValue(true),
   }),
 }));
 

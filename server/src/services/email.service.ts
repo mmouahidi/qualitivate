@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer';
+import type Mail from 'nodemailer/lib/mailer';
 import { env } from '../config/env';
+import logger from '../config/logger';
 
 const escapeHtml = (str: string): string => {
   return str
@@ -10,15 +12,62 @@ const escapeHtml = (str: string): string => {
     .replace(/'/g, '&#39;');
 };
 
-const transporter = nodemailer.createTransport({
-  host: env.SMTP_HOST || 'smtp.gmail.com',
-  port: env.SMTP_PORT || 587,
-  secure: false,
-  auth: {
-    user: env.SMTP_USER,
-    pass: env.SMTP_PASS
+const isSmtpConfigured = (): boolean => {
+  return !!(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS && env.SMTP_FROM);
+};
+
+let _transporter: Mail | null = null;
+let _transporterVerified = false;
+
+const getTransporter = (): Mail => {
+  if (_transporter) return _transporter;
+
+  const port = env.SMTP_PORT || 465;
+
+  _transporter = nodemailer.createTransport({
+    host: env.SMTP_HOST!,
+    port,
+    secure: port === 465,
+    auth: {
+      user: env.SMTP_USER!,
+      pass: env.SMTP_PASS!,
+    },
+    tls: {
+      rejectUnauthorized: env.NODE_ENV === 'production',
+    },
+  });
+
+  return _transporter;
+};
+
+const ensureTransporter = async (): Promise<Mail> => {
+  if (!isSmtpConfigured()) {
+    const missing = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM']
+      .filter((k) => !env[k as keyof typeof env]);
+    throw new Error(
+      `SMTP is not configured (missing: ${missing.join(', ')}). Set SMTP_HOST, SMTP_USER, SMTP_PASS, and SMTP_FROM environment variables to enable email delivery.`
+    );
   }
-});
+
+  const transporter = getTransporter();
+
+  if (!_transporterVerified) {
+    try {
+      await transporter.verify();
+      _transporterVerified = true;
+      logger.info('SMTP connection verified successfully');
+    } catch (err) {
+      _transporter = null;
+      _transporterVerified = false;
+      logger.error('SMTP connection verification failed', { error: err });
+      throw new Error(
+        `SMTP connection failed: ${err instanceof Error ? err.message : 'Unknown error'}. Check your SMTP_HOST, SMTP_USER, and SMTP_PASS settings.`
+      );
+    }
+  }
+
+  return transporter;
+};
 
 interface SurveyInvitationParams {
   to: string;
@@ -145,8 +194,10 @@ Take the survey: ${surveyUrl}
 This email was sent by Qualitivate.io
   `.trim();
 
+  const transporter = await ensureTransporter();
+
   await transporter.sendMail({
-    from: env.SMTP_FROM || 'noreply@qualitivate.io',
+    from: env.SMTP_FROM!,
     to,
     subject,
     text: textContent,
@@ -212,8 +263,10 @@ export const sendResponseNotification = async (params: ResponseNotificationParam
 
   const textContent = `New Response: ${surveyTitle}\nRespondent: ${respondentInfo}\nSubmitted: ${submittedAt}\n\n${answers.map((a) => `${a.question}: ${a.answer}`).join('\n')}\n\n---\nSent by Qualitivate.io`;
 
+  const transporter = await ensureTransporter();
+
   await transporter.sendMail({
-    from: env.SMTP_FROM || 'noreply@qualitivate.io',
+    from: env.SMTP_FROM!,
     to: to.join(', '),
     subject: `📬 New Response: ${surveyTitle}`,
     text: textContent,
