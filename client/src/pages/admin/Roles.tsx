@@ -92,8 +92,9 @@ const Roles: React.FC = () => {
             }, 2500);
             queryClient.invalidateQueries({ queryKey: ['rbac-permissions'] });
         },
-        onError: (err: { response?: { data?: { error?: string } } }) => {
-            setSaveError(err.response?.data?.error || 'Failed to save. Please try again.');
+        onError: (err: Error) => {
+            const msg = (err as Error & { response?: { data?: { error?: string } } }).response?.data?.error || 'Failed to save. Please try again.';
+            setSaveError(msg);
             queryClient.invalidateQueries({ queryKey: ['rbac-permissions'] });
         },
     });
