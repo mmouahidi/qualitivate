@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '../../services/organization.service';
-import { referenceService } from '../../services/reference.service';
+import { referenceService, FALLBACK_INDUSTRIES } from '../../services/reference.service';
 import type { Company } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { DashboardLayout } from '../../components/layout';
@@ -34,9 +34,8 @@ const Companies: React.FC = () => {
   const { data: industriesData } = useQuery({
     queryKey: ['reference', 'industries'],
     queryFn: () => referenceService.getIndustries(),
-    enabled: isCreateModalOpen || isEditModalOpen
   });
-  const industries = industriesData?.data ?? [];
+  const industries = (industriesData?.data?.length ? industriesData.data : FALLBACK_INDUSTRIES);
 
   const createMutation = useMutation({
     mutationFn: companyService.create,
