@@ -23,6 +23,7 @@ import db from './config/database';
 import logger from './config/logger';
 import correlationId from './middlewares/correlationId.middleware';
 import { initSentry, captureException, addRequestContext } from './config/sentry';
+import { verifySmtpConnection } from './services/email.service';
 import path from 'path';
 
 // Initialize Sentry before app setup
@@ -141,13 +142,17 @@ app.use('/api/templates', templateRoutes);
 app.use('/api/rbac', rbacRoutes);
 app.use('/api/taxonomy', taxonomyRoutes);
 
-// Health check with database connectivity (must be before catch-all)
+// Track SMTP readiness (set after startup verification)
+let smtpReady = false;
+
+// Health check with database and SMTP connectivity (must be before catch-all)
 app.get('/api/health', async (req, res) => {
   try {
     await db.raw('SELECT 1');
     res.json({
       status: 'ok',
       database: 'connected',
+      smtp: smtpReady ? 'connected' : 'not configured',
       timestamp: new Date().toISOString(),
       environment: env.NODE_ENV,
     });
@@ -155,6 +160,7 @@ app.get('/api/health', async (req, res) => {
     res.status(503).json({
       status: 'error',
       database: 'disconnected',
+      smtp: smtpReady ? 'connected' : 'not configured',
       timestamp: new Date().toISOString(),
       environment: env.NODE_ENV,
     });
@@ -212,9 +218,10 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Environment: ${env.NODE_ENV}`);
+  smtpReady = await verifySmtpConnection();
 });
 
 export default app;

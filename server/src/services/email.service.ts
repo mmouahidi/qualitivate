@@ -69,6 +69,23 @@ const ensureTransporter = async (): Promise<Mail> => {
   return transporter;
 };
 
+export const verifySmtpConnection = async (): Promise<boolean> => {
+  if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) {
+    logger.warn('SMTP not configured — email features will be unavailable (missing SMTP_HOST, SMTP_USER, or SMTP_PASS)');
+    return false;
+  }
+  try {
+    const transport = getTransporter();
+    await transport.verify();
+    const port = env.SMTP_PORT || 465;
+    logger.info(`SMTP connection verified (${env.SMTP_HOST}:${port})`);
+    return true;
+  } catch (err) {
+    logger.error('SMTP connection verification failed — emails will not be sent', { error: err });
+    return false;
+  }
+};
+
 interface SurveyInvitationParams {
   to: string;
   subject: string;
