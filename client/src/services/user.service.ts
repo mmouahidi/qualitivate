@@ -33,6 +33,7 @@ export interface InviteUserData {
   companyId?: string;
   siteId?: string;
   departmentId?: string;
+  position?: string;
 }
 
 export interface UpdateUserData {
@@ -45,6 +46,7 @@ export interface UpdateUserData {
   companyId?: string | null;
   siteId?: string | null;
   departmentId?: string | null;
+  position?: string | null;
 }
 
 class UserService {

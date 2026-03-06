@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { userService, User, InviteUserData, UpdateUserData } from '../../services/user.service';
 import { companyService, siteService } from '../../services/organization.service';
+import { referenceService } from '../../services/reference.service';
 import { DashboardLayout } from '../../components/layout';
 import { ConfirmModal } from '../../components/ui';
 import { useToast } from '../../contexts/ToastContext';
@@ -29,7 +30,8 @@ const Users: React.FC = () => {
         isActive: true,
         companyId: null,
         siteId: null,
-        departmentId: null
+        departmentId: null,
+        position: undefined
     });
     const [formData, setFormData] = useState({
         email: '',
@@ -38,7 +40,8 @@ const Users: React.FC = () => {
         lastName: '',
         role: 'user',
         companyId: '',
-        siteId: ''
+        siteId: '',
+        position: ''
     });
     const [error, setError] = useState<string | null>(null);
     const [bulkData, setBulkData] = useState<InviteUserData[]>([]);
@@ -61,6 +64,13 @@ const Users: React.FC = () => {
         enabled: !!activeCompanyId || currentUser?.role === 'company_admin'
     });
 
+    const { data: jobPositionsData } = useQuery({
+        queryKey: ['reference', 'job-positions'],
+        queryFn: () => referenceService.getJobPositions(),
+        enabled: isCreateModalOpen || isEditModalOpen
+    });
+    const jobPositions = jobPositionsData?.data ?? [];
+
     const { data, isLoading } = useQuery({
         queryKey: ['users', search],
         queryFn: () => userService.getUsers({ search })
@@ -71,7 +81,7 @@ const Users: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
             setIsCreateModalOpen(false);
-            setFormData({ email: '', password: '', firstName: '', lastName: '', role: 'user', companyId: '', siteId: '' });
+            setFormData({ email: '', password: '', firstName: '', lastName: '', role: 'user', companyId: '', siteId: '', position: '' });
             setError(null);
         },
         onError: (err: any) => {
@@ -146,6 +156,7 @@ const Users: React.FC = () => {
         };
         if (formData.companyId) payload.companyId = formData.companyId;
         if (formData.siteId) payload.siteId = formData.siteId;
+        if (formData.position) payload.position = formData.position;
         createMutation.mutate(payload);
     };
 
@@ -168,7 +179,8 @@ const Users: React.FC = () => {
             isActive: user.isActive,
             companyId: user.companyId || null,
             siteId: user.siteId,
-            departmentId: user.departmentId
+            departmentId: user.departmentId,
+            position: user.position ?? undefined
         });
         setIsEditModalOpen(true);
     };
@@ -531,6 +543,31 @@ const Users: React.FC = () => {
                                     </select>
                                 </div>
 
+                                <div>
+                                    <label className="label-soft">Position / Job Title</label>
+                                    <select
+                                        value={formData.position}
+                                        onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                                        className="select-soft"
+                                    >
+                                        <option value="">— Select position —</option>
+                                        {(() => {
+                                            const byDept = jobPositions.reduce<Record<string, typeof jobPositions>>((acc, jp) => {
+                                                if (!acc[jp.department]) acc[jp.department] = [];
+                                                acc[jp.department].push(jp);
+                                                return acc;
+                                            }, {});
+                                            return Object.entries(byDept).map(([dept, list]) => (
+                                                <optgroup key={dept} label={dept}>
+                                                    {list.map((jp) => (
+                                                        <option key={jp.id} value={jp.position}>{jp.position}</option>
+                                                    ))}
+                                                </optgroup>
+                                            ));
+                                        })()}
+                                    </select>
+                                </div>
+
                                 {/* Company Selection - Only for super_admin */}
                                 {currentUser?.role === 'super_admin' && (
                                     <div>
@@ -826,6 +863,31 @@ const Users: React.FC = () => {
                                     {currentUser?.role === 'super_admin' && (
                                         <option value="super_admin">Super Admin</option>
                                     )}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="label-soft">Position / Job Title</label>
+                                <select
+                                    value={editForm.position ?? ''}
+                                    onChange={(e) => setEditForm({ ...editForm, position: e.target.value || undefined })}
+                                    className="select-soft"
+                                >
+                                    <option value="">— Select position —</option>
+                                    {(() => {
+                                        const byDept = jobPositions.reduce<Record<string, typeof jobPositions>>((acc, jp) => {
+                                            if (!acc[jp.department]) acc[jp.department] = [];
+                                            acc[jp.department].push(jp);
+                                            return acc;
+                                        }, {});
+                                        return Object.entries(byDept).map(([dept, list]) => (
+                                            <optgroup key={dept} label={dept}>
+                                                {list.map((jp) => (
+                                                    <option key={jp.id} value={jp.position}>{jp.position}</option>
+                                                ))}
+                                            </optgroup>
+                                        ));
+                                    })()}
                                 </select>
                             </div>
 

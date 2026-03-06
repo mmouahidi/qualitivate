@@ -136,7 +136,7 @@ export const getUser = async (req: AuthRequest, res: Response) => {
 
 export const inviteUser = async (req: AuthRequest, res: Response) => {
   try {
-    const { email, firstName, lastName, role, companyId, siteId, departmentId, password } = req.body;
+    const { email, firstName, lastName, role, companyId, siteId, departmentId, password, position } = req.body;
     const currentUser = req.user!;
 
     const existingUser = await db('users').where({ email }).first();
@@ -208,6 +208,7 @@ export const inviteUser = async (req: AuthRequest, res: Response) => {
         company_id: targetCompanyId || null,
         site_id: targetSiteId || null,
         department_id: targetDepartmentId || null,
+        position: position && String(position).trim() ? String(position).trim() : null,
         is_active: true
       })
       .returning(['id', 'email', 'first_name', 'last_name', 'role', 'company_id', 'site_id', 'department_id', 'position']);
@@ -222,7 +223,7 @@ export const inviteUser = async (req: AuthRequest, res: Response) => {
 export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { email, password, firstName, lastName, role, isActive, companyId, siteId, departmentId } = req.body;
+    const { email, password, firstName, lastName, role, isActive, companyId, siteId, departmentId, position } = req.body;
     const currentUser = req.user!;
 
     const user = await db('users').where({ id }).first();
@@ -270,6 +271,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     if (firstName !== undefined) updateData.first_name = firstName;
     if (lastName !== undefined) updateData.last_name = lastName;
     if (isActive !== undefined) updateData.is_active = isActive;
+    if (position !== undefined) updateData.position = position && String(position).trim() ? String(position).trim() : null;
 
     // Handle company update (super_admin only)
     if (companyId !== undefined && currentUser.role === 'super_admin' && companyId !== user.company_id) {
@@ -422,7 +424,7 @@ export const bulkCreateUsers = async (req: AuthRequest, res: Response) => {
 
     for (const userData of users) {
       try {
-        const { email, firstName, lastName, role = 'user', companyId, siteId, departmentId, password } = userData;
+        const { email, firstName, lastName, role = 'user', companyId, siteId, departmentId, password, position } = userData;
 
         if (!email || !password) {
           results.failed.push({ email: email || 'unknown', error: 'Email and password are required' });
@@ -508,6 +510,7 @@ export const bulkCreateUsers = async (req: AuthRequest, res: Response) => {
           company_id: targetCompanyId || null,
           site_id: targetSiteId || null,
           department_id: targetDepartmentId || null,
+          position: position && String(position).trim() ? String(position).trim() : null,
           is_active: true
         });
 

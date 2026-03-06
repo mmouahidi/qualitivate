@@ -33,6 +33,7 @@ export const inviteUserSchema: ValidationSchema = {
         companyId: Joi.string().uuid().optional(),
         siteId: Joi.string().uuid().optional(),
         departmentId: Joi.string().uuid().optional(),
+        position: Joi.string().max(255).allow('', null).optional(),
     })
 };
 
@@ -54,6 +55,7 @@ export const updateUserSchema: ValidationSchema = {
         companyId: Joi.string().uuid().allow(null).optional(),
         siteId: Joi.string().uuid().allow(null).optional(),
         departmentId: Joi.string().uuid().allow(null).optional(),
+        position: Joi.string().max(255).allow('', null).optional(),
         isActive: Joi.boolean().optional(),
     }).min(1).messages({
         'object.min': 'At least one field must be provided for update'
@@ -73,6 +75,7 @@ export const bulkCreateUsersSchema: ValidationSchema = {
                 companyId: Joi.string().uuid().optional(),
                 siteId: Joi.string().uuid().optional(),
                 departmentId: Joi.string().uuid().optional(),
+                position: Joi.string().max(255).allow('', null).optional(),
             })
         ).min(1).max(500).required().messages({
             'array.min': 'At least one user is required',

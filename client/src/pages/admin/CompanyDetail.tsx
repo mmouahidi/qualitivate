@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { DashboardLayout } from '../../components/layout';
 import { companyService, siteService, userService } from '../../services/organization.service';
+import { referenceService } from '../../services/reference.service';
 import type { Company, User as UserType } from '../../types';
 
 type TabKey = 'overview' | 'sites' | 'users';
@@ -36,7 +37,7 @@ const CompanyDetail: React.FC = () => {
     const [showBulkImport, setShowBulkImport] = useState(false);
 
     // Add User form
-    const [userForm, setUserForm] = useState({ email: '', firstName: '', lastName: '', password: '', role: 'user' });
+    const [userForm, setUserForm] = useState({ email: '', firstName: '', lastName: '', password: '', role: 'user', position: '' });
     const [userFormError, setUserFormError] = useState('');
 
     // Add Site form
@@ -69,6 +70,13 @@ const CompanyDetail: React.FC = () => {
         enabled: !!id && (activeTab === 'users' || activeTab === 'overview'),
     });
 
+    const { data: jobPositionsData } = useQuery({
+        queryKey: ['reference', 'job-positions'],
+        queryFn: () => referenceService.getJobPositions(),
+        enabled: !!showAddUser
+    });
+    const jobPositions = jobPositionsData?.data ?? [];
+
     // --- Mutations ---
     const deleteSiteMutation = useMutation({
         mutationFn: siteService.delete,
@@ -91,7 +99,7 @@ const CompanyDetail: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users', { companyId: id }] });
             setShowAddUser(false);
-            setUserForm({ email: '', firstName: '', lastName: '', password: '', role: 'user' });
+            setUserForm({ email: '', firstName: '', lastName: '', password: '', role: 'user', position: '' });
             setUserFormError('');
         },
         onError: (err: any) => {
@@ -148,7 +156,7 @@ const CompanyDetail: React.FC = () => {
             setUserFormError('Password must be at least 8 characters');
             return;
         }
-        inviteUserMutation.mutate({ ...userForm, companyId: id! });
+        inviteUserMutation.mutate({ ...userForm, companyId: id!, position: userForm.position || undefined });
     };
 
     const handleCreateSite = (e: React.FormEvent) => {
@@ -494,6 +502,26 @@ const CompanyDetail: React.FC = () => {
                                     <option value="site_admin">{t('profile.roles.siteAdmin', 'Site Admin')}</option>
                                     <option value="company_admin">{t('profile.roles.companyAdmin', 'Company Admin')}</option>
                                     {user?.role === 'super_admin' && <option value="super_admin">{t('profile.roles.superAdmin', 'Super Admin')}</option>}
+                                </select>
+                            </div>
+                            <div className="mb-4">
+                                <label className="label-soft">{t('admin.users.position', 'Position / Job Title')}</label>
+                                <select value={userForm.position} onChange={(e) => setUserForm({ ...userForm, position: e.target.value })} className="select-soft">
+                                    <option value="">— {t('admin.users.selectPosition', 'Select position')} —</option>
+                                    {(() => {
+                                        const byDept = jobPositions.reduce<Record<string, typeof jobPositions>>((acc, jp) => {
+                                            if (!acc[jp.department]) acc[jp.department] = [];
+                                            acc[jp.department].push(jp);
+                                            return acc;
+                                        }, {});
+                                        return Object.entries(byDept).map(([dept, list]) => (
+                                            <optgroup key={dept} label={dept}>
+                                                {list.map((jp) => (
+                                                    <option key={jp.id} value={jp.position}>{jp.position}</option>
+                                                ))}
+                                            </optgroup>
+                                        ));
+                                    })()}
                                 </select>
                             </div>
                             <div className="flex justify-end gap-3">

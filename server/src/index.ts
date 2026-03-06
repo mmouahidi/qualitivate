@@ -18,6 +18,7 @@ import distributionRoutes from './routes/distribution.routes';
 import templateRoutes from './routes/template.routes';
 import rbacRoutes from './routes/rbac.routes';
 import taxonomyRoutes from './routes/taxonomy.routes';
+import referenceRoutes from './routes/reference.routes';
 import { camelCaseResponse } from './utils/transformCase';
 import db from './config/database';
 import logger from './config/logger';
@@ -141,6 +142,7 @@ app.use('/api/distributions', distributionRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/rbac', rbacRoutes);
 app.use('/api/taxonomy', taxonomyRoutes);
+app.use('/api/reference', referenceRoutes);
 
 // Track SMTP readiness (set after startup verification)
 let smtpReady = false;

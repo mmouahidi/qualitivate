@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '../../services/organization.service';
+import { referenceService } from '../../services/reference.service';
 import type { Company } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { DashboardLayout } from '../../components/layout';
@@ -29,6 +30,13 @@ const Companies: React.FC = () => {
     queryKey: ['companies', search],
     queryFn: () => companyService.list({ search })
   });
+
+  const { data: industriesData } = useQuery({
+    queryKey: ['reference', 'industries'],
+    queryFn: () => referenceService.getIndustries(),
+    enabled: isCreateModalOpen || isEditModalOpen
+  });
+  const industries = industriesData?.data ?? [];
 
   const createMutation = useMutation({
     mutationFn: companyService.create,
@@ -297,14 +305,19 @@ const Companies: React.FC = () => {
                 </div>
               </div>
               <div className="mb-4">
-                <label className="label-soft">Activity</label>
-                <input
-                  type="text"
+                <label className="label-soft">Industry / Activity</label>
+                <select
                   value={formData.activity}
                   onChange={(e) => setFormData({ ...formData, activity: e.target.value })}
-                  className="input-soft"
-                  placeholder="e.g., Food Manufacturing, IT Services..."
-                />
+                  className="select-soft"
+                >
+                  <option value="">— Select industry —</option>
+                  {industries.map((ind) => (
+                    <option key={ind.id} value={ind.name}>
+                      {ind.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="mb-4">
                 <label className="label-soft">Address</label>
@@ -412,13 +425,19 @@ const Companies: React.FC = () => {
                 </div>
               </div>
               <div className="mb-4">
-                <label className="label-soft">Activity</label>
-                <input
-                  type="text"
+                <label className="label-soft">Industry / Activity</label>
+                <select
                   value={editingCompany.activity || ''}
                   onChange={(e) => setEditingCompany({ ...editingCompany, activity: e.target.value })}
-                  className="input-soft"
-                />
+                  className="select-soft"
+                >
+                  <option value="">— Select industry —</option>
+                  {industries.map((ind) => (
+                    <option key={ind.id} value={ind.name}>
+                      {ind.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="mb-4">
                 <label className="label-soft">Address</label>

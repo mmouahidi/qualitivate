@@ -168,6 +168,7 @@ export const userService = {
     companyId?: string;
     siteId?: string;
     departmentId?: string;
+    position?: string;
   }): Promise<User> {
     const response = await api.post('/users/invite', data);
     return response.data;
