@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { env } from '../config/env';
+import logger from '../config/logger';
 
 const escapeHtml = (str: string): string => {
   return str
@@ -10,15 +11,32 @@ const escapeHtml = (str: string): string => {
     .replace(/'/g, '&#39;');
 };
 
+const smtpPort = env.SMTP_PORT || 587;
+
 const transporter = nodemailer.createTransport({
   host: env.SMTP_HOST || 'smtp.gmail.com',
-  port: env.SMTP_PORT || 587,
-  secure: false,
+  port: smtpPort,
+  secure: smtpPort === 465,
   auth: {
     user: env.SMTP_USER,
     pass: env.SMTP_PASS
   }
 });
+
+export const verifySmtpConnection = async (): Promise<boolean> => {
+  if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) {
+    logger.warn('SMTP not configured — email features will be unavailable (missing SMTP_HOST, SMTP_USER, or SMTP_PASS)');
+    return false;
+  }
+  try {
+    await transporter.verify();
+    logger.info(`SMTP connection verified (${env.SMTP_HOST}:${smtpPort})`);
+    return true;
+  } catch (err) {
+    logger.error('SMTP connection verification failed — emails will not be sent', { error: err });
+    return false;
+  }
+};
 
 interface SurveyInvitationParams {
   to: string;
